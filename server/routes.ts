@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { db } from "@db";
 import { plants, orders, users } from "@db/schema";
-import { like, and, or, eq } from "drizzle-orm";
+import { like, and, or, eq, inArray, gte } from "drizzle-orm";
 import NodeGeocoder from "node-geocoder";
 import { setupAuth } from "./auth";
 import distance from "@turf/distance";
@@ -41,8 +41,8 @@ export function registerRoutes(app: Express): Server {
         .select()
         .from(plants)
         .where(and(
-          plants.id.in(plantIds),
-          plants.quantity.gte(1)
+          inArray(plants.id, plantIds),
+          gte(plants.quantity, 1)
         ));
 
       // Create line items for Stripe
