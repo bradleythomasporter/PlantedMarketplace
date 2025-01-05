@@ -1,13 +1,19 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { db } from "@db";
-import { plants, orders, users } from "@db/schema"; // Added users import
+import { plants, orders, users } from "@db/schema";
 import { like, and, or, eq } from "drizzle-orm";
 import NodeGeocoder from "node-geocoder";
 import { setupAuth } from "./auth";
 import distance from "@turf/distance";
 import { point } from "@turf/helpers";
+import Stripe from "stripe";
 
+if (!process.env.STRIPE_SECRET_KEY) {
+  throw new Error("STRIPE_SECRET_KEY environment variable is required");
+}
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const geocoder = NodeGeocoder({
   provider: 'openstreetmap'
 });
@@ -15,6 +21,90 @@ const geocoder = NodeGeocoder({
 export function registerRoutes(app: Express): Server {
   // Setup authentication routes
   setupAuth(app);
+
+  // Checkout endpoint
+  app.post("/api/checkout", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    try {
+      const { items } = req.body;
+
+      if (!Array.isArray(items) || items.length === 0) {
+        return res.status(400).json({ message: "Invalid items" });
+      }
+
+      // Fetch all plants in one query
+      const plantIds = items.map(item => item.plantId);
+      const plantsData = await db
+        .select()
+        .from(plants)
+        .where(and(
+          plants.id.in(plantIds),
+          plants.quantity.gte(1)
+        ));
+
+      // Create line items for Stripe
+      const lineItems = items.map(item => {
+        const plant = plantsData.find(p => p.id === item.plantId);
+        if (!plant) {
+          throw new Error(`Plant ${item.plantId} not found`);
+        }
+
+        if (plant.quantity < item.quantity) {
+          throw new Error(`Not enough stock for ${plant.name}`);
+        }
+
+        return {
+          price_data: {
+            currency: "usd",
+            product_data: {
+              name: plant.name,
+              description: plant.description,
+              images: [plant.imageUrl],
+            },
+            unit_amount: Math.round(Number(plant.price) * 100), // Convert to cents
+          },
+          quantity: item.quantity,
+        };
+      });
+
+      // Add planting service fee if requested
+      const plantingServices = items.filter(item => item.requiresPlanting);
+      if (plantingServices.length > 0) {
+        lineItems.push({
+          price_data: {
+            currency: "usd",
+            product_data: {
+              name: "Professional Planting Service",
+              description: "Expert planting service by certified gardeners",
+            },
+            unit_amount: 4999, // $49.99
+          },
+          quantity: plantingServices.length,
+        });
+      }
+
+      // Create Stripe checkout session
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ["card"],
+        line_items: lineItems,
+        mode: "payment",
+        success_url: `${req.protocol}://${req.get("host")}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${req.protocol}://${req.get("host")}/checkout/cancel`,
+        metadata: {
+          userId: req.user.id.toString(),
+          items: JSON.stringify(items),
+        },
+      });
+
+      res.json({ url: session.url });
+    } catch (error: any) {
+      console.error("Checkout error:", error);
+      res.status(500).json({ message: error.message || "Checkout failed" });
+    }
+  });
 
   // Get individual plant
   app.get("/api/plants/:id", async (req, res) => {
