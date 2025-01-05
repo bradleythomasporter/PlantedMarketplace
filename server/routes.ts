@@ -2,10 +2,9 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { db } from "@db";
-import { plants, orders, orderItems } from "@db/schema";
+import { plants, orders, orderItems, type User } from "@db/schema";
 import { and, eq, like, desc } from "drizzle-orm";
 
-// Extend Express.Request to include our User type
 declare module 'express-serve-static-core' {
   interface Request {
     user?: User;
@@ -62,7 +61,6 @@ export function registerRoutes(app: Express): Server {
       res.status(500).json({ message: "Failed to create plant" });
     }
   });
-
 
   const httpServer = createServer(app);
   return httpServer;

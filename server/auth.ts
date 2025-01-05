@@ -28,11 +28,15 @@ const crypto = {
   },
 };
 
-// Extend Express User type without recursion
+// Define the User type for Express without recursion
 declare global {
   namespace Express {
-    // eslint-disable-next-line @typescript-eslint/no-empty-interface
-    interface User extends Omit<User, 'password'> {}
+    interface User extends Omit<User, 'password'> {
+      id: number;
+      username: string;
+      role: "customer" | "nursery";
+      name: string;
+    }
   }
 }
 

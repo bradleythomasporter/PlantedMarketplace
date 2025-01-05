@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, decimal, timestamp, boolean, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, decimal, timestamp, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { relations } from "drizzle-orm";
 
@@ -75,7 +75,7 @@ export const orderItemsRelations = relations(orderItems, ({ one }) => ({
   })
 }));
 
-// Export types
+// Export types with proper naming
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Plant = typeof plants.$inferSelect;
@@ -85,7 +85,7 @@ export type NewOrder = typeof orders.$inferInsert;
 export type OrderItem = typeof orderItems.$inferSelect;
 export type NewOrderItem = typeof orderItems.$inferInsert;
 
-// Export schemas
+// Export schemas with proper validation
 export const insertUserSchema = createInsertSchema(users);
 export const selectUserSchema = createSelectSchema(users);
 export const insertPlantSchema = createInsertSchema(plants);
