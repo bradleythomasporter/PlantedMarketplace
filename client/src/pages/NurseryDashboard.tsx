@@ -207,9 +207,10 @@ export default function NurseryDashboard() {
     if (!selectedPlant) return;
 
     const formData = new FormData(e.currentTarget);
+    const category = formData.get("category") as "flowers" | "trees" | "shrubs" | "indoor" | "outdoor";
     const updates = {
       name: formData.get("name") as string,
-      category: formData.get("category") as string,
+      category,
       description: formData.get("description") as string,
       price: parseFloat(formData.get("price") as string),
       quantity: parseInt(formData.get("quantity") as string),
