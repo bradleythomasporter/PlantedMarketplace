@@ -16,6 +16,30 @@ export function registerRoutes(app: Express): Server {
   // Setup authentication routes
   setupAuth(app);
 
+  // Geocoding endpoint
+  app.get("/api/geocode", async (req, res) => {
+    try {
+      const { address } = req.query;
+      if (!address || typeof address !== 'string') {
+        return res.status(400).json({ message: "Address is required" });
+      }
+
+      const [location] = await geocoder.geocode(address);
+      if (!location) {
+        return res.status(404).json({ message: "Location not found" });
+      }
+
+      res.json({
+        latitude: location.latitude,
+        longitude: location.longitude,
+        zipCode: location.zipcode || "00000" // Fallback ZIP code
+      });
+    } catch (error) {
+      console.error('Geocoding error:', error);
+      res.status(500).json({ message: "Failed to geocode address" });
+    }
+  });
+
   // Basic plants route for listing and searching
   app.get("/api/plants", async (req, res) => {
     try {

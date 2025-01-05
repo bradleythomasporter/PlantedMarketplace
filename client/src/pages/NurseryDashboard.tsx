@@ -30,6 +30,7 @@ export default function NurseryDashboard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedPlant, setSelectedPlant] = useState<Plant | null>(null);
+  const [isAddingPlant, setIsAddingPlant] = useState(false);
 
   const { data: plants = [], isLoading } = useQuery<Plant[]>({
     queryKey: [`/api/plants?nurseryId=${user?.id}`],
@@ -37,6 +38,18 @@ export default function NurseryDashboard() {
 
   const addPlantMutation = useMutation({
     mutationFn: async (formData: FormData) => {
+      // Use the nursery's address for plant location
+      if (!user?.address) {
+        throw new Error("Nursery address is required");
+      }
+
+      // Get coordinates from address
+      const geocodeResponse = await fetch(`/api/geocode?address=${encodeURIComponent(user.address)}`);
+      if (!geocodeResponse.ok) {
+        throw new Error("Failed to geocode address");
+      }
+      const { latitude, longitude, zipCode } = await geocodeResponse.json();
+
       const response = await fetch("/api/plants", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -48,6 +61,9 @@ export default function NurseryDashboard() {
           price: parseFloat(formData.get("price") as string),
           quantity: parseInt(formData.get("quantity") as string),
           imageUrl: formData.get("imageUrl"),
+          latitude,
+          longitude,
+          zipCode,
         }),
       });
 
@@ -61,6 +77,7 @@ export default function NurseryDashboard() {
       toast({
         title: "Plant added successfully",
       });
+      setIsAddingPlant(false);
     },
     onError: (error: Error) => {
       toast({
@@ -75,7 +92,6 @@ export default function NurseryDashboard() {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     await addPlantMutation.mutateAsync(formData);
-    e.currentTarget.reset();
   };
 
   return (
@@ -83,7 +99,7 @@ export default function NurseryDashboard() {
       <header className="bg-primary/10 p-4 md:p-6">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-4">
-            <h1 className="text-2xl font-bold text-primary">Planted 🌱</h1>
+            <h1 className="text-2xl font-bold text-primary text-display">Planted 🌱</h1>
             <Button variant="ghost" onClick={() => setLocation("/")}>
               View Store
             </Button>
@@ -103,9 +119,9 @@ export default function NurseryDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Plant Management */}
           <section>
-            <h2 className="text-2xl font-semibold mb-6">Manage Plants</h2>
+            <h2 className="text-2xl font-semibold mb-6 text-display">Manage Plants</h2>
 
-            <Dialog>
+            <Dialog open={isAddingPlant} onOpenChange={setIsAddingPlant}>
               <DialogTrigger asChild>
                 <Button className="mb-6">Add New Plant</Button>
               </DialogTrigger>
@@ -204,7 +220,7 @@ export default function NurseryDashboard() {
 
           {/* Info Section */}
           <section>
-            <h2 className="text-2xl font-semibold mb-6">Nursery Information</h2>
+            <h2 className="text-2xl font-semibold mb-6 text-display">Nursery Information</h2>
             <div className="p-4 border rounded-lg">
               <p className="font-semibold">{user?.name}</p>
               {user?.address && (
