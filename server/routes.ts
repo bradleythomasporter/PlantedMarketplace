@@ -4,14 +4,18 @@ import { db } from "@db";
 import { plants } from "@db/schema";
 import { like, and, or } from "drizzle-orm";
 import NodeGeocoder from "node-geocoder";
-import { point, distance } from "@turf/helpers";
+import { point } from "@turf/helpers";
 import turfDistance from "@turf/distance";
+import { setupAuth } from "./auth";
 
 const geocoder = NodeGeocoder({
   provider: 'openstreetmap'
 });
 
 export function registerRoutes(app: Express): Server {
+  // Setup authentication routes
+  setupAuth(app);
+
   // Basic plants route for listing and searching
   app.get("/api/plants", async (req, res) => {
     try {
@@ -61,6 +65,26 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       console.error('Error fetching plants:', error);
       res.status(500).json({ message: "Failed to fetch plants" });
+    }
+  });
+
+  // Add plant route (requires authentication)
+  app.post("/api/plants", async (req, res) => {
+    if (!req.isAuthenticated() || req.user.role !== "nursery") {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    try {
+      const plantData = {
+        ...req.body,
+        nurseryId: req.user.id,
+      };
+
+      const [newPlant] = await db.insert(plants).values(plantData).returning();
+      res.json(newPlant);
+    } catch (error) {
+      console.error('Error adding plant:', error);
+      res.status(500).json({ message: "Failed to add plant" });
     }
   });
 

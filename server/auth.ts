@@ -123,7 +123,7 @@ export async function setupAuth(app: Express) {
           .limit(1);
 
         if (existingUser) {
-          return res.status(400).send("Username already exists");
+          return res.status(400).json({ message: "Username already exists" });
         }
 
         const hashedPassword = await crypto.hash(password);
@@ -160,7 +160,7 @@ export async function setupAuth(app: Express) {
         }
 
         if (!user) {
-          return res.status(400).send(info.message ?? "Login failed");
+          return res.status(400).json({ message: info.message ?? "Login failed" });
         }
 
         req.logIn(user, (err) => {
@@ -176,7 +176,7 @@ export async function setupAuth(app: Express) {
     app.post("/api/logout", (req, res) => {
       req.logout((err) => {
         if (err) {
-          return res.status(500).send("Logout failed");
+          return res.status(500).json({ message: "Logout failed" });
         }
         res.clearCookie("connect.sid");
         res.json({ message: "Logout successful" });
@@ -187,7 +187,7 @@ export async function setupAuth(app: Express) {
       if (req.isAuthenticated()) {
         return res.json(req.user);
       }
-      res.status(401).send("Not logged in");
+      res.status(401).json({ message: "Not logged in" });
     });
   } catch (error) {
     console.error("Failed to setup authentication:", error);
