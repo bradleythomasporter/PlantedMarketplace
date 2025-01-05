@@ -28,14 +28,17 @@ const crypto = {
   },
 };
 
-// Define the User type for Express without recursion
+// Define a separate interface for Express User to avoid recursion
 declare global {
   namespace Express {
-    interface User extends Omit<User, 'password'> {
+    interface User {
       id: number;
       username: string;
       role: "customer" | "nursery";
       name: string;
+      address?: string | null;
+      description?: string | null;
+      hoursOfOperation?: string | null;
     }
   }
 }
