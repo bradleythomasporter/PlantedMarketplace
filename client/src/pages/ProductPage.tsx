@@ -13,16 +13,29 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, LeafyGreen, MapPin } from "lucide-react";
 import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
+import { useCart } from "@/hooks/use-cart";
 import type { Plant } from "@db/schema";
 
 export default function ProductPage({ params }: { params: { id: string } }) {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { addItem } = useCart();
   const [showGardenerModal, setShowGardenerModal] = useState(false);
 
   const { data: plant, isLoading } = useQuery<Plant>({
     queryKey: [`/api/plants/${params.id}`],
   });
+
+  const handleAddToCart = () => {
+    if (plant) {
+      addItem(plant, 1);
+      toast({
+        title: "Added to Cart",
+        description: `${plant.name} has been added to your cart.`,
+      });
+    }
+  };
 
   if (isLoading) {
     return (
@@ -31,6 +44,7 @@ export default function ProductPage({ params }: { params: { id: string } }) {
         <div className="flex justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
+        <Footer />
       </div>
     );
   }
@@ -45,15 +59,16 @@ export default function ProductPage({ params }: { params: { id: string } }) {
             Return to Home
           </Button>
         </div>
+        <Footer />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <Header />
 
-      <main className="max-w-7xl mx-auto px-4 md:px-6 py-8">
+      <main className="flex-1 max-w-7xl mx-auto px-4 md:px-6 py-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Image Section */}
           <div>
@@ -80,7 +95,7 @@ export default function ProductPage({ params }: { params: { id: string } }) {
             </div>
 
             <div className="space-y-4">
-              <Button className="w-full" size="lg">
+              <Button className="w-full" size="lg" onClick={handleAddToCart}>
                 Add to Cart
               </Button>
 
@@ -143,6 +158,8 @@ export default function ProductPage({ params }: { params: { id: string } }) {
           </div>
         </div>
       </main>
+
+      <Footer />
     </div>
   );
 }

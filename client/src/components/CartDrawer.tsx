@@ -88,7 +88,7 @@ export function CartDrawer() {
               onClick={handleCheckout}
               disabled={!user}
             >
-              Checkout (Coming Soon)
+              {user ? "Checkout" : "Login to Checkout"}
             </Button>
           </div>
         )}

@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { useUser } from "@/hooks/use-user";
+import { CartDrawer } from "./CartDrawer";
 
 export function Header() {
   const [, setLocation] = useLocation();
@@ -31,14 +32,18 @@ export function Header() {
               <span className="text-sm hidden md:inline">
                 Welcome, {user.name}
               </span>
+              <CartDrawer />
               <Button variant="outline" onClick={() => logout()}>
                 Logout
               </Button>
             </>
           ) : (
-            <Button variant="outline" onClick={() => setLocation("/auth")}>
-              Login
-            </Button>
+            <>
+              <CartDrawer />
+              <Button variant="outline" onClick={() => setLocation("/auth")}>
+                Login
+              </Button>
+            </>
           )}
         </div>
       </div>
