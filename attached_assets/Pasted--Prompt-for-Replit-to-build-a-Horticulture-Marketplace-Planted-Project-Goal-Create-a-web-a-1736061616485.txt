@@ -1,0 +1,70 @@
+## Prompt for Replit to build a Horticulture Marketplace (Planted)
+
+**Project Goal:** Create a web application called "Planted" that connects local nurseries with local customers for plant sales. Future features will include connecting customers with gardeners for planting services.
+
+**Technology Stack:** Ideally MERN (MongoDB, Express.js, React, Node.js) as I am familiar with it. If there's a compelling reason for an alternative, please explain and provide guidance.
+
+**Core Features (MVP):**
+
+*   **Nursery Registration/Management:**
+    *   Nurseries can create profiles with details (name, address, contact info, description, hours of operation).
+    *   Nurseries can list their available plants with details (name, description, images, price, quantity available).
+    *   Nurseries can manage their inventory (add, edit, delete plants).
+*   **Customer Browsing/Searching:**
+    *   Customers can browse plants by category (e.g., flowers, trees, shrubs, indoor, outdoor).
+    *   Customers can search for plants by name or keywords.
+    *   Customers can view nursery profiles and plant details.
+    *   Customers can filter search results by price, distance, and other relevant criteria.
+*   **Shopping Cart/Checkout:**
+    *   Customers can add plants to a shopping cart.
+    *   Customers can proceed to checkout and place orders.
+    *   Basic order management for nurseries (view new orders).
+*   **Location-Based Search:**
+    *   Utilize geolocation to allow customers to find nurseries near them.
+
+**Future Features (Out of Scope for Initial Build):**
+
+*   Integration with payment gateways (Stripe, PayPal).
+*   Gardener registration/management and connection with customers for planting services.
+*   Order tracking and delivery management.
+*   Customer reviews and ratings for nurseries and gardeners.
+*   Advanced search filtering and sorting options.
+
+**Specific Instructions for Replit:**
+
+1.  **Project Setup:** Create a new Replit using the Node.js template.
+2.  **Backend (Express.js/Node.js):**
+    *   Set up an Express.js server.
+    *   Define API endpoints for nursery management, plant listing, customer browsing, and orders.
+    *   Connect to a MongoDB database (consider using MongoDB Atlas for cloud hosting).
+3.  **Frontend (React):**
+    *   Use Create React App or a similar setup.
+    *   Create components for browsing plants, viewing nursery profiles, managing the shopping cart, and checkout.
+    *   Implement user authentication (basic authentication is sufficient for the MVP).
+    *   Implement location services for local plant search.
+4.  **Data Modeling (MongoDB):**
+    *   Design schemas for nurseries, plants, and orders.
+
+**Deliverables:**
+
+*   A functional Replit project that implements the core features described above.
+*   Clear documentation or comments explaining the code structure and functionality.
+
+**Example API Endpoints (Illustrative):**
+
+*   `GET /api/nurseries`: Get all nurseries.
+*   `GET /api/nurseries/:id`: Get a specific nursery by ID.
+*   `POST /api/nurseries`: Create a new nursery (requires authentication).
+*   `GET /api/plants`: Get all plants.
+*   `GET /api/plants?search=keyword`: Search plants by keyword.
+*   `GET /api/plants?category=flowers`: Get plants by category.
+*   `POST /api/orders`: Create a new order (requires authentication).
+
+**Success Criteria:**
+
+*   The application allows nurseries to list plants.
+*   Customers can browse and search for plants.
+*   Customers can add plants to a cart and "place" an order (no actual payment processing required for MVP).
+*   Location based search is implemented.
+
+This detailed prompt should provide Replit with a clear understanding of the project requirements and facilitate the development of a functional horticulture marketplace application.
