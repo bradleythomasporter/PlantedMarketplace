@@ -7,23 +7,66 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ShoppingCart, Trash2 } from "lucide-react";
+import { ShoppingCart, Trash2, Plus, Minus } from "lucide-react";
 import { useCart } from "@/hooks/use-cart";
 import { useState } from "react";
 import { useUser } from "@/hooks/use-user";
 import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
 
 export function CartDrawer() {
   const [open, setOpen] = useState(false);
-  const { items, removeItem, total, clearCart } = useCart();
+  const { items, removeItem, updateQuantity, total, clearCart } = useCart();
   const { user } = useUser();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
 
-  const handleCheckout = () => {
-    toast({
-      title: "Coming Soon!",
-      description: "Checkout functionality will be available in a future update.",
-    });
+  const handleQuantityChange = (plantId: number, currentQuantity: number, increment: boolean) => {
+    const newQuantity = increment ? currentQuantity + 1 : currentQuantity - 1;
+    if (newQuantity >= 1) {
+      updateQuantity(plantId, newQuantity);
+    }
+  };
+
+  const handleCheckout = async () => {
+    if (!user) {
+      setOpen(false);
+      setLocation("/auth");
+      return;
+    }
+
+    try {
+      setIsCheckingOut(true);
+      const response = await fetch("/api/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          items: items.map(item => ({
+            plantId: item.plant.id,
+            quantity: item.quantity,
+            requiresPlanting: item.requiresPlanting,
+          })),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Checkout failed");
+      }
+
+      const { url } = await response.json();
+      window.location.href = url;
+    } catch (error) {
+      toast({
+        title: "Checkout Error",
+        description: "There was a problem processing your checkout. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCheckingOut(false);
+    }
   };
 
   return (
@@ -61,17 +104,42 @@ export function CartDrawer() {
                   />
                   <div className="flex-1">
                     <h3 className="font-semibold">{item.plant.name}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      ${Number(item.plant.price).toFixed(2)} x {item.quantity}
+                    <p className="text-sm text-muted-foreground mb-2">
+                      ${Number(item.plant.price).toFixed(2)} each
                     </p>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => handleQuantityChange(item.plant.id, item.quantity, false)}
+                      >
+                        <Minus className="h-4 w-4" />
+                      </Button>
+                      <span className="w-8 text-center">{item.quantity}</span>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => handleQuantityChange(item.plant.id, item.quantity, true)}
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => removeItem(item.plant.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <div className="flex flex-col items-end gap-2">
+                    <p className="font-semibold">
+                      ${(Number(item.plant.price) * item.quantity).toFixed(2)}
+                    </p>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => removeItem(item.plant.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -79,16 +147,28 @@ export function CartDrawer() {
         </ScrollArea>
         {items.length > 0 && (
           <div className="mt-4 space-y-4">
-            <div className="flex justify-between text-lg font-semibold">
-              <span>Total</span>
-              <span>${total().toFixed(2)}</span>
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>Subtotal</span>
+                <span>${total().toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between font-semibold">
+                <span>Total</span>
+                <span>${total().toFixed(2)}</span>
+              </div>
             </div>
             <Button
               className="w-full"
               onClick={handleCheckout}
-              disabled={!user}
+              disabled={isCheckingOut || !user}
             >
-              {user ? "Checkout" : "Login to Checkout"}
+              {isCheckingOut ? (
+                "Processing..."
+              ) : !user ? (
+                "Login to Checkout"
+              ) : (
+                "Checkout"
+              )}
             </Button>
           </div>
         )}
