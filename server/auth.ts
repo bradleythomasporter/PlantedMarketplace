@@ -5,7 +5,7 @@ import session from "express-session";
 import createMemoryStore from "memorystore";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
-import { users, type User } from "@db/schema";
+import { users, type User as DbUser } from "@db/schema";
 import { db } from "@db";
 import { eq } from "drizzle-orm";
 
@@ -28,18 +28,13 @@ const crypto = {
   },
 };
 
-// Define a separate interface for Express User to avoid recursion
+// Create a type that excludes the password field
+type UserWithoutPassword = Omit<DbUser, 'password'>;
+
 declare global {
   namespace Express {
-    interface User {
-      id: number;
-      username: string;
-      role: "customer" | "nursery";
-      name: string;
-      address?: string | null;
-      description?: string | null;
-      hoursOfOperation?: string | null;
-    }
+    // Extend User interface with our custom fields
+    interface User extends UserWithoutPassword {}
   }
 }
 
@@ -49,17 +44,18 @@ export function setupAuth(app: Express) {
     secret: process.env.REPL_ID || "planted-secret",
     resave: false,
     saveUninitialized: false,
-    cookie: {},
+    cookie: {
+      secure: app.get("env") === "production",
+      httpOnly: true,
+      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    },
     store: new MemoryStore({
-      checkPeriod: 86400000,
+      checkPeriod: 86400000, // prune expired entries every 24h
     }),
   };
 
   if (app.get("env") === "production") {
     app.set("trust proxy", 1);
-    sessionSettings.cookie = {
-      secure: true,
-    };
   }
 
   app.use(session(sessionSettings));
@@ -82,14 +78,16 @@ export function setupAuth(app: Express) {
         if (!isMatch) {
           return done(null, false, { message: "Incorrect password." });
         }
-        return done(null, user);
+
+        const { password: _, ...userWithoutPassword } = user;
+        return done(null, userWithoutPassword);
       } catch (err) {
         return done(err);
       }
     })
   );
 
-  passport.serializeUser((user, done) => {
+  passport.serializeUser((user: Express.User, done) => {
     done(null, user.id);
   });
 
@@ -100,7 +98,13 @@ export function setupAuth(app: Express) {
         .from(users)
         .where(eq(users.id, id))
         .limit(1);
-      done(null, user);
+
+      if (!user) {
+        return done(null, false);
+      }
+
+      const { password: _, ...userWithoutPassword } = user;
+      done(null, userWithoutPassword);
     } catch (err) {
       done(err);
     }
@@ -108,7 +112,7 @@ export function setupAuth(app: Express) {
 
   app.post("/api/register", async (req, res, next) => {
     try {
-      const { username, password, role, name, address, description, hoursOfOperation } = req.body;
+      const { username, password, role, name, address, description, hoursOfOperation, location } = req.body;
 
       const [existingUser] = await db
         .select()
@@ -132,14 +136,16 @@ export function setupAuth(app: Express) {
           address,
           description,
           hoursOfOperation,
+          location,
         })
         .returning();
 
-      req.login(newUser, (err) => {
+      const { password: _, ...userWithoutPassword } = newUser;
+      req.login(userWithoutPassword, (err) => {
         if (err) {
           return next(err);
         }
-        return res.json(newUser);
+        return res.json(userWithoutPassword);
       });
     } catch (error) {
       next(error);
@@ -171,7 +177,7 @@ export function setupAuth(app: Express) {
       if (err) {
         return res.status(500).send("Logout failed");
       }
-
+      res.clearCookie("connect.sid");
       res.json({ message: "Logout successful" });
     });
   });
@@ -180,7 +186,6 @@ export function setupAuth(app: Express) {
     if (req.isAuthenticated()) {
       return res.json(req.user);
     }
-
     res.status(401).send("Not logged in");
   });
 }

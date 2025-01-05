@@ -1,8 +1,11 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { setupAuth } from "./auth";
 
 const app = express();
+
+// Basic middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
@@ -38,7 +41,10 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // Register API routes (this will also setup auth)
+  // Setup authentication before routes
+  setupAuth(app);
+
+  // Register API routes
   const server = registerRoutes(app);
 
   // Error handling middleware
