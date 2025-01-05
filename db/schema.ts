@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, decimal, timestamp, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, decimal, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { relations } from "drizzle-orm";
 
@@ -8,6 +8,9 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   role: text("role", { enum: ["customer", "nursery"] }).notNull(),
   name: text("name").notNull(),
+  address: text("address"),
+  description: text("description"),
+  hoursOfOperation: text("hours_of_operation"),
   createdAt: timestamp("created_at").defaultNow()
 });
 
@@ -31,13 +34,12 @@ export const plantsRelations = relations(plants, ({ one }) => ({
   })
 }));
 
-// Export types with proper naming
+// Export types and schemas
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Plant = typeof plants.$inferSelect;
 export type NewPlant = typeof plants.$inferInsert;
 
-// Export schemas with proper validation
 export const insertUserSchema = createInsertSchema(users);
 export const selectUserSchema = createSelectSchema(users);
 export const insertPlantSchema = createInsertSchema(plants);

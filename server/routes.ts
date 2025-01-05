@@ -12,7 +12,7 @@ export function registerRoutes(app: Express): Server {
   // Plants routes
   app.get("/api/plants", async (req, res) => {
     try {
-      const { search, category } = req.query;
+      const { search, category, nurseryId } = req.query;
       const conditions = [];
 
       if (typeof search === 'string' && search) {
@@ -20,7 +20,11 @@ export function registerRoutes(app: Express): Server {
       }
 
       if (typeof category === 'string' && category) {
-        conditions.push(eq(plants.category, category as any));
+        conditions.push(eq(plants.category, category));
+      }
+
+      if (typeof nurseryId === 'string' && nurseryId) {
+        conditions.push(eq(plants.nurseryId, parseInt(nurseryId)));
       }
 
       const results = await db
@@ -36,6 +40,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Protected route for nurseries to add plants
   app.post("/api/plants", async (req, res) => {
     if (!req.isAuthenticated() || req.user?.role !== "nursery") {
       return res.status(403).send("Unauthorized");
@@ -44,7 +49,15 @@ export function registerRoutes(app: Express): Server {
     try {
       const [plant] = await db
         .insert(plants)
-        .values({ ...req.body, nurseryId: req.user.id })
+        .values({
+          nurseryId: req.user.id,
+          name: req.body.name,
+          category: req.body.category,
+          description: req.body.description,
+          price: req.body.price,
+          quantity: req.body.quantity,
+          imageUrl: req.body.imageUrl,
+        })
         .returning();
 
       res.json(plant);

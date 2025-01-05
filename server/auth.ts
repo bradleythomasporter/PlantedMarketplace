@@ -114,7 +114,7 @@ export async function setupAuth(app: Express) {
     // Register authentication routes
     app.post("/api/register", async (req, res, next) => {
       try {
-        const { username, password, role, name, address, description, hoursOfOperation, location } = req.body;
+        const { username, password, role, name, address, description, hoursOfOperation } = req.body;
 
         const [existingUser] = await db
           .select()
@@ -138,7 +138,6 @@ export async function setupAuth(app: Express) {
             address,
             description,
             hoursOfOperation,
-            location,
           })
           .returning();
 

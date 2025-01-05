@@ -22,7 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/hooks/use-user";
 import { Loader2, PenSquare, Trash2 } from "lucide-react";
 import { useLocation } from "wouter";
-import type { Plant, Order } from "@db/schema";
+import type { Plant } from "@db/schema";
 
 export default function NurseryDashboard() {
   const [, setLocation] = useLocation();
@@ -33,10 +33,6 @@ export default function NurseryDashboard() {
 
   const { data: plants = [], isLoading } = useQuery<Plant[]>({
     queryKey: [`/api/plants?nurseryId=${user?.id}`],
-  });
-
-  const { data: orders = [] } = useQuery<Order[]>({
-    queryKey: ["/api/orders"],
   });
 
   const addPlantMutation = useMutation({
@@ -206,27 +202,26 @@ export default function NurseryDashboard() {
             )}
           </section>
 
-          {/* Orders */}
+          {/* Info Section */}
           <section>
-            <h2 className="text-2xl font-semibold mb-6">Recent Orders</h2>
-            <div className="space-y-4">
-              {orders.map((order) => (
-                <div
-                  key={order.id}
-                  className="p-4 border rounded-lg"
-                >
-                  <div className="flex justify-between mb-2">
-                    <span className="font-semibold">Order #{order.id}</span>
-                    <span className="capitalize">{order.status}</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Total: ${Number(order.total).toFixed(2)}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Date: {new Date(order.createdAt!).toLocaleDateString()}
-                  </p>
-                </div>
-              ))}
+            <h2 className="text-2xl font-semibold mb-6">Nursery Information</h2>
+            <div className="p-4 border rounded-lg">
+              <p className="font-semibold">{user?.name}</p>
+              {user?.address && (
+                <p className="text-sm text-muted-foreground mt-2">
+                  {user.address}
+                </p>
+              )}
+              {user?.description && (
+                <p className="text-sm text-muted-foreground mt-2">
+                  {user.description}
+                </p>
+              )}
+              {user?.hoursOfOperation && (
+                <p className="text-sm text-muted-foreground mt-2">
+                  Hours: {user.hoursOfOperation}
+                </p>
+              )}
             </div>
           </section>
         </div>

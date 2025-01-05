@@ -11,54 +11,20 @@ import { ShoppingCart, Trash2 } from "lucide-react";
 import { useCart } from "@/hooks/use-cart";
 import { useState } from "react";
 import { useUser } from "@/hooks/use-user";
-import { useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 
 export function CartDrawer() {
   const [open, setOpen] = useState(false);
-  const { items, removeItem, updateQuantity, total, clearCart } = useCart();
+  const { items, removeItem, total, clearCart } = useCart();
   const { user } = useUser();
   const { toast } = useToast();
 
-  const checkoutMutation = useMutation({
-    mutationFn: async () => {
-      const response = await fetch("/api/orders", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          nurseryId: items[0].plant.nurseryId,
-          items: items.map((item) => ({
-            plantId: item.plant.id,
-            quantity: item.quantity,
-            price: item.plant.price,
-          })),
-          total: total(),
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(await response.text());
-      }
-
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Order placed successfully!",
-        description: "Thank you for shopping with Planted.",
-      });
-      clearCart();
-      setOpen(false);
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Failed to place order",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
+  const handleCheckout = () => {
+    toast({
+      title: "Coming Soon!",
+      description: "Checkout functionality will be available in a future update.",
+    });
+  };
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -119,10 +85,10 @@ export function CartDrawer() {
             </div>
             <Button
               className="w-full"
-              onClick={() => checkoutMutation.mutate()}
-              disabled={!user || checkoutMutation.isPending}
+              onClick={handleCheckout}
+              disabled={!user}
             >
-              {checkoutMutation.isPending ? "Processing..." : "Checkout"}
+              Checkout (Coming Soon)
             </Button>
           </div>
         )}
