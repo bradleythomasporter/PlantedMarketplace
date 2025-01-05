@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, LeafyGreen, MapPin } from "lucide-react";
+import { Header } from "@/components/Header";
 import type { Plant } from "@db/schema";
 
 export default function ProductPage({ params }: { params: { id: string } }) {
@@ -25,32 +26,32 @@ export default function ProductPage({ params }: { params: { id: string } }) {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="flex justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
       </div>
     );
   }
 
   if (!plant) {
     return (
-      <div className="text-center py-12">
-        <p className="text-lg text-muted-foreground">Plant not found</p>
-        <Button variant="link" onClick={() => setLocation("/")}>
-          Return to Home
-        </Button>
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="text-center py-12">
+          <p className="text-lg text-muted-foreground">Plant not found</p>
+          <Button variant="link" onClick={() => setLocation("/")}>
+            Return to Home
+          </Button>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="bg-primary/10 p-4 md:p-6">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <Button variant="ghost" onClick={() => setLocation("/")}>
-            ← Back to Plants
-          </Button>
-        </div>
-      </header>
+      <Header />
 
       <main className="max-w-7xl mx-auto px-4 md:px-6 py-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
