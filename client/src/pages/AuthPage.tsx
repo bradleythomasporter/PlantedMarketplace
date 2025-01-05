@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useUser } from "@/hooks/use-user";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -26,16 +27,18 @@ export default function AuthPage() {
   const [isLoading, setIsLoading] = useState(false);
   const { login, register } = useUser();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
     const formData = new FormData(e.currentTarget);
     try {
-      await login({
+      const user = await login({
         username: formData.get("username") as string,
         password: formData.get("password") as string,
       });
+      setLocation("/"); // Redirect to home page after successful login
     } catch (error) {
       setIsLoading(false);
     }
@@ -45,7 +48,7 @@ export default function AuthPage() {
     e.preventDefault();
     setIsLoading(true);
     const formData = new FormData(e.currentTarget);
-    
+
     if (formData.get("password") !== formData.get("confirmPassword")) {
       toast({
         title: "Passwords do not match",
@@ -56,7 +59,7 @@ export default function AuthPage() {
     }
 
     try {
-      await register({
+      const user = await register({
         username: formData.get("username") as string,
         password: formData.get("password") as string,
         role: formData.get("role") as "customer" | "nursery",
@@ -65,6 +68,7 @@ export default function AuthPage() {
         description: formData.get("description") as string,
         hoursOfOperation: formData.get("hoursOfOperation") as string,
       });
+      setLocation("/"); // Redirect to home page after successful registration
     } catch (error) {
       setIsLoading(false);
     }
@@ -73,8 +77,11 @@ export default function AuthPage() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <header className="py-6 bg-primary/10">
-        <div className="max-w-7xl mx-auto px-4">
+        <div className="max-w-7xl mx-auto px-4 flex items-center justify-between">
           <h1 className="text-2xl font-bold text-primary">Planted 🌱</h1>
+          <Button variant="ghost" onClick={() => setLocation("/")}>
+            Back to Home
+          </Button>
         </div>
       </header>
 
@@ -123,6 +130,18 @@ export default function AuthPage() {
               <TabsContent value="register">
                 <form onSubmit={handleRegister} className="space-y-4">
                   <div className="space-y-2">
+                    <Label htmlFor="role">Role</Label>
+                    <Select name="role" defaultValue="customer" required>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select role" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="customer">Customer</SelectItem>
+                        <SelectItem value="nursery">Nursery</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
                     <Label htmlFor="register-username">Username</Label>
                     <Input
                       id="register-username"
@@ -150,18 +169,6 @@ export default function AuthPage() {
                       required
                       autoComplete="new-password"
                     />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="role">Role</Label>
-                    <Select name="role" required>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select role" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="customer">Customer</SelectItem>
-                        <SelectItem value="nursery">Nursery</SelectItem>
-                      </SelectContent>
-                    </Select>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="name">Name</Label>

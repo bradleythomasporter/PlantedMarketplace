@@ -3,10 +3,11 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { PlantCard } from "@/components/PlantCard";
 import { SearchFilters } from "@/components/SearchFilters";
+import { CartDrawer } from "@/components/CartDrawer";
 import { Loader2 } from "lucide-react";
 import type { Plant } from "@db/schema";
 import { useUser } from "@/hooks/use-user";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 
 export default function HomePage() {
   const [search, setSearch] = useState("");
@@ -14,6 +15,7 @@ export default function HomePage() {
   const [zipCode, setZipCode] = useState("");
   const [radius, setRadius] = useState("20");
   const { user } = useUser();
+  const [, setLocation] = useLocation();
 
   const { data: plants = [], isLoading } = useQuery<Plant[]>({
     queryKey: [`/api/plants?search=${search}&category=${category}&zipCode=${zipCode}&radius=${radius}`],
@@ -24,15 +26,19 @@ export default function HomePage() {
       {/* Header */}
       <header className="bg-primary/10 p-4 md:p-6">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-primary">Planted 🌱</h1>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-4">
+            <h1 className="text-2xl font-bold text-primary">Planted 🌱</h1>
+            {user?.role === "nursery" && (
+              <Button variant="ghost" onClick={() => setLocation("/dashboard")}>
+                Dashboard
+              </Button>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
             {user ? (
               <>
-                <Button variant="outline" asChild>
-                  <Link href={user.role === 'nursery' ? '/dashboard' : '/profile'}>
-                    {user.role === 'nursery' ? 'Nursery Dashboard' : 'Profile'}
-                  </Link>
-                </Button>
+                {user.role === "customer" && <CartDrawer />}
+                <span className="hidden md:inline text-sm">{user.name}</span>
               </>
             ) : (
               <Button variant="outline" asChild>
@@ -86,13 +92,6 @@ export default function HomePage() {
           </div>
         )}
       </main>
-
-      {/* Footer */}
-      <footer className="bg-muted mt-auto py-6">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 text-center text-sm text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} Planted. All rights reserved.</p>
-        </div>
-      </footer>
     </div>
   );
 }
