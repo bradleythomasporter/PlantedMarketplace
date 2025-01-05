@@ -6,25 +6,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { MapPin } from "lucide-react";
 
 type SearchFiltersProps = {
   search: string;
-  category: string;
   zipCode: string;
   radius: string;
   onSearchChange: (value: string) => void;
-  onCategoryChange: (value: string) => void;
   onZipCodeChange: (value: string) => void;
   onRadiusChange: (value: string) => void;
 };
 
 export function SearchFilters({
   search,
-  category,
   zipCode,
   radius,
   onSearchChange,
-  onCategoryChange,
   onZipCodeChange,
   onRadiusChange,
 }: SearchFiltersProps) {
@@ -35,31 +32,17 @@ export function SearchFilters({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-4">
-        <Input
-          placeholder="Search plants..."
-          value={search}
-          onChange={(e) => onSearchChange(e.target.value)}
-          className="flex-1 min-w-[200px]"
-        />
-        <Select value={category} onValueChange={onCategoryChange}>
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder="Category" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Categories</SelectItem>
-            <SelectItem value="flowers">Flowers</SelectItem>
-            <SelectItem value="trees">Trees</SelectItem>
-            <SelectItem value="shrubs">Shrubs</SelectItem>
-            <SelectItem value="indoor">Indoor</SelectItem>
-            <SelectItem value="outdoor">Outdoor</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      <Input
+        placeholder="Search plants..."
+        value={search}
+        onChange={(e) => onSearchChange(e.target.value)}
+        className="w-full"
+      />
 
       <div className="flex flex-wrap gap-4 items-center bg-primary/5 p-4 rounded-lg">
         <div className="space-y-2 flex-1 min-w-[200px]">
-          <label htmlFor="zipCode" className="text-sm font-medium">
+          <label htmlFor="zipCode" className="text-sm font-medium flex items-center gap-2">
+            <MapPin className="h-4 w-4" />
             Find plants near you
           </label>
           <Input
