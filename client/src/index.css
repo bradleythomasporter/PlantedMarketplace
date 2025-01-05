@@ -3,27 +3,21 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
-    --font-aptos: "aptos", sans-serif;
-    --font-aptos-display: "aptos-display", serif;
-  }
-
   * {
     @apply border-border;
   }
 
   body {
-    @apply antialiased bg-background text-foreground;
-    font-family: var(--font-aptos);
+    @apply font-sans antialiased bg-background text-foreground;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-aptos-display);
+    @apply font-display;
   }
 }
 
 @layer components {
   .text-display {
-    font-family: var(--font-aptos-display);
+    @apply font-display;
   }
 }
