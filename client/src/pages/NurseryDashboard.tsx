@@ -18,6 +18,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/hooks/use-user";
 import { Loader2, PenSquare, Trash2 } from "lucide-react";
@@ -31,6 +41,7 @@ export default function NurseryDashboard() {
   const queryClient = useQueryClient();
   const [selectedPlant, setSelectedPlant] = useState<Plant | null>(null);
   const [isAddingPlant, setIsAddingPlant] = useState(false);
+  const [plantToDelete, setPlantToDelete] = useState<Plant | null>(null);
 
   const { data: plants = [], isLoading } = useQuery<Plant[]>({
     queryKey: [`/api/plants?nurseryId=${user?.id}`],
@@ -38,12 +49,10 @@ export default function NurseryDashboard() {
 
   const addPlantMutation = useMutation({
     mutationFn: async (formData: FormData) => {
-      // Use the nursery's address for plant location
       if (!user?.address) {
         throw new Error("Nursery address is required");
       }
 
-      // Get coordinates from address
       const geocodeResponse = await fetch(`/api/geocode?address=${encodeURIComponent(user.address)}`);
       if (!geocodeResponse.ok) {
         throw new Error("Failed to geocode address");
@@ -88,10 +97,91 @@ export default function NurseryDashboard() {
     },
   });
 
+  const updatePlantMutation = useMutation({
+    mutationFn: async (data: { id: number; updates: Partial<Plant> }) => {
+      const response = await fetch(`/api/plants/${data.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(data.updates),
+      });
+
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/plants?nurseryId=${user?.id}`] });
+      toast({
+        title: "Plant updated successfully",
+      });
+      setSelectedPlant(null);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to update plant",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deletePlantMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const response = await fetch(`/api/plants/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/plants?nurseryId=${user?.id}`] });
+      toast({
+        title: "Plant deleted successfully",
+      });
+      setPlantToDelete(null);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to delete plant",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     await addPlantMutation.mutateAsync(formData);
+  };
+
+  const handleUpdate = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!selectedPlant) return;
+
+    const formData = new FormData(e.currentTarget);
+    const updates = {
+      name: formData.get("name") as string,
+      category: formData.get("category") as string,
+      description: formData.get("description") as string,
+      price: parseFloat(formData.get("price") as string),
+      quantity: parseInt(formData.get("quantity") as string),
+      imageUrl: formData.get("imageUrl") as string,
+    };
+
+    await updatePlantMutation.mutateAsync({
+      id: selectedPlant.id,
+      updates,
+    });
+  };
+
+  const handleDelete = async (plant: Plant) => {
+    await deletePlantMutation.mutateAsync(plant.id);
   };
 
   return (
@@ -183,6 +273,109 @@ export default function NurseryDashboard() {
               </DialogContent>
             </Dialog>
 
+            {/* Edit Plant Dialog */}
+            <Dialog open={!!selectedPlant} onOpenChange={(open) => !open && setSelectedPlant(null)}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Edit Plant</DialogTitle>
+                </DialogHeader>
+                {selectedPlant && (
+                  <form onSubmit={handleUpdate} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-name">Plant Name</Label>
+                      <Input
+                        id="edit-name"
+                        name="name"
+                        defaultValue={selectedPlant.name}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-category">Category</Label>
+                      <Select name="category" defaultValue={selectedPlant.category}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="flowers">Flowers</SelectItem>
+                          <SelectItem value="trees">Trees</SelectItem>
+                          <SelectItem value="shrubs">Shrubs</SelectItem>
+                          <SelectItem value="indoor">Indoor</SelectItem>
+                          <SelectItem value="outdoor">Outdoor</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-description">Description</Label>
+                      <Textarea
+                        id="edit-description"
+                        name="description"
+                        defaultValue={selectedPlant.description}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-price">Price</Label>
+                      <Input
+                        id="edit-price"
+                        name="price"
+                        type="number"
+                        step="0.01"
+                        defaultValue={selectedPlant.price}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-quantity">Quantity</Label>
+                      <Input
+                        id="edit-quantity"
+                        name="quantity"
+                        type="number"
+                        defaultValue={selectedPlant.quantity}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-imageUrl">Image URL</Label>
+                      <Input
+                        id="edit-imageUrl"
+                        name="imageUrl"
+                        defaultValue={selectedPlant.imageUrl}
+                        required
+                      />
+                    </div>
+                    <Button type="submit" className="w-full">
+                      Update Plant
+                    </Button>
+                  </form>
+                )}
+              </DialogContent>
+            </Dialog>
+
+            {/* Delete Confirmation Dialog */}
+            <AlertDialog
+              open={!!plantToDelete}
+              onOpenChange={(open) => !open && setPlantToDelete(null)}
+            >
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete the plant from your inventory.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => plantToDelete && handleDelete(plantToDelete)}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+
             {isLoading ? (
               <div className="flex justify-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -208,7 +401,11 @@ export default function NurseryDashboard() {
                       >
                         <PenSquare className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setPlantToDelete(plant)}
+                      >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>

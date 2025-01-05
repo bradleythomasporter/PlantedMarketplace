@@ -36,6 +36,76 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Update plant
+  app.patch("/api/plants/:id", async (req, res) => {
+    if (!req.isAuthenticated() || req.user.role !== "nursery") {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    try {
+      const plantId = parseInt(req.params.id);
+
+      // Verify the plant belongs to this nursery
+      const [existingPlant] = await db
+        .select()
+        .from(plants)
+        .where(and(
+          eq(plants.id, plantId),
+          eq(plants.nurseryId, req.user.id)
+        ))
+        .limit(1);
+
+      if (!existingPlant) {
+        return res.status(404).json({ message: "Plant not found" });
+      }
+
+      const [updatedPlant] = await db
+        .update(plants)
+        .set(req.body)
+        .where(eq(plants.id, plantId))
+        .returning();
+
+      res.json(updatedPlant);
+    } catch (error) {
+      console.error('Error updating plant:', error);
+      res.status(500).json({ message: "Failed to update plant" });
+    }
+  });
+
+  // Delete plant
+  app.delete("/api/plants/:id", async (req, res) => {
+    if (!req.isAuthenticated() || req.user.role !== "nursery") {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    try {
+      const plantId = parseInt(req.params.id);
+
+      // Verify the plant belongs to this nursery
+      const [existingPlant] = await db
+        .select()
+        .from(plants)
+        .where(and(
+          eq(plants.id, plantId),
+          eq(plants.nurseryId, req.user.id)
+        ))
+        .limit(1);
+
+      if (!existingPlant) {
+        return res.status(404).json({ message: "Plant not found" });
+      }
+
+      await db
+        .delete(plants)
+        .where(eq(plants.id, plantId));
+
+      res.json({ message: "Plant deleted successfully" });
+    } catch (error) {
+      console.error('Error deleting plant:', error);
+      res.status(500).json({ message: "Failed to delete plant" });
+    }
+  });
+
   // Geocoding endpoint
   app.get("/api/geocode", async (req, res) => {
     try {
@@ -60,10 +130,10 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Basic plants route for listing and searching
+  // Plants listing and search
   app.get("/api/plants", async (req, res) => {
     try {
-      const { search, category, zipCode, radius } = req.query;
+      const { search, category, zipCode, radius, nurseryId } = req.query;
       let query = db.select().from(plants);
       const conditions = [];
 
@@ -76,6 +146,10 @@ export function registerRoutes(app: Express): Server {
 
       if (typeof category === 'string' && category && category !== 'all') {
         conditions.push(like(plants.category, category));
+      }
+
+      if (typeof nurseryId === 'string' && nurseryId) {
+        conditions.push(eq(plants.nurseryId, parseInt(nurseryId)));
       }
 
       if (typeof zipCode === 'string' && zipCode && typeof radius === 'string' && radius) {
@@ -125,62 +199,15 @@ export function registerRoutes(app: Express): Server {
         nurseryId: req.user.id,
       };
 
-      const [newPlant] = await db.insert(plants).values(plantData).returning();
+      const [newPlant] = await db
+        .insert(plants)
+        .values(plantData)
+        .returning();
+
       res.json(newPlant);
     } catch (error) {
       console.error('Error adding plant:', error);
       res.status(500).json({ message: "Failed to add plant" });
-    }
-  });
-
-  // Add sample data
-  app.post("/api/sample-data", async (req, res) => {
-    try {
-      const existingPlants = await db.select().from(plants);
-
-      if (existingPlants.length === 0) {
-        // Sample data with location information
-        await db.insert(plants).values([
-          {
-            name: "Peace Lily",
-            category: "indoor",
-            description: "Beautiful indoor plant that helps purify air",
-            price: "29.99",
-            imageUrl: "https://images.unsplash.com/photo-1593691509543-c55fb32e7355?auto=format&fit=crop&q=80&w=300",
-            nurseryId: 1,
-            latitude: 37.7749,
-            longitude: -122.4194,
-            zipCode: "94103"
-          },
-          {
-            name: "Snake Plant",
-            category: "indoor",
-            description: "Low maintenance indoor plant",
-            price: "24.99",
-            imageUrl: "https://images.unsplash.com/photo-1572974496518-4ca44800c24e?auto=format&fit=crop&q=80&w=300",
-            nurseryId: 1,
-            latitude: 37.7833,
-            longitude: -122.4167,
-            zipCode: "94111"
-          },
-          {
-            name: "Rose Bush",
-            category: "outdoor",
-            description: "Classic garden rose bush",
-            price: "34.99",
-            imageUrl: "https://images.unsplash.com/photo-1496062031456-07b8f162a322?auto=format&fit=crop&q=80&w=300",
-            nurseryId: 2,
-            latitude: 37.7694,
-            longitude: -122.4862,
-            zipCode: "94122"
-          }
-        ]);
-      }
-
-      res.json({ message: "Sample data added successfully" });
-    } catch (error) {
-      console.error('Error adding sample data:', error);
-      res.status(500).json({ message: "Failed to add sample data" });
     }
   });
 
