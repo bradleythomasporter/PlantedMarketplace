@@ -85,10 +85,14 @@ export default function ProductPage({ params }: { params: { id: string } }) {
           <div className="space-y-6">
             <div>
               <h1 className="text-3xl font-bold text-display mb-2">{plant.name}</h1>
-              <div className="flex items-center gap-2 text-muted-foreground">
+              <Button 
+                variant="link" 
+                className="flex items-center gap-2 text-muted-foreground hover:text-primary"
+                onClick={() => setLocation(`/nurseries/${plant.nurseryId}`)}
+              >
                 <MapPin className="h-4 w-4" />
-                <span>Local nursery in {plant.zipCode}</span>
-              </div>
+                <span>Visit Nursery Profile</span>
+              </Button>
               <p className="text-2xl font-semibold mt-4">
                 ${Number(plant.price).toFixed(2)}
               </p>

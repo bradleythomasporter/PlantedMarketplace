@@ -6,6 +6,7 @@ import HomePage from "./pages/HomePage";
 import AuthPage from "./pages/AuthPage";
 import NurseryDashboard from "./pages/NurseryDashboard";
 import ProductPage from "./pages/ProductPage";
+import NurseryProfile from "./pages/NurseryProfile";
 import { useUser } from "@/hooks/use-user";
 
 function App() {
@@ -16,6 +17,7 @@ function App() {
       <Route path="/" component={HomePage} />
       <Route path="/auth" component={AuthPage} />
       <Route path="/plants/:id" component={ProductPage} />
+      <Route path="/nurseries/:id" component={NurseryProfile} />
       {user?.role === "nursery" && (
         <Route path="/dashboard" component={NurseryDashboard} />
       )}

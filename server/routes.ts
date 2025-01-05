@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { db } from "@db";
-import { plants, orders } from "@db/schema";
+import { plants, orders, users } from "@db/schema"; // Added users import
 import { like, and, or, eq } from "drizzle-orm";
 import NodeGeocoder from "node-geocoder";
 import { setupAuth } from "./auth";
@@ -272,6 +272,31 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       console.error('Error adding plant:', error);
       res.status(500).json({ message: "Failed to add plant" });
+    }
+  });
+
+  // Get nursery details
+  app.get("/api/nurseries/:id", async (req, res) => {
+    try {
+      const [nursery] = await db
+        .select()
+        .from(users)
+        .where(and(
+          eq(users.id, parseInt(req.params.id)),
+          eq(users.role, "nursery")
+        ))
+        .limit(1);
+
+      if (!nursery) {
+        return res.status(404).json({ message: "Nursery not found" });
+      }
+
+      // Don't send the password
+      const { password: _, ...nurseryWithoutPassword } = nursery;
+      res.json(nurseryWithoutPassword);
+    } catch (error) {
+      console.error('Error fetching nursery:', error);
+      res.status(500).json({ message: "Failed to fetch nursery" });
     }
   });
 
