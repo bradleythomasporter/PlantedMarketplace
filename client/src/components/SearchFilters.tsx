@@ -33,7 +33,7 @@ export function SearchFilters({
           <SelectValue placeholder="Category" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">All Categories</SelectItem>
+          <SelectItem value="all">All Categories</SelectItem>
           <SelectItem value="flowers">Flowers</SelectItem>
           <SelectItem value="trees">Trees</SelectItem>
           <SelectItem value="shrubs">Shrubs</SelectItem>
