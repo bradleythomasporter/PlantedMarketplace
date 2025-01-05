@@ -1,7 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import { setupAuth } from "./auth";
+import { db } from "@db";
 
 const app = express();
 
@@ -41,29 +41,35 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // Setup authentication before routes
-  setupAuth(app);
+  try {
+    // Test database connection
+    await db.query.users.findFirst();
+    log("Database connection successful");
 
-  // Register API routes
-  const server = registerRoutes(app);
+    // Register routes (which includes auth setup)
+    const server = registerRoutes(app);
 
-  // Error handling middleware
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
-    log(`Error: ${err.stack}`);
-    res.status(status).json({ message });
-  });
+    // Error handling middleware
+    app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+      const status = err.status || err.statusCode || 500;
+      const message = err.message || "Internal Server Error";
+      log(`Error: ${err.stack}`);
+      res.status(status).json({ message });
+    });
 
-  // Setup Vite for development or serve static files for production
-  if (app.get("env") === "development") {
-    await setupVite(app, server);
-  } else {
-    serveStatic(app);
+    // Setup Vite for development or serve static files for production
+    if (app.get("env") === "development") {
+      await setupVite(app, server);
+    } else {
+      serveStatic(app);
+    }
+
+    const PORT = 5000;
+    server.listen(PORT, "0.0.0.0", () => {
+      log(`Server is running on port ${PORT}`);
+    });
+  } catch (error) {
+    log(`Failed to start server: ${error}`);
+    process.exit(1);
   }
-
-  const PORT = 5000;
-  server.listen(PORT, "0.0.0.0", () => {
-    log(`Server is running on port ${PORT}`);
-  });
 })();

@@ -1,14 +1,18 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { db } from "@db";
-import { plants, orders, orderItems } from "@db/schema";
+import { plants } from "@db/schema";
 import { and, eq, like, desc } from "drizzle-orm";
+import { setupAuth } from "./auth";
 
 export function registerRoutes(app: Express): Server {
+  // Setup authentication first
+  setupAuth(app);
+
   // Plants routes
   app.get("/api/plants", async (req, res) => {
     try {
-      const { search, category, nurseryId } = req.query;
+      const { search, category } = req.query;
       const conditions = [];
 
       if (typeof search === 'string' && search) {
@@ -17,10 +21,6 @@ export function registerRoutes(app: Express): Server {
 
       if (typeof category === 'string' && category) {
         conditions.push(eq(plants.category, category as any));
-      }
-
-      if (typeof nurseryId === 'string' && nurseryId) {
-        conditions.push(eq(plants.nurseryId, parseInt(nurseryId)));
       }
 
       const results = await db
@@ -51,62 +51,6 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       console.error('Error creating plant:', error);
       res.status(500).json({ message: "Failed to create plant" });
-    }
-  });
-
-  // Orders routes
-  app.post("/api/orders", async (req, res) => {
-    if (!req.isAuthenticated()) {
-      return res.status(403).send("Unauthorized");
-    }
-
-    try {
-      const [order] = await db
-        .insert(orders)
-        .values({
-          customerId: req.user.id,
-          nurseryId: req.body.nurseryId,
-          status: "pending",
-          total: req.body.total,
-        })
-        .returning();
-
-      const orderItemsData = req.body.items.map((item: any) => ({
-        orderId: order.id,
-        plantId: item.plantId,
-        quantity: item.quantity,
-        price: item.price,
-      }));
-
-      await db.insert(orderItems).values(orderItemsData);
-
-      res.json(order);
-    } catch (error) {
-      console.error('Error creating order:', error);
-      res.status(500).json({ message: "Failed to create order" });
-    }
-  });
-
-  app.get("/api/orders", async (req, res) => {
-    if (!req.isAuthenticated()) {
-      return res.status(403).send("Unauthorized");
-    }
-
-    try {
-      const results = await db
-        .select()
-        .from(orders)
-        .where(
-          req.user.role === "nursery"
-            ? eq(orders.nurseryId, req.user.id)
-            : eq(orders.customerId, req.user.id)
-        )
-        .orderBy(desc(orders.createdAt));
-
-      res.json(results);
-    } catch (error) {
-      console.error('Error fetching orders:', error);
-      res.status(500).json({ message: "Failed to fetch orders" });
     }
   });
 
