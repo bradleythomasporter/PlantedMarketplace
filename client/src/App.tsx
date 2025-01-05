@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import HomePage from "./pages/HomePage";
 import AuthPage from "./pages/AuthPage";
 import NurseryDashboard from "./pages/NurseryDashboard";
+import ProductPage from "./pages/ProductPage";
 import { useUser } from "@/hooks/use-user";
 
 function App() {
@@ -14,6 +15,7 @@ function App() {
     <Switch>
       <Route path="/" component={HomePage} />
       <Route path="/auth" component={AuthPage} />
+      <Route path="/plants/:id" component={ProductPage} />
       {user?.role === "nursery" && (
         <Route path="/dashboard" component={NurseryDashboard} />
       )}

@@ -2,11 +2,11 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { db } from "@db";
 import { plants } from "@db/schema";
-import { like, and, or } from "drizzle-orm";
+import { like, and, or, eq } from "drizzle-orm";
 import NodeGeocoder from "node-geocoder";
-import { point } from "@turf/helpers";
-import turfDistance from "@turf/distance";
 import { setupAuth } from "./auth";
+import distance from "@turf/distance";
+import { point } from "@turf/helpers";
 
 const geocoder = NodeGeocoder({
   provider: 'openstreetmap'
@@ -15,6 +15,26 @@ const geocoder = NodeGeocoder({
 export function registerRoutes(app: Express): Server {
   // Setup authentication routes
   setupAuth(app);
+
+  // Get individual plant
+  app.get("/api/plants/:id", async (req, res) => {
+    try {
+      const [plant] = await db
+        .select()
+        .from(plants)
+        .where(eq(plants.id, parseInt(req.params.id)))
+        .limit(1);
+
+      if (!plant) {
+        return res.status(404).json({ message: "Plant not found" });
+      }
+
+      res.json(plant);
+    } catch (error) {
+      console.error('Error fetching plant:', error);
+      res.status(500).json({ message: "Failed to fetch plant" });
+    }
+  });
 
   // Geocoding endpoint
   app.get("/api/geocode", async (req, res) => {
@@ -68,8 +88,9 @@ export function registerRoutes(app: Express): Server {
             // Get all plants and filter by distance
             const allPlants = await query;
             const filteredPlants = allPlants.filter(plant => {
+              if (!plant.latitude || !plant.longitude) return false;
               const plantPoint = point([plant.longitude, plant.latitude]);
-              const distanceInMiles = turfDistance(center, plantPoint, { units: 'miles' });
+              const distanceInMiles = distance(center, plantPoint, { units: 'miles' });
               return distanceInMiles <= radiusMiles;
             });
 
