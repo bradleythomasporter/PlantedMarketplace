@@ -10,24 +10,52 @@ import {
 type SearchFiltersProps = {
   search: string;
   category: string;
+  zipCode: string;
+  radius: string;
   onSearchChange: (value: string) => void;
   onCategoryChange: (value: string) => void;
+  onZipCodeChange: (value: string) => void;
+  onRadiusChange: (value: string) => void;
 };
 
 export function SearchFilters({
   search,
   category,
+  zipCode,
+  radius,
   onSearchChange,
   onCategoryChange,
+  onZipCodeChange,
+  onRadiusChange,
 }: SearchFiltersProps) {
   return (
-    <div className="flex gap-4 mb-6">
+    <div className="flex flex-wrap gap-4 mb-6">
       <Input
         placeholder="Search plants..."
         value={search}
         onChange={(e) => onSearchChange(e.target.value)}
-        className="flex-1"
+        className="flex-1 min-w-[200px]"
       />
+      <Input
+        placeholder="Enter ZIP code"
+        value={zipCode}
+        onChange={(e) => onZipCodeChange(e.target.value)}
+        className="w-32"
+        type="text"
+        maxLength={5}
+        pattern="[0-9]*"
+      />
+      <Select value={radius} onValueChange={onRadiusChange}>
+        <SelectTrigger className="w-40">
+          <SelectValue placeholder="Distance" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="5">Within 5 miles</SelectItem>
+          <SelectItem value="10">Within 10 miles</SelectItem>
+          <SelectItem value="20">Within 20 miles</SelectItem>
+          <SelectItem value="50">Within 50 miles</SelectItem>
+        </SelectContent>
+      </Select>
       <Select value={category} onValueChange={onCategoryChange}>
         <SelectTrigger className="w-40">
           <SelectValue placeholder="Category" />

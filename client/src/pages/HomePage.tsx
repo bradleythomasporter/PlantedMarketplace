@@ -5,13 +5,18 @@ import { PlantCard } from "@/components/PlantCard";
 import { SearchFilters } from "@/components/SearchFilters";
 import { Loader2 } from "lucide-react";
 import type { Plant } from "@db/schema";
+import { useUser } from "@/hooks/use-user";
+import { Link } from "wouter";
 
 export default function HomePage() {
   const [search, setSearch] = useState("");
-  const [category, setCategory] = useState("");
+  const [category, setCategory] = useState("all");
+  const [zipCode, setZipCode] = useState("");
+  const [radius, setRadius] = useState("20");
+  const { user } = useUser();
 
   const { data: plants = [], isLoading } = useQuery<Plant[]>({
-    queryKey: [`/api/plants?search=${search}&category=${category}`],
+    queryKey: [`/api/plants?search=${search}&category=${category}&zipCode=${zipCode}&radius=${radius}`],
   });
 
   return (
@@ -20,7 +25,21 @@ export default function HomePage() {
       <header className="bg-primary/10 p-4 md:p-6">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <h1 className="text-2xl font-bold text-primary">Planted 🌱</h1>
-          <Button variant="outline">Login (Coming Soon)</Button>
+          <div className="flex gap-2">
+            {user ? (
+              <>
+                <Button variant="outline" asChild>
+                  <Link href={user.role === 'nursery' ? '/dashboard' : '/profile'}>
+                    {user.role === 'nursery' ? 'Nursery Dashboard' : 'Profile'}
+                  </Link>
+                </Button>
+              </>
+            ) : (
+              <Button variant="outline" asChild>
+                <Link href="/auth">Login / Register</Link>
+              </Button>
+            )}
+          </div>
         </div>
       </header>
 
@@ -41,8 +60,12 @@ export default function HomePage() {
         <SearchFilters
           search={search}
           category={category}
+          zipCode={zipCode}
+          radius={radius}
           onSearchChange={setSearch}
           onCategoryChange={setCategory}
+          onZipCodeChange={setZipCode}
+          onRadiusChange={setRadius}
         />
 
         {isLoading ? (
@@ -52,7 +75,7 @@ export default function HomePage() {
         ) : plants.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-lg text-muted-foreground">
-              No plants found. Try adjusting your search.
+              No plants found. Try adjusting your search or location.
             </p>
           </div>
         ) : (
