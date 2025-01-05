@@ -28,9 +28,11 @@ const crypto = {
   },
 };
 
+// Extend Express User type without recursion
 declare global {
   namespace Express {
-    interface User extends User {}
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    interface User extends Omit<User, 'password'> {}
   }
 }
 
@@ -99,7 +101,7 @@ export function setupAuth(app: Express) {
 
   app.post("/api/register", async (req, res, next) => {
     try {
-      const { username, password, role, name, address, location, description, hoursOfOperation } = req.body;
+      const { username, password, role, name, address, description, hoursOfOperation } = req.body;
 
       const [existingUser] = await db
         .select()
@@ -118,12 +120,11 @@ export function setupAuth(app: Express) {
         .values({
           username,
           password: hashedPassword,
-          role,
+          role: role as "customer" | "nursery",
           name,
           address,
-          location,
           description,
-          hoursOfOperation
+          hoursOfOperation,
         })
         .returning();
 
