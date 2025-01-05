@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { db } from "@db";
-import { plants } from "@db/schema";
+import { plants, orders } from "@db/schema";
 import { like, and, or, eq } from "drizzle-orm";
 import NodeGeocoder from "node-geocoder";
 import { setupAuth } from "./auth";
@@ -33,6 +33,70 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       console.error('Error fetching plant:', error);
       res.status(500).json({ message: "Failed to fetch plant" });
+    }
+  });
+
+  // Get orders for a nursery
+  app.get("/api/orders", async (req, res) => {
+    if (!req.isAuthenticated() || req.user.role !== "nursery") {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    try {
+      const nurseryOrders = await db
+        .select()
+        .from(orders)
+        .where(eq(orders.nurseryId, req.user.id))
+        .orderBy(orders.createdAt);
+
+      res.json(nurseryOrders);
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+      res.status(500).json({ message: "Failed to fetch orders" });
+    }
+  });
+
+  // Update order status
+  app.patch("/api/orders/:id/status", async (req, res) => {
+    if (!req.isAuthenticated() || req.user.role !== "nursery") {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    try {
+      const orderId = parseInt(req.params.id);
+      const { status } = req.body;
+
+      if (!status || !["pending", "confirmed", "processing", "shipped", "delivered", "cancelled"].includes(status)) {
+        return res.status(400).json({ message: "Invalid status" });
+      }
+
+      // Verify the order belongs to this nursery
+      const [existingOrder] = await db
+        .select()
+        .from(orders)
+        .where(and(
+          eq(orders.id, orderId),
+          eq(orders.nurseryId, req.user.id)
+        ))
+        .limit(1);
+
+      if (!existingOrder) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+
+      const [updatedOrder] = await db
+        .update(orders)
+        .set({ 
+          status,
+          updatedAt: new Date()
+        })
+        .where(eq(orders.id, orderId))
+        .returning();
+
+      res.json(updatedOrder);
+    } catch (error) {
+      console.error('Error updating order:', error);
+      res.status(500).json({ message: "Failed to update order" });
     }
   });
 

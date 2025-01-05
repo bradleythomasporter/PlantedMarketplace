@@ -1,4 +1,4 @@
-import { pgTable, text, serial, decimal, integer, real } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, decimal, integer, real, timestamp, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -29,13 +29,45 @@ export const plants = pgTable("plants", {
   zipCode: text("zip_code").notNull(),
 });
 
+export const orders = pgTable("orders", {
+  id: serial("id").primaryKey(),
+  customerId: integer("customer_id").notNull(),
+  nurseryId: integer("nursery_id").notNull(),
+  status: text("status", { 
+    enum: ["pending", "confirmed", "processing", "shipped", "delivered", "cancelled"] 
+  }).notNull().default("pending"),
+  totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
+  shippingAddress: text("shipping_address").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  requiresPlanting: boolean("requires_planting").notNull().default(false),
+  plantingScheduledAt: timestamp("planting_scheduled_at"),
+  notes: text("notes"),
+});
+
+export const orderItems = pgTable("order_items", {
+  id: serial("id").primaryKey(),
+  orderId: integer("order_id").notNull(),
+  plantId: integer("plant_id").notNull(),
+  quantity: integer("quantity").notNull(),
+  priceAtTime: decimal("price_at_time", { precision: 10, scale: 2 }).notNull(),
+});
+
 // Export types
 export type User = typeof users.$inferSelect;
 export type Plant = typeof plants.$inferSelect;
+export type Order = typeof orders.$inferSelect;
+export type OrderItem = typeof orderItems.$inferSelect;
 export type NewPlant = typeof plants.$inferInsert;
+export type NewOrder = typeof orders.$inferInsert;
+export type NewOrderItem = typeof orderItems.$inferInsert;
 
 // Create Zod schemas for validation
 export const insertUserSchema = createInsertSchema(users);
 export const selectUserSchema = createSelectSchema(users);
 export const insertPlantSchema = createInsertSchema(plants);
 export const selectPlantSchema = createSelectSchema(plants);
+export const insertOrderSchema = createInsertSchema(orders);
+export const selectOrderSchema = createSelectSchema(orders);
+export const insertOrderItemSchema = createInsertSchema(orderItems);
+export const selectOrderItemSchema = createSelectSchema(orderItems);
