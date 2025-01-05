@@ -2,37 +2,24 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { db } from "@db";
 import { plants } from "@db/schema";
-import { and, eq, like, desc } from "drizzle-orm";
-import { setupAuth } from "./auth";
+import { like } from "drizzle-orm";
 
 export function registerRoutes(app: Express): Server {
-  // Setup authentication first
-  setupAuth(app);
-
-  // Plants routes
+  // Basic plants route for listing and searching
   app.get("/api/plants", async (req, res) => {
     try {
-      const { search, category, nurseryId } = req.query;
-      const conditions = [];
+      const { search, category } = req.query;
+      let query = db.select().from(plants);
 
       if (typeof search === 'string' && search) {
-        conditions.push(like(plants.name, `%${search}%`));
+        query = query.where(like(plants.name, `%${search}%`));
       }
 
       if (typeof category === 'string' && category) {
-        conditions.push(eq(plants.category, category));
+        query = query.where(like(plants.category, category));
       }
 
-      if (typeof nurseryId === 'string' && nurseryId) {
-        conditions.push(eq(plants.nurseryId, parseInt(nurseryId)));
-      }
-
-      const results = await db
-        .select()
-        .from(plants)
-        .where(conditions.length > 0 ? and(...conditions) : undefined)
-        .orderBy(desc(plants.createdAt));
-
+      const results = await query;
       res.json(results);
     } catch (error) {
       console.error('Error fetching plants:', error);
@@ -40,30 +27,41 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Protected route for nurseries to add plants
-  app.post("/api/plants", async (req, res) => {
-    if (!req.isAuthenticated() || req.user?.role !== "nursery") {
-      return res.status(403).send("Unauthorized");
-    }
-
+  // Add sample data
+  app.post("/api/sample-data", async (req, res) => {
     try {
-      const [plant] = await db
-        .insert(plants)
-        .values({
-          nurseryId: req.user.id,
-          name: req.body.name,
-          category: req.body.category,
-          description: req.body.description,
-          price: req.body.price,
-          quantity: req.body.quantity,
-          imageUrl: req.body.imageUrl,
-        })
-        .returning();
+      const existingPlants = await db.select().from(plants);
 
-      res.json(plant);
+      if (existingPlants.length === 0) {
+        await db.insert(plants).values([
+          {
+            name: "Peace Lily",
+            category: "indoor",
+            description: "Beautiful indoor plant that helps purify air",
+            price: "29.99",
+            imageUrl: "https://images.unsplash.com/photo-1593691509543-c55fb32e7355?auto=format&fit=crop&q=80&w=300"
+          },
+          {
+            name: "Snake Plant",
+            category: "indoor",
+            description: "Low maintenance indoor plant",
+            price: "24.99",
+            imageUrl: "https://images.unsplash.com/photo-1572974496518-4ca44800c24e?auto=format&fit=crop&q=80&w=300"
+          },
+          {
+            name: "Rose Bush",
+            category: "outdoor",
+            description: "Classic garden rose bush",
+            price: "34.99",
+            imageUrl: "https://images.unsplash.com/photo-1496062031456-07b8f162a322?auto=format&fit=crop&q=80&w=300"
+          }
+        ]);
+      }
+
+      res.json({ message: "Sample data added successfully" });
     } catch (error) {
-      console.error('Error creating plant:', error);
-      res.status(500).json({ message: "Failed to create plant" });
+      console.error('Error adding sample data:', error);
+      res.status(500).json({ message: "Failed to add sample data" });
     }
   });
 

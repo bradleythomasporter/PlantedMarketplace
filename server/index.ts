@@ -1,7 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import { db } from "@db";
+import { connectDB } from "@db";
 
 const app = express();
 
@@ -42,11 +42,10 @@ app.use((req, res, next) => {
 
 (async () => {
   try {
-    // Test database connection
-    await db.query.users.findFirst();
-    log("Database connection successful");
+    // Connect to database first
+    await connectDB();
 
-    // Register routes (which includes auth setup)
+    // Register routes
     const server = registerRoutes(app);
 
     // Error handling middleware
@@ -57,7 +56,7 @@ app.use((req, res, next) => {
       res.status(status).json({ message });
     });
 
-    // Setup Vite for development or serve static files for production
+    // Setup Vite or serve static files
     if (app.get("env") === "development") {
       await setupVite(app, server);
     } else {

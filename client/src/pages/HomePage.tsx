@@ -1,19 +1,14 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useUser } from "@/hooks/use-user";
 import { Button } from "@/components/ui/button";
-import { CartDrawer } from "@/components/CartDrawer";
 import { PlantCard } from "@/components/PlantCard";
 import { SearchFilters } from "@/components/SearchFilters";
-import { useLocation } from "wouter";
 import { Loader2 } from "lucide-react";
 import type { Plant } from "@db/schema";
 
 export default function HomePage() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("");
-  const { user, logout } = useUser();
-  const [, setLocation] = useLocation();
 
   const { data: plants = [], isLoading } = useQuery<Plant[]>({
     queryKey: [`/api/plants?search=${search}&category=${category}`],
@@ -24,28 +19,8 @@ export default function HomePage() {
       {/* Header */}
       <header className="bg-primary/10 p-4 md:p-6">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold text-primary">Planted 🌱</h1>
-            {user?.role === "nursery" && (
-              <Button
-                variant="ghost"
-                onClick={() => setLocation("/dashboard")}
-              >
-                Dashboard
-              </Button>
-            )}
-          </div>
-          <div className="flex items-center gap-4">
-            <CartDrawer />
-            <div className="flex items-center gap-2">
-              <span className="text-sm hidden md:inline">
-                Welcome, {user?.name}
-              </span>
-              <Button variant="outline" onClick={() => logout()}>
-                Logout
-              </Button>
-            </div>
-          </div>
+          <h1 className="text-2xl font-bold text-primary">Planted 🌱</h1>
+          <Button variant="outline">Login (Coming Soon)</Button>
         </div>
       </header>
 
