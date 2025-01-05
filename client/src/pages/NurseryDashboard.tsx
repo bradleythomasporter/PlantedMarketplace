@@ -223,7 +223,7 @@ export default function NurseryDashboard() {
                     Total: ${Number(order.total).toFixed(2)}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    Date: {new Date(order.createdAt).toLocaleDateString()}
+                    Date: {new Date(order.createdAt!).toLocaleDateString()}
                   </p>
                 </div>
               ))}

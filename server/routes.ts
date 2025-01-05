@@ -2,8 +2,15 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { db } from "@db";
-import { plants, orders, orderItems } from "@db/schema";
+import { plants, orders, orderItems, type User, type Plant, type Order } from "@db/schema";
 import { and, eq, like, desc, SQL } from "drizzle-orm";
+
+// Extend Express.Request to include our User type
+declare module 'express-serve-static-core' {
+  interface Request {
+    user?: User;
+  }
+}
 
 export function registerRoutes(app: Express): Server {
   // Setup authentication routes
@@ -15,16 +22,16 @@ export function registerRoutes(app: Express): Server {
       const { search, category, nurseryId } = req.query;
       const conditions: SQL[] = [];
 
-      if (search) {
+      if (typeof search === 'string' && search) {
         conditions.push(like(plants.name, `%${search}%`));
       }
 
-      if (category) {
-        conditions.push(eq(plants.category, category as string));
+      if (typeof category === 'string' && category) {
+        conditions.push(eq(plants.category, category as "flowers" | "trees" | "shrubs" | "indoor" | "outdoor"));
       }
 
-      if (nurseryId) {
-        conditions.push(eq(plants.nurseryId, parseInt(nurseryId as string)));
+      if (typeof nurseryId === 'string' && nurseryId) {
+        conditions.push(eq(plants.nurseryId, parseInt(nurseryId)));
       }
 
       const results = await db
@@ -45,12 +52,12 @@ export function registerRoutes(app: Express): Server {
     }
 
     try {
-      const plant = await db
+      const [plant] = await db
         .insert(plants)
         .values({ ...req.body, nurseryId: req.user.id })
         .returning();
 
-      res.json(plant[0]);
+      res.json(plant);
     } catch (error) {
       res.status(500).json({ message: "Failed to create plant" });
     }
@@ -68,7 +75,7 @@ export function registerRoutes(app: Express): Server {
       const [order] = await db
         .insert(orders)
         .values({
-          customerId: req.user?.id,
+          customerId: req.user.id,
           nurseryId,
           status: "pending",
           total,
@@ -100,7 +107,7 @@ export function registerRoutes(app: Express): Server {
         .select()
         .from(orders)
         .where(
-          req.user?.role === "customer"
+          req.user.role === "customer"
             ? eq(orders.customerId, req.user.id)
             : eq(orders.nurseryId, req.user.id)
         )

@@ -44,6 +44,7 @@ export const orderItems = pgTable("order_items", {
   price: decimal("price", { precision: 10, scale: 2 }).notNull()
 });
 
+// Define relationships
 export const plantsRelations = relations(plants, ({ one }) => ({
   nursery: one(users, {
     fields: [plants.nurseryId],
@@ -74,11 +75,17 @@ export const orderItemsRelations = relations(orderItems, ({ one }) => ({
   })
 }));
 
+// Export types
 export type User = typeof users.$inferSelect;
+export type NewUser = typeof users.$inferInsert;
 export type Plant = typeof plants.$inferSelect;
+export type NewPlant = typeof plants.$inferInsert;
 export type Order = typeof orders.$inferSelect;
+export type NewOrder = typeof orders.$inferInsert;
 export type OrderItem = typeof orderItems.$inferSelect;
+export type NewOrderItem = typeof orderItems.$inferInsert;
 
+// Export schemas
 export const insertUserSchema = createInsertSchema(users);
 export const selectUserSchema = createSelectSchema(users);
 export const insertPlantSchema = createInsertSchema(plants);
