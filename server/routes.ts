@@ -32,6 +32,9 @@ const geocoder = NodeGeocoder({
   provider: 'openstreetmap'
 });
 
+// Maximum length for Stripe URLs
+const MAX_STRIPE_URL_LENGTH = 2000; // Keep under 2048 to be safe
+
 export function registerRoutes(app: Express): Server {
   // Setup authentication routes
   setupAuth(app);
@@ -77,14 +80,20 @@ export function registerRoutes(app: Express): Server {
       // Create line items for Stripe
       const lineItems = items.map(item => {
         const plant = plantsData.find(p => p.id === item.plantId)!;
+        const productData: Stripe.Checkout.SessionCreateParams.LineItem.PriceData.ProductData = {
+          name: plant.name,
+          description: plant.description || undefined,
+        };
+
+        // Only add image if URL is valid and not too long
+        if (plant.imageUrl && plant.imageUrl.length < MAX_STRIPE_URL_LENGTH) {
+          productData.images = [plant.imageUrl];
+        }
+
         return {
           price_data: {
             currency: "usd",
-            product_data: {
-              name: plant.name,
-              description: plant.description || undefined,
-              images: plant.imageUrl ? [plant.imageUrl] : undefined,
-            },
+            product_data: productData,
             unit_amount: Math.round(Number(plant.price) * 100), // Convert to cents
           },
           quantity: item.quantity,
