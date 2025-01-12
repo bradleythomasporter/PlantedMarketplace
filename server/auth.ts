@@ -10,22 +10,30 @@ import { db } from "@db";
 import { eq } from "drizzle-orm";
 
 const scryptAsync = promisify(scrypt);
+
+const SALT_LENGTH = 32;
+const KEY_LENGTH = 64;
+
 const crypto = {
-  hash: async (password: string) => {
-    const salt = randomBytes(16).toString("hex");
-    const buf = (await scryptAsync(password, salt, 64)) as Buffer;
-    return `${buf.toString("hex")}.${salt}`;
+  hash: async (password: string): Promise<string> => {
+    const salt = randomBytes(SALT_LENGTH);
+    const derivedKey = await scryptAsync(password, salt, KEY_LENGTH);
+    return `${derivedKey.toString('hex')}.${salt.toString('hex')}`;
   },
-  compare: async (suppliedPassword: string, storedPassword: string) => {
-    const [hashedPassword, salt] = storedPassword.split(".");
-    const hashedPasswordBuf = Buffer.from(hashedPassword, "hex");
-    const suppliedPasswordBuf = (await scryptAsync(
-      suppliedPassword,
-      salt,
-      64
-    )) as Buffer;
-    return timingSafeEqual(hashedPasswordBuf, suppliedPasswordBuf);
-  },
+
+  verify: async (password: string, hash: string): Promise<boolean> => {
+    const [hashedPassword, salt] = hash.split('.');
+    if (!hashedPassword || !salt) return false;
+
+    try {
+      const derivedKey = await scryptAsync(password, Buffer.from(salt, 'hex'), KEY_LENGTH);
+      const keyBuffer = Buffer.from(hashedPassword, 'hex');
+      return timingSafeEqual(derivedKey, keyBuffer);
+    } catch (error) {
+      console.error('Password verification error:', error);
+      return false;
+    }
+  }
 };
 
 // Create a type that excludes the password field
@@ -33,7 +41,6 @@ type UserWithoutPassword = Omit<DbUser, 'password'>;
 
 declare global {
   namespace Express {
-    // Extend User interface with our custom fields
     interface User extends UserWithoutPassword {}
   }
 }
@@ -75,8 +82,9 @@ export async function setupAuth(app: Express) {
           if (!user) {
             return done(null, false, { message: "Incorrect username." });
           }
-          const isMatch = await crypto.compare(password, user.password);
-          if (!isMatch) {
+
+          const isValid = await crypto.verify(password, user.password);
+          if (!isValid) {
             return done(null, false, { message: "Incorrect password." });
           }
 
