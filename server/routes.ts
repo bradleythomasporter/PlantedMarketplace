@@ -9,11 +9,25 @@ import distance from "@turf/distance";
 import { point } from "@turf/helpers";
 import Stripe from "stripe";
 
+// Validate Stripe key format
+const isValidStripeKey = (key: string) => {
+  return key && (key.startsWith('sk_test_') || key.startsWith('sk_live_'));
+};
+
 if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error("STRIPE_SECRET_KEY environment variable is required");
 }
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+if (!isValidStripeKey(process.env.STRIPE_SECRET_KEY)) {
+  throw new Error("Invalid STRIPE_SECRET_KEY format. Key must start with 'sk_test_' or 'sk_live_'");
+}
+
+// Initialize Stripe with proper configuration
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+  apiVersion: "2023-10-16",
+  typescript: true,
+});
+
 const geocoder = NodeGeocoder({
   provider: 'openstreetmap'
 });
@@ -25,14 +39,14 @@ export function registerRoutes(app: Express): Server {
   // Checkout endpoint
   app.post("/api/checkout", async (req, res) => {
     if (!req.isAuthenticated()) {
-      return res.status(401).json({ message: "Unauthorized" });
+      return res.status(401).json({ message: "Please log in to proceed with checkout" });
     }
 
     try {
       const { items } = req.body;
 
       if (!Array.isArray(items) || items.length === 0) {
-        return res.status(400).json({ message: "Invalid items" });
+        return res.status(400).json({ message: "Cart is empty" });
       }
 
       // Fetch all plants in one query
@@ -45,24 +59,31 @@ export function registerRoutes(app: Express): Server {
           gte(plants.quantity, 1)
         ));
 
-      // Create line items for Stripe
-      const lineItems = items.map(item => {
+      // Validate all items exist and are in stock
+      for (const item of items) {
         const plant = plantsData.find(p => p.id === item.plantId);
         if (!plant) {
-          throw new Error(`Plant ${item.plantId} not found`);
+          return res.status(400).json({ 
+            message: `Plant ${item.plantId} not found or no longer available` 
+          });
         }
-
         if (plant.quantity < item.quantity) {
-          throw new Error(`Not enough stock for ${plant.name}`);
+          return res.status(400).json({ 
+            message: `Not enough stock for ${plant.name}. Only ${plant.quantity} available` 
+          });
         }
+      }
 
+      // Create line items for Stripe
+      const lineItems = items.map(item => {
+        const plant = plantsData.find(p => p.id === item.plantId)!;
         return {
           price_data: {
             currency: "usd",
             product_data: {
               name: plant.name,
-              description: plant.description,
-              images: [plant.imageUrl],
+              description: plant.description || undefined,
+              images: plant.imageUrl ? [plant.imageUrl] : undefined,
             },
             unit_amount: Math.round(Number(plant.price) * 100), // Convert to cents
           },
@@ -86,7 +107,7 @@ export function registerRoutes(app: Express): Server {
         });
       }
 
-      // Create Stripe checkout session
+      // Create Stripe checkout session with proper configuration
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ["card"],
         line_items: lineItems,
@@ -102,7 +123,19 @@ export function registerRoutes(app: Express): Server {
       res.json({ url: session.url });
     } catch (error: any) {
       console.error("Checkout error:", error);
-      res.status(500).json({ message: error.message || "Checkout failed" });
+
+      // Proper error handling with specific error messages
+      if (error instanceof Stripe.errors.StripeError) {
+        return res.status(error.statusCode || 500).json({ 
+          message: error.message,
+          type: error.type
+        });
+      }
+
+      res.status(500).json({ 
+        message: "Unable to process checkout at this time. Please try again later.",
+        type: "server_error"
+      });
     }
   });
 
