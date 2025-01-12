@@ -20,6 +20,19 @@ interface CartStore {
   total: () => number;
 }
 
+const calculateSubtotal = (items: CartItem[]): number => {
+  return items.reduce(
+    (total, item) => total + Number(item.plant.price) * item.quantity,
+    0
+  );
+};
+
+const calculatePlantingServiceFee = (items: CartItem[]): number => {
+  return items.reduce((total, item) => {
+    return total + (item.requiresPlanting ? 49.99 * item.quantity : 0);
+  }, 0);
+};
+
 export const useCartStore = create<CartStore>((set, get) => ({
   items: [],
 
@@ -72,23 +85,22 @@ export const useCartStore = create<CartStore>((set, get) => ({
   },
 
   totalItems: () => {
-    return get().items.reduce((total, item) => total + item.quantity, 0);
+    const items = get().items;
+    return items.reduce((total, item) => total + item.quantity, 0);
   },
 
   subtotal: () => {
-    return get().items.reduce(
-      (total, item) => total + Number(item.plant.price) * item.quantity,
-      0
-    );
+    const items = get().items;
+    return calculateSubtotal(items);
   },
 
   plantingServiceFee: () => {
-    return get().items.reduce((total, item) => {
-      return total + (item.requiresPlanting ? 49.99 * item.quantity : 0);
-    }, 0);
+    const items = get().items;
+    return calculatePlantingServiceFee(items);
   },
 
   total: () => {
-    return get().subtotal() + get().plantingServiceFee();
+    const items = get().items;
+    return calculateSubtotal(items) + calculatePlantingServiceFee(items);
   },
 }));
