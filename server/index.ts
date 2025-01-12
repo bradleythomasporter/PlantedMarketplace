@@ -44,6 +44,7 @@ app.use((req, res, next) => {
   try {
     // Connect to database first
     await connectDB();
+    log("Database connection established");
 
     // Register routes
     const server = registerRoutes(app);
