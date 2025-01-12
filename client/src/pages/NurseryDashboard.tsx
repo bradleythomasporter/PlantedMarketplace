@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -83,6 +83,7 @@ interface PlantTemplate {
     winter: string;
   };
   imageUrl: string;
+  mainCategory: string;
 }
 
 const mainCategories = {
@@ -105,10 +106,21 @@ export default function NurseryDashboard() {
   const [mainCategory, setMainCategory] = useState<string>("");
   const [subCategory, setSubCategory] = useState<string>("");
   const [activeSection, setActiveSection] = useState<string>("basics");
+  const [selectedMainCategory, setSelectedMainCategory] = useState<string>("");
+  const [availablePlants, setAvailablePlants] = useState<PlantTemplate[]>([]);
 
-  const { data: plantTemplates = [], isLoading: isLoadingTemplates } = useQuery<PlantTemplate[]>({
+  const { data: plantTemplates = {}, isLoading: isLoadingTemplates } = useQuery<Record<string, PlantTemplate[]>>({
     queryKey: ['/api/plants/templates'],
   });
+
+  useEffect(() => {
+    if (selectedMainCategory && plantTemplates[selectedMainCategory]) {
+      setAvailablePlants(plantTemplates[selectedMainCategory]);
+    } else {
+      setAvailablePlants([]);
+    }
+  }, [selectedMainCategory, plantTemplates]);
+
 
   const { data: plants = [], isLoading: isLoadingPlants } = useQuery<Plant[]>({
     queryKey: [`/api/plants?nurseryId=${user?.id}`],
@@ -303,43 +315,34 @@ export default function NurseryDashboard() {
     return acc;
   }, {} as Record<string, Set<string>>);
 
-  const handleTemplateSelection = (value: string) => {
-    setSelectedTemplate(value);
+  const handleTemplateSelection = (templateId: string) => {
+    setSelectedTemplate(templateId);
     const form = document.querySelector('form') as HTMLFormElement;
     if (!form) return;
 
-    if (value === 'custom') {
-      // Reset all form fields
+    if (templateId === 'custom') {
       form.reset();
       setMainCategory("");
       setSubCategory("");
       return;
     }
 
-    const template = plantTemplates.find(p => p.id === value);
+    const template = availablePlants.find(p => p.id === templateId);
     if (template) {
-      // Auto-populate form fields from template
-      Object.entries(template).forEach(([key, value]) => {
-        const input = form.elements.namedItem(key) as HTMLInputElement | HTMLTextAreaElement;
-        if (input && typeof value === 'string') {
-          input.value = value;
-        }
+      form.name.value = template.name;
+      form.scientificName.value = template.scientificName;
+      form.description.value = template.description;
+      form.imageUrl.value = template.imageUrl;
+
+      Object.entries(template.growthDetails).forEach(([key, value]) => {
+        const input = form.elements.namedItem(key) as HTMLInputElement;
+        if (input) input.value = value;
       });
 
-      // Special handling for nested objects
-      if (template.growthDetails) {
-        Object.entries(template.growthDetails).forEach(([key, value]) => {
-          const input = form.elements.namedItem(key) as HTMLInputElement;
-          if (input) input.value = value;
-        });
-      }
-
-      if (template.careInstructions) {
-        Object.entries(template.careInstructions).forEach(([key, value]) => {
-          const input = form.elements.namedItem(key) as HTMLInputElement;
-          if (input) input.value = value;
-        });
-      }
+      Object.entries(template.careInstructions).forEach(([key, value]) => {
+        const input = form.elements.namedItem(key) as HTMLInputElement;
+        if (input) input.value = value;
+      });
 
       setMainCategory(template.category);
       setSubCategory(template.subCategory);
@@ -396,26 +399,59 @@ export default function NurseryDashboard() {
                       className="w-full"
                     >
                       <AccordionItem value="template">
-                        <AccordionTrigger>Template Selection</AccordionTrigger>
+                        <AccordionTrigger>Plant Selection</AccordionTrigger>
                         <AccordionContent className="space-y-4 p-4">
-                          <div className="space-y-2">
-                            <Label>Choose a Template (Optional)</Label>
-                            <Select
-                              value={selectedTemplate}
-                              onValueChange={handleTemplateSelection}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select a template" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="custom">Custom Plant</SelectItem>
-                                {plantTemplates.map((template) => (
-                                  <SelectItem key={template.id} value={template.id}>
-                                    {template.name} ({template.scientificName})
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                          <div className="space-y-4">
+                            <div className="space-y-2">
+                              <Label>1. Select Plant Type</Label>
+                              <Select
+                                value={selectedMainCategory}
+                                onValueChange={setSelectedMainCategory}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select plant type" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="custom">Custom Plant</SelectItem>
+                                  {Object.keys(plantTemplates).map((category) => (
+                                    <SelectItem key={category} value={category}>
+                                      {category.charAt(0).toUpperCase() + category.slice(1)}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            {selectedMainCategory && selectedMainCategory !== 'custom' && (
+                              <div className="space-y-2">
+                                <Label>2. Select Plant</Label>
+                                <Select
+                                  value={selectedTemplate}
+                                  onValueChange={handleTemplateSelection}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Choose a plant" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {availablePlants.map((plant) => (
+                                      <SelectItem key={plant.id} value={plant.id}>
+                                        {plant.name} ({plant.scientificName})
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            )}
+
+                            {selectedTemplate && selectedTemplate !== 'custom' && (
+                              <div className="mt-4">
+                                <img
+                                  src={availablePlants.find(p => p.id === selectedTemplate)?.imageUrl}
+                                  alt="Selected plant"
+                                  className="w-full h-48 object-cover rounded-lg"
+                                />
+                              </div>
+                            )}
                           </div>
                         </AccordionContent>
                       </AccordionItem>
@@ -448,7 +484,7 @@ export default function NurseryDashboard() {
                                 <SelectContent>
                                   {Object.entries(mainCategories).map(([key, _]) => (
                                     <SelectItem key={key} value={key}>
-                                      {key.split('_').map(word => 
+                                      {key.split('_').map(word =>
                                         word.charAt(0).toUpperCase() + word.slice(1)
                                       ).join(' ')}
                                     </SelectItem>

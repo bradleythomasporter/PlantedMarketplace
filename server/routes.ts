@@ -54,7 +54,8 @@ export function registerRoutes(app: Express): Server {
             autumn: "Continued red new growth",
             winter: "Evergreen structure",
           },
-          imageUrl: "https://plant-images.s3.amazonaws.com/red-robin.jpg"
+          imageUrl: "https://plant-images.s3.amazonaws.com/red-robin.jpg",
+          mainCategory: "outdoor"
         },
         {
           id: "lavender-hidcote",
@@ -91,7 +92,8 @@ export function registerRoutes(app: Express): Server {
             autumn: "Extended flowering",
             winter: "Evergreen structure",
           },
-          imageUrl: "https://plant-images.s3.amazonaws.com/lavender.jpg"
+          imageUrl: "https://plant-images.s3.amazonaws.com/lavender.jpg",
+          mainCategory: "outdoor"
         },
         {
           id: "peace-lily",
@@ -128,11 +130,21 @@ export function registerRoutes(app: Express): Server {
             autumn: "Continued growth",
             winter: "Possible flowering",
           },
-          imageUrl: "https://plant-images.s3.amazonaws.com/peace-lily.jpg"
+          imageUrl: "https://plant-images.s3.amazonaws.com/peace-lily.jpg",
+          mainCategory: "indoor"
         }
       ];
 
-      res.json(templates);
+      // Group templates by main category
+      const groupedTemplates = templates.reduce((acc, template) => {
+        if (!acc[template.mainCategory]) {
+          acc[template.mainCategory] = [];
+        }
+        acc[template.mainCategory].push(template);
+        return acc;
+      }, {} as Record<string, any[]>);
+
+      res.json(groupedTemplates);
     } catch (error) {
       console.error('Error fetching plant templates:', error);
       res.status(500).json({ message: "Failed to fetch plant templates" });
