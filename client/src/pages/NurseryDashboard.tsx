@@ -79,93 +79,32 @@ export default function NurseryDashboard() {
     }
   });
 
-  const populateForm = (template: PlantTemplate) => {
-    const form = document.querySelector('form') as HTMLFormElement;
-    if (!form) return;
-
-    form.name.value = template.name;
-    form.scientificName.value = template.scientificName;
-    form.description.value = template.description;
-    form.imageUrl.value = template.imageUrl;
-
-    // Populate growth details
-    Object.entries(template.growthDetails).forEach(([key, value]) => {
-      const input = form.elements.namedItem(key) as HTMLInputElement;
-      if (input) input.value = value;
-    });
-
-    // Populate care instructions
-    Object.entries(template.careInstructions).forEach(([key, value]) => {
-      const input = form.elements.namedItem(key) as HTMLInputElement;
-      if (input) input.value = value;
-    });
-  };
-
-  const renderTemplateSelection = () => (
-    <div className="space-y-6">
-      <div>
-        <Label>Plant Templates</Label>
-        <Button
-          variant="outline"
-          className="mt-2 w-full"
-          onClick={() => {
-            const form = document.querySelector('form') as HTMLFormElement;
-            if (form) form.reset();
-          }}
-        >
-          Custom Plant
-        </Button>
-      </div>
-
-      {Object.entries(plantTemplates).map(([category, templates]) => (
-        <div key={category} className="space-y-2">
-          <Label className="text-lg font-semibold capitalize">{category}</Label>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-            {templates.map((template) => (
-              <Button
-                key={template.id}
-                variant="outline"
-                className="justify-start h-auto py-4 px-4"
-                onClick={() => populateForm(template)}
-              >
-                <div className="text-left">
-                  <div className="font-medium">{template.name}</div>
-                  <div className="text-sm text-muted-foreground">{template.scientificName}</div>
-                </div>
-              </Button>
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-
   const addPlantMutation = useMutation({
-    mutationFn: async (formData: FormData) => {
-      if (!user?.address) {
-        throw new Error("Nursery address is required");
-      }
+    mutationFn: async (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      const formData = new FormData(e.currentTarget);
 
-      const geocodeResponse = await fetch(`/api/geocode?address=${encodeURIComponent(user.address)}`);
-      if (!geocodeResponse.ok) {
-        throw new Error("Failed to geocode address");
+      // Basic validation
+      const name = formData.get("name") as string;
+      const category = formData.get("category") as string;
+      const price = parseFloat(formData.get("price") as string);
+      const quantity = parseInt(formData.get("quantity") as string);
+
+      if (!name || !category || isNaN(price) || isNaN(quantity)) {
+        throw new Error("Please fill in all required fields");
       }
-      const { latitude, longitude, zipCode } = await geocodeResponse.json();
 
       const response = await fetch("/api/plants", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
-          name: formData.get("name"),
-          category: formData.get("category"),
+          name,
+          category,
           description: formData.get("description"),
-          price: parseFloat(formData.get("price") as string),
-          quantity: parseInt(formData.get("quantity") as string),
+          price,
+          quantity,
           imageUrl: formData.get("imageUrl"),
-          latitude,
-          longitude,
-          zipCode,
         }),
       });
 
@@ -189,6 +128,66 @@ export default function NurseryDashboard() {
       });
     },
   });
+
+  const renderTemplateSelection = () => {
+    const categories = {
+      indoor: "Indoor Plants",
+      outdoor: "Outdoor Plants",
+      flowers: "Flowers",
+      trees: "Trees",
+      shrubs: "Shrubs"
+    };
+
+    return (
+      <div className="space-y-6">
+        <div>
+          <Label>Plant Type</Label>
+          <Button
+            variant="outline"
+            className="mt-2 w-full"
+            onClick={() => {
+              const form = document.querySelector('form') as HTMLFormElement;
+              if (form) form.reset();
+            }}
+          >
+            Custom Plant
+          </Button>
+        </div>
+
+        {Object.entries(categories).map(([category, label]) => (
+          <div key={category} className="space-y-2">
+            <Label className="text-lg font-semibold">{label}</Label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {plantTemplates[category]?.map((template) => (
+                <Button
+                  key={template.id}
+                  variant="outline"
+                  className="justify-start h-auto py-4 px-4"
+                  onClick={() => {
+                    const form = document.querySelector('form') as HTMLFormElement;
+                    if (!form) return;
+
+                    form.name.value = template.name;
+                    form.category.value = category;
+                    form.description.value = template.description;
+                    form.imageUrl.value = template.imageUrl;
+
+                    // Set some default values for required fields
+                    form.price.value = "29.99";
+                    form.quantity.value = "10";
+                  }}
+                >
+                  <div className="text-left">
+                    <div className="font-medium">{template.name}</div>
+                  </div>
+                </Button>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
 
   const updatePlantMutation = useMutation({
     mutationFn: async (data: { id: number; updates: Partial<Plant> }) => {
@@ -275,12 +274,6 @@ export default function NurseryDashboard() {
       });
     },
   });
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    await addPlantMutation.mutateAsync(formData);
-  };
 
   const handleUpdate = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -381,112 +374,81 @@ export default function NurseryDashboard() {
                   <DialogHeader>
                     <DialogTitle>Add New Plant</DialogTitle>
                   </DialogHeader>
-                  <form onSubmit={handleSubmit} className="space-y-6">
-                    <Accordion
-                      type="single"
-                      collapsible
-                      value={activeSection}
-                      onValueChange={setActiveSection}
-                      className="w-full"
-                    >
-                      <AccordionItem value="template">
-                        <AccordionTrigger>Plant Selection</AccordionTrigger>
-                        <AccordionContent className="space-y-4 p-4">
-                          {renderTemplateSelection()}
-                        </AccordionContent>
-                      </AccordionItem>
+                  <form onSubmit={(e) => addPlantMutation.mutate(e)} className="space-y-6">
+                    <div className="space-y-4">
+                      {renderTemplateSelection()}
 
-                      <AccordionItem value="basics">
-                        <AccordionTrigger>Basic Information</AccordionTrigger>
-                        <AccordionContent className="space-y-4 p-4">
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                              <Label htmlFor="name">Common Name</Label>
-                              <Input id="name" name="name" required />
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="scientificName">Scientific Name</Label>
-                              <Input id="scientificName" name="scientificName" required />
-                            </div>
+                      <div className="pt-4 border-t space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="name">Plant Name *</Label>
+                            <Input id="name" name="name" required />
                           </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="category">Category *</Label>
+                            <select 
+                              id="category" 
+                              name="category" 
+                              className="w-full rounded-md border border-input bg-background px-3 py-2"
+                              required
+                            >
+                              <option value="">Select Category</option>
+                              <option value="indoor">Indoor Plants</option>
+                              <option value="outdoor">Outdoor Plants</option>
+                              <option value="flowers">Flowers</option>
+                              <option value="trees">Trees</option>
+                              <option value="shrubs">Shrubs</option>
+                            </select>
+                          </div>
+                        </div>
 
-                          <div className="space-y-4">
-                            <div className="space-y-2">
-                              <Label htmlFor="description">Description</Label>
-                              <Textarea id="description" name="description" required />
-                            </div>
-                          </div>
-                        </AccordionContent>
-                      </AccordionItem>
-                      <AccordionItem value="growth">
-                        <AccordionTrigger>Growth Details</AccordionTrigger>
-                        <AccordionContent className="space-y-4 p-4">
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                              <Label htmlFor="height">Height</Label>
-                              <Input id="height" name="height" required />
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="spread">Spread</Label>
-                              <Input id="spread" name="spread" required />
-                            </div>
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="growthRate">Growth Rate</Label>
-                            <Input id="growthRate" name="growthRate" required />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="ultimateHeight">Ultimate Height</Label>
-                            <Input id="ultimateHeight" name="ultimateHeight" required />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="timeToUltimateHeight">Time to Ultimate Height</Label>
-                            <Input id="timeToUltimateHeight" name="timeToUltimateHeight" required />
-                          </div>
-                        </AccordionContent>
-                      </AccordionItem>
+                        <div className="space-y-2">
+                          <Label htmlFor="description">Description</Label>
+                          <Textarea id="description" name="description" />
+                        </div>
 
-                      <AccordionItem value="care">
-                        <AccordionTrigger>Care Instructions</AccordionTrigger>
-                        <AccordionContent className="space-y-4 p-4">
+                        <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-2">
-                            <Label htmlFor="sunlight">Sunlight Requirements</Label>
-                            <Input id="sunlight" name="sunlight" required />
+                            <Label htmlFor="price">Price ($) *</Label>
+                            <Input 
+                              id="price" 
+                              name="price" 
+                              type="number" 
+                              step="0.01" 
+                              min="0.01" 
+                              required 
+                            />
                           </div>
                           <div className="space-y-2">
-                            <Label htmlFor="watering">Watering Needs</Label>
-                            <Input id="watering" name="watering" required />
+                            <Label htmlFor="quantity">Quantity *</Label>
+                            <Input 
+                              id="quantity" 
+                              name="quantity" 
+                              type="number" 
+                              min="1" 
+                              required 
+                            />
                           </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="soil">Soil Requirements</Label>
-                            <Input id="soil" name="soil" required />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="pruning">Pruning Instructions</Label>
-                            <Input id="pruning" name="pruning" required />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="fertilizer">Fertilizer</Label>
-                            <Input id="fertilizer" name="fertilizer" required />
-                          </div>
-                        </AccordionContent>
-                      </AccordionItem>
+                        </div>
 
-                      <AccordionItem value="image">
-                        <AccordionTrigger>Image</AccordionTrigger>
-                        <AccordionContent className="space-y-4 p-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="imageUrl">Image URL</Label>
-                            <Input id="imageUrl" name="imageUrl" required />
-                          </div>
-                        </AccordionContent>
-                      </AccordionItem>
-                    </Accordion>
+                        <div className="space-y-2">
+                          <Label htmlFor="imageUrl">Image URL</Label>
+                          <Input id="imageUrl" name="imageUrl" />
+                        </div>
+                      </div>
 
-                    <div className="pt-4 border-t">
-                      <Button type="submit" className="w-full">
-                        Add Plant
-                      </Button>
+                      <div className="pt-4 border-t">
+                        <Button 
+                          type="submit" 
+                          className="w-full"
+                          disabled={addPlantMutation.isPending}
+                        >
+                          {addPlantMutation.isPending ? (
+                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          ) : null}
+                          Add Plant
+                        </Button>
+                      </div>
                     </div>
                   </form>
                 </DialogContent>

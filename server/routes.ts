@@ -705,22 +705,24 @@ export function registerRoutes(app: Express): Server {
     }
 
     try {
-      if (!req.user.address) {
-        return res.status(400).json({ message: "Nursery address is required to add plants" });
-      }
+      const { name, category, description, price, quantity, imageUrl } = req.body;
 
-      // Get location data from nursery's address
-      const [location] = await geocoder.geocode(req.user.address);
-      if (!location) {
-        return res.status(400).json({ message: "Could not determine nursery location" });
+      // Basic validation
+      if (!name || !category || !price || !quantity) {
+        return res.status(400).json({ message: "Missing required fields" });
       }
 
       const plantData = {
-        ...req.body,
+        name,
+        category,
+        description: description || "",
+        price,
+        quantity,
+        imageUrl: imageUrl || "",
         nurseryId: req.user.id,
-        latitude: location.latitude,
-        longitude: location.longitude,
-        zipCode: location.zipcode || req.user.address.match(/\d{5}/)?.[0] || "00000",
+        latitude: req.user.latitude,
+        longitude: req.user.longitude,
+        zipCode: req.user.address.match(/\d{5}/)?.[0] || "00000",
       };
 
       const [newPlant] = await db
