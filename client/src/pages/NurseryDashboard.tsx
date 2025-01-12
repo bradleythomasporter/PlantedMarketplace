@@ -17,6 +17,17 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/hooks/use-user";
 import { Loader2, PenSquare, Trash2, Package } from "lucide-react";
@@ -58,6 +69,14 @@ export default function NurseryDashboard() {
 
   const { data: plantTemplates = {}, isLoading: isLoadingTemplates } = useQuery<Record<string, PlantTemplate[]>>({
     queryKey: ['/api/plants/templates'],
+    retry: 2,
+    onError: (error) => {
+      toast({
+        title: "Error loading templates",
+        description: "Please try again or contact support if the issue persists.",
+        variant: "destructive",
+      });
+    }
   });
 
   const populateForm = (template: PlantTemplate) => {
@@ -321,7 +340,21 @@ export default function NurseryDashboard() {
             <span className="text-sm hidden md:inline">
               Welcome, {user?.name}
             </span>
-            <Button variant="outline" onClick={() => logout()}>
+            <Button
+              variant="outline"
+              onClick={async () => {
+                try {
+                  await logout();
+                  setLocation("/login");
+                } catch (error) {
+                  toast({
+                    title: "Error logging out",
+                    description: "Please try again",
+                    variant: "destructive",
+                  });
+                }
+              }}
+            >
               Logout
             </Button>
           </div>

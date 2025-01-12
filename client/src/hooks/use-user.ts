@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import type { User } from "@db/schema";
 
 type LoginData = {
   username: string;
@@ -16,28 +15,58 @@ type LoginData = {
 async function handleAuthRequest(
   url: string,
   data: LoginData
-): Promise<User> {
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-    credentials: "include",
-  });
+): Promise<any> {
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+      credentials: "include",
+    });
 
-  if (!response.ok) {
-    throw new Error(await response.text());
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(errorText || `HTTP error! status: ${response.status}`);
+    }
+
+    return response.json();
+  } catch (error: any) {
+    if (error instanceof TypeError && error.message === 'Failed to fetch') {
+      throw new Error('Unable to connect to server. Please check your connection and try again.');
+    }
+    throw error;
   }
-
-  return response.json();
 }
 
 export function useUser() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: user, isLoading } = useQuery<User>({
+  const { data: user, isLoading, error } = useQuery({
     queryKey: ["/api/user"],
-    retry: false,
+    queryFn: async () => {
+      try {
+        const response = await fetch("/api/user", {
+          credentials: "include",
+        });
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            return null;
+          }
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        return response.json();
+      } catch (error: any) {
+        if (error instanceof TypeError && error.message === 'Failed to fetch') {
+          throw new Error('Unable to connect to server. Please check your connection.');
+        }
+        throw error;
+      }
+    },
+    retry: 1,
+    staleTime: 30000, // Consider data fresh for 30 seconds
   });
 
   const loginMutation = useMutation({
@@ -78,12 +107,20 @@ export function useUser() {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      const response = await fetch("/api/logout", {
-        method: "POST",
-        credentials: "include",
-      });
-      if (!response.ok) {
-        throw new Error(await response.text());
+      try {
+        const response = await fetch("/api/logout", {
+          method: "POST",
+          credentials: "include",
+        });
+
+        if (!response.ok) {
+          throw new Error(await response.text());
+        }
+      } catch (error: any) {
+        if (error instanceof TypeError && error.message === 'Failed to fetch') {
+          throw new Error('Unable to connect to server. Please try logging out again.');
+        }
+        throw error;
       }
     },
     onSuccess: () => {
@@ -93,11 +130,19 @@ export function useUser() {
         description: "Come back soon!",
       });
     },
+    onError: (error: Error) => {
+      toast({
+        title: "Logout failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
   });
 
   return {
     user,
     isLoading,
+    error,
     login: loginMutation.mutateAsync,
     register: registerMutation.mutateAsync,
     logout: logoutMutation.mutateAsync,

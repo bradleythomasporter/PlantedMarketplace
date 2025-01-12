@@ -11,7 +11,7 @@ const geocoder = NodeGeocoder({
 });
 
 export function registerRoutes(app: Express): Server {
-  // Setup authentication routes
+  // Setup authentication routes and middleware first
   setupAuth(app);
 
   // Plant templates endpoint
