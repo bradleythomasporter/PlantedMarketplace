@@ -90,7 +90,9 @@ const mainCategories = {
   indoor: ["Foliage Plants", "Flowering Plants", "Succulents", "Air Plants"],
   garden_type: ["Cottage Garden", "Mediterranean", "Tropical", "Woodland"],
   special_features: ["Fragrant", "Bee Friendly", "Drought Resistant", "Shade Loving"]
-};
+} as const;
+
+type MainCategory = keyof typeof mainCategories;
 
 export default function NurseryDashboard() {
   const [, setLocation] = useLocation();
@@ -102,7 +104,7 @@ export default function NurseryDashboard() {
   const [plantToDelete, setPlantToDelete] = useState<Plant | null>(null);
   const [activeTab, setActiveTab] = useState("inventory");
   const [selectedTemplate, setSelectedTemplate] = useState<string>("none");
-  const [mainCategory, setMainCategory] = useState<string>("");
+  const [mainCategory, setMainCategory] = useState<MainCategory | "">("");
   const [subCategory, setSubCategory] = useState<string>("");
   const [activeSection, setActiveSection] = useState<string>("basics");
   const [selectedMainCategory, setSelectedMainCategory] = useState<string>("none");
@@ -340,7 +342,7 @@ export default function NurseryDashboard() {
         if (input) input.value = value;
       });
 
-      setMainCategory(template.category);
+      setMainCategory(template.category as MainCategory);
       setSubCategory(template.subCategory);
     }
   };
@@ -476,16 +478,15 @@ export default function NurseryDashboard() {
                               <Label>Main Category</Label>
                               <Select
                                 value={mainCategory}
-                                onValueChange={setMainCategory}
-                                required
+                                onValueChange={(value: MainCategory) => setMainCategory(value)}
                               >
                                 <SelectTrigger>
                                   <SelectValue placeholder="Select main category" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  {Object.entries(mainCategories).map(([key, _]) => (
-                                    <SelectItem key={key} value={key}>
-                                      {key.split('_').map(word =>
+                                  {(Object.keys(mainCategories) as MainCategory[]).map((category) => (
+                                    <SelectItem key={category} value={category}>
+                                      {category.split('_').map(word =>
                                         word.charAt(0).toUpperCase() + word.slice(1)
                                       ).join(' ')}
                                     </SelectItem>
@@ -500,13 +501,12 @@ export default function NurseryDashboard() {
                                 <Select
                                   value={subCategory}
                                   onValueChange={setSubCategory}
-                                  required
                                 >
                                   <SelectTrigger>
                                     <SelectValue placeholder="Select sub-category" />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    {mainCategories[mainCategory as keyof typeof mainCategories]?.map((sub) => (
+                                    {mainCategories[mainCategory].map((sub) => (
                                       <SelectItem key={sub} value={sub}>
                                         {sub}
                                       </SelectItem>
