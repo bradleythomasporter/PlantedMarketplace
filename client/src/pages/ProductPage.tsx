@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -27,12 +27,29 @@ import {
   Ruler,
   Calendar,
   Scale,
-  Info
+  Info,
+  Share2,
+  Facebook,
+  Twitter,
+  Mail
 } from "lucide-react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { useCartStore } from "@/lib/cart-store";
+import { SimilarPlants } from "@/components/SimilarPlants";
+import { ReviewSection } from "@/components/ReviewSection";
 import type { Plant } from "@db/schema";
+
+// Add to recently viewed plants in localStorage
+function addToRecentlyViewed(plant: Plant) {
+  try {
+    const recentlyViewed = JSON.parse(localStorage.getItem('recentlyViewed') || '[]');
+    const updated = [plant, ...recentlyViewed.filter((p: Plant) => p.id !== plant.id)].slice(0, 4);
+    localStorage.setItem('recentlyViewed', JSON.stringify(updated));
+  } catch (error) {
+    console.error('Error updating recently viewed:', error);
+  }
+}
 
 export default function ProductPage({ params }: { params: { id: string } }) {
   const [, setLocation] = useLocation();
@@ -40,10 +57,34 @@ export default function ProductPage({ params }: { params: { id: string } }) {
   const cartStore = useCartStore();
   const [showGardenerModal, setShowGardenerModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [showZoomModal, setShowZoomModal] = useState(false);
 
   const { data: plant, isLoading } = useQuery<Plant>({
     queryKey: [`/api/plants/${params.id}`],
   });
+
+  useEffect(() => {
+    if (plant) {
+      addToRecentlyViewed(plant);
+    }
+  }, [plant]);
+
+  const handleShare = (platform: string) => {
+    const url = window.location.href;
+    const text = `Check out ${plant?.name} on Planted!`;
+
+    switch (platform) {
+      case 'facebook':
+        window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
+        break;
+      case 'twitter':
+        window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank');
+        break;
+      case 'email':
+        window.open(`mailto:?subject=${text}&body=${url}`, '_blank');
+        break;
+    }
+  };
 
   const handleAddToCart = () => {
     if (plant) {
@@ -91,13 +132,30 @@ export default function ProductPage({ params }: { params: { id: string } }) {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Image Gallery Section */}
             <div className="space-y-4">
-              <div className="aspect-square rounded-lg overflow-hidden bg-white">
-                <img
-                  src={selectedImage || plant.imageUrl}
-                  alt={plant.name}
-                  className="w-full h-full object-cover"
-                />
-              </div>
+              <Dialog open={showZoomModal} onOpenChange={setShowZoomModal}>
+                <DialogTrigger asChild>
+                  <div className="aspect-square rounded-lg overflow-hidden bg-white cursor-zoom-in">
+                    <img
+                      src={selectedImage || plant.imageUrl}
+                      alt={plant.name}
+                      className="w-full h-full object-cover transition-transform hover:scale-105"
+                    />
+                  </div>
+                </DialogTrigger>
+                <DialogContent className="max-w-4xl">
+                  <DialogHeader>
+                    <DialogTitle>{plant.name}</DialogTitle>
+                  </DialogHeader>
+                  <div className="aspect-square">
+                    <img
+                      src={selectedImage || plant.imageUrl}
+                      alt={plant.name}
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                </DialogContent>
+              </Dialog>
+
               {plant.additionalImages && plant.additionalImages.length > 0 && (
                 <div className="grid grid-cols-4 gap-2">
                   <div 
@@ -125,6 +183,37 @@ export default function ProductPage({ params }: { params: { id: string } }) {
                   ))}
                 </div>
               )}
+
+              {/* Share Buttons */}
+              <div className="flex items-center gap-4 pt-4 border-t">
+                <span className="text-sm font-medium flex items-center gap-2">
+                  <Share2 className="h-4 w-4" /> Share:
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleShare('facebook')}
+                  className="hover:text-blue-600"
+                >
+                  <Facebook className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleShare('twitter')}
+                  className="hover:text-blue-400"
+                >
+                  <Twitter className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleShare('email')}
+                  className="hover:text-red-500"
+                >
+                  <Mail className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
 
             {/* Product Info */}
@@ -238,6 +327,7 @@ export default function ProductPage({ params }: { params: { id: string } }) {
                   <TabsTrigger value="description" className="flex-1">Description</TabsTrigger>
                   <TabsTrigger value="care" className="flex-1">Care Guide</TabsTrigger>
                   <TabsTrigger value="planting" className="flex-1">Planting</TabsTrigger>
+                  <TabsTrigger value="reviews" className="flex-1">Reviews</TabsTrigger>
                 </TabsList>
                 <TabsContent value="description" className="mt-4">
                   <div className="prose prose-stone dark:prose-invert">
@@ -289,6 +379,9 @@ export default function ProductPage({ params }: { params: { id: string } }) {
                     )}
                   </div>
                 </TabsContent>
+                <TabsContent value="reviews" className="mt-4">
+                  <ReviewSection plantId={plant.id} />
+                </TabsContent>
               </Tabs>
 
               {/* Seasonal Information */}
@@ -299,6 +392,12 @@ export default function ProductPage({ params }: { params: { id: string } }) {
                 </Card>
               )}
             </div>
+          </div>
+
+          {/* Similar Plants Section */}
+          <div className="mt-16">
+            <h2 className="text-2xl font-bold mb-6">Similar Plants</h2>
+            <SimilarPlants currentPlant={plant} />
           </div>
         </main>
 
