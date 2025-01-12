@@ -50,6 +50,11 @@ export default function NurseryDashboard() {
   const [isAddingPlant, setIsAddingPlant] = useState(false);
   const [plantToDelete, setPlantToDelete] = useState<Plant | null>(null);
   const [activeTab, setActiveTab] = useState("inventory");
+  const [selectedTemplate, setSelectedTemplate] = useState<string>("");
+
+  const { data: plantTemplates = [] } = useQuery<Plant[]>({
+    queryKey: ['/api/plants/templates'],
+  });
 
   const { data: plants = [], isLoading: isLoadingPlants } = useQuery<Plant[]>({
     queryKey: [`/api/plants?nurseryId=${user?.id}`],
@@ -59,7 +64,6 @@ export default function NurseryDashboard() {
     queryKey: [`/api/orders?nurseryId=${user?.id}`],
   });
 
-  // Mutations for plants management
   const addPlantMutation = useMutation({
     mutationFn: async (formData: FormData) => {
       if (!user?.address) {
@@ -167,7 +171,6 @@ export default function NurseryDashboard() {
     },
   });
 
-  // Mutation for updating order status
   const updateOrderStatusMutation = useMutation({
     mutationFn: async ({ orderId, status }: { orderId: number; status: string }) => {
       const response = await fetch(`/api/orders/${orderId}/status`, {
@@ -232,7 +235,6 @@ export default function NurseryDashboard() {
     await updateOrderStatusMutation.mutateAsync({ orderId, status });
   };
 
-  // Calculate basic analytics
   const totalOrders = orders.length;
   const pendingOrders = orders.filter(order => order.status === "pending").length;
   const totalRevenue = orders
@@ -269,7 +271,6 @@ export default function NurseryDashboard() {
           </TabsList>
 
           <TabsContent value="inventory" className="space-y-8">
-            {/* Plant Management Section */}
             <section>
               <h2 className="text-2xl font-semibold mb-6 text-display">Manage Plants</h2>
 
@@ -282,6 +283,39 @@ export default function NurseryDashboard() {
                     <DialogTitle>Add New Plant</DialogTitle>
                   </DialogHeader>
                   <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>Choose a Template (Optional)</Label>
+                      <Select
+                        value={selectedTemplate}
+                        onValueChange={(value) => {
+                          setSelectedTemplate(value);
+                          if (value) {
+                            const template = plantTemplates.find(p => p.id.toString() === value);
+                            if (template) {
+                              const form = document.querySelector('form') as HTMLFormElement;
+                              if (form) {
+                                form.name.value = template.name;
+                                form.category.value = template.category;
+                                form.description.value = template.description;
+                              }
+                            }
+                          }
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a template" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="">Custom Plant</SelectItem>
+                          {plantTemplates.map((template) => (
+                            <SelectItem key={template.id} value={template.id.toString()}>
+                              {template.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
                     <div className="space-y-2">
                       <Label htmlFor="name">Plant Name</Label>
                       <Input id="name" name="name" required />
@@ -335,7 +369,6 @@ export default function NurseryDashboard() {
                 </DialogContent>
               </Dialog>
 
-              {/* Edit Plant Dialog */}
               <Dialog open={!!selectedPlant} onOpenChange={(open) => !open && setSelectedPlant(null)}>
                 <DialogContent>
                   <DialogHeader>
@@ -414,7 +447,6 @@ export default function NurseryDashboard() {
                 </DialogContent>
               </Dialog>
 
-              {/* Delete Confirmation Dialog */}
               <AlertDialog
                 open={!!plantToDelete}
                 onOpenChange={(open) => !open && setPlantToDelete(null)}
@@ -479,7 +511,6 @@ export default function NurseryDashboard() {
           </TabsContent>
 
           <TabsContent value="orders" className="space-y-8">
-            {/* Analytics Overview */}
             <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="p-4 border rounded-lg">
                 <h3 className="text-sm font-medium text-muted-foreground">Total Orders</h3>
@@ -495,7 +526,6 @@ export default function NurseryDashboard() {
               </div>
             </section>
 
-            {/* Orders List */}
             <section>
               <h2 className="text-2xl font-semibold mb-6 text-display">Recent Orders</h2>
               {isLoadingOrders ? (
@@ -567,7 +597,6 @@ export default function NurseryDashboard() {
           </TabsContent>
         </Tabs>
 
-        {/* Nursery Information Section */}
         <section className="mt-8">
           <h2 className="text-2xl font-semibold mb-6 text-display">Nursery Information</h2>
           <div className="p-4 border rounded-lg">
