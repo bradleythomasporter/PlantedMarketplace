@@ -5,6 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -76,35 +83,66 @@ export default function NurseryDashboard() {
     queryKey: ['/api/plants/templates'],
   });
 
-  const handleTemplateChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleTemplateChange = (templateId: string) => {
     const form = document.querySelector('form') as HTMLFormElement;
     if (!form) return;
 
-    const [category, templateId] = event.target.value.split('|');
-    if (!category || !templateId || category === "none") {
+    // Reset form if "custom" is selected
+    if (templateId === "custom") {
       form.reset();
       return;
     }
 
-    const template = plantTemplates[category]?.find(t => t.id === templateId);
-    if (!template) return;
+    // Find the template in all categories
+    let selectedTemplate: PlantTemplate | undefined;
+    for (const templates of Object.values(plantTemplates)) {
+      selectedTemplate = templates.find(t => t.id === templateId);
+      if (selectedTemplate) break;
+    }
+
+    if (!selectedTemplate) return;
 
     // Populate form fields with template data
-    form.name.value = template.name;
-    form.scientificName.value = template.scientificName;
-    form.description.value = template.description;
-    form.imageUrl.value = template.imageUrl;
+    form.name.value = selectedTemplate.name;
+    form.scientificName.value = selectedTemplate.scientificName;
+    form.description.value = selectedTemplate.description;
+    form.imageUrl.value = selectedTemplate.imageUrl;
 
-    Object.entries(template.growthDetails).forEach(([key, value]) => {
+    // Populate growth details
+    Object.entries(selectedTemplate.growthDetails).forEach(([key, value]) => {
       const input = form.elements.namedItem(key) as HTMLInputElement;
       if (input) input.value = value;
     });
 
-    Object.entries(template.careInstructions).forEach(([key, value]) => {
+    // Populate care instructions
+    Object.entries(selectedTemplate.careInstructions).forEach(([key, value]) => {
       const input = form.elements.namedItem(key) as HTMLInputElement;
       if (input) input.value = value;
     });
   };
+
+  const renderTemplateSelection = () => (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <Label>Select Plant Template</Label>
+        <Select onValueChange={handleTemplateChange}>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Choose a template" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="custom">Custom Plant</SelectItem>
+            {Object.entries(plantTemplates).map(([category, templates]) => (
+              templates.map(template => (
+                <SelectItem key={template.id} value={template.id}>
+                  {template.name} ({category})
+                </SelectItem>
+              ))
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    </div>
+  );
 
   const addPlantMutation = useMutation({
     mutationFn: async (formData: FormData) => {
@@ -291,31 +329,6 @@ export default function NurseryDashboard() {
     .filter(order => order.status !== "cancelled")
     .reduce((sum, order) => sum + Number(order.totalAmount), 0);
 
-
-  const renderTemplateSelection = () => (
-    <div className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="template-select">Select Plant Template</Label>
-        <select
-          id="template-select"
-          className="w-full rounded-md border border-input bg-background px-3 py-2"
-          onChange={handleTemplateChange}
-          defaultValue="none|none"
-        >
-          <option value="none|none">Custom Plant</option>
-          {Object.entries(plantTemplates).map(([category, templates]) => (
-            <optgroup key={category} label={category}>
-              {templates.map(template => (
-                <option key={template.id} value={`${category}|${template.id}`}>
-                  {template.name}
-                </option>
-              ))}
-            </optgroup>
-          ))}
-        </select>
-      </div>
-    </div>
-  );
 
   return (
     <div className="min-h-screen bg-background">
