@@ -41,6 +41,14 @@ import { useLocation } from "wouter";
 import type { Plant, Order } from "@db/schema";
 import { NurseryProfileManager } from "@/components/NurseryProfileManager";
 
+interface PlantTemplate {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  imageUrl: string;
+}
+
 export default function NurseryDashboard() {
   const [, setLocation] = useLocation();
   const { user, logout } = useUser();
@@ -50,9 +58,9 @@ export default function NurseryDashboard() {
   const [isAddingPlant, setIsAddingPlant] = useState(false);
   const [plantToDelete, setPlantToDelete] = useState<Plant | null>(null);
   const [activeTab, setActiveTab] = useState("inventory");
-  const [selectedTemplate, setSelectedTemplate] = useState<string>("");
+  const [selectedTemplate, setSelectedTemplate] = useState<string>("custom");
 
-  const { data: plantTemplates = [] } = useQuery<Plant[]>({
+  const { data: plantTemplates = [], isLoading: isLoadingTemplates } = useQuery<PlantTemplate[]>({
     queryKey: ['/api/plants/templates'],
   });
 
@@ -289,16 +297,23 @@ export default function NurseryDashboard() {
                         value={selectedTemplate}
                         onValueChange={(value) => {
                           setSelectedTemplate(value);
-                          if (value) {
-                            const template = plantTemplates.find(p => p.id.toString() === value);
-                            if (template) {
-                              const form = document.querySelector('form') as HTMLFormElement;
-                              if (form) {
-                                form.name.value = template.name;
-                                form.category.value = template.category;
-                                form.description.value = template.description;
-                              }
-                            }
+                          const form = document.querySelector('form') as HTMLFormElement;
+                          if (!form) return;
+
+                          if (value === 'custom') {
+                            form.name.value = '';
+                            form.category.value = '';
+                            form.description.value = '';
+                            form.imageUrl.value = '';
+                            return;
+                          }
+
+                          const template = plantTemplates.find(p => p.id === value);
+                          if (template) {
+                            form.name.value = template.name;
+                            form.category.value = template.category;
+                            form.description.value = template.description;
+                            form.imageUrl.value = template.imageUrl;
                           }
                         }}
                       >
@@ -306,9 +321,9 @@ export default function NurseryDashboard() {
                           <SelectValue placeholder="Select a template" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">Custom Plant</SelectItem>
+                          <SelectItem value="custom">Custom Plant</SelectItem>
                           {plantTemplates.map((template) => (
-                            <SelectItem key={template.id} value={template.id.toString()}>
+                            <SelectItem key={template.id} value={template.id}>
                               {template.name}
                             </SelectItem>
                           ))}

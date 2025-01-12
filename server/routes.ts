@@ -5,40 +5,56 @@ import { plants, orders, users } from "@db/schema";
 import { like, and, or, eq, inArray, gte, sql } from "drizzle-orm";
 import NodeGeocoder from "node-geocoder";
 import { setupAuth } from "./auth";
-import distance from "@turf/distance";
-import { point } from "@turf/helpers";
-import Stripe from "stripe";
-
-// Validate Stripe key format
-const isValidStripeKey = (key: string) => {
-  return key && (key.startsWith('sk_test_') || key.startsWith('sk_live_'));
-};
-
-if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error("STRIPE_SECRET_KEY environment variable is required");
-}
-
-if (!isValidStripeKey(process.env.STRIPE_SECRET_KEY)) {
-  throw new Error("Invalid STRIPE_SECRET_KEY format. Key must start with 'sk_test_' or 'sk_live_'");
-}
-
-// Initialize Stripe with proper configuration
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  // Use latest stable API version
-  apiVersion: '2023-10-16' as const,
-  typescript: true,
-});
 
 const geocoder = NodeGeocoder({
   provider: 'openstreetmap'
 });
 
-// Maximum length for Stripe URLs
-const MAX_STRIPE_URL_LENGTH = 2000; // Keep under 2048 to be safe
-
 export function registerRoutes(app: Express): Server {
   // Setup authentication routes
   setupAuth(app);
+
+  // Plant templates endpoint
+  app.get("/api/plants/templates", async (_req, res) => {
+    try {
+      // Basic plant templates that can be used as starting points
+      const templates = [
+        {
+          id: "red-robin",
+          name: "Red Robin",
+          category: "shrubs",
+          description: "Popular evergreen shrub with bright red young leaves that mature to glossy dark green. Perfect for hedging.",
+          imageUrl: "https://plant-images.s3.amazonaws.com/red-robin.jpg"
+        },
+        {
+          id: "lavender",
+          name: "English Lavender",
+          category: "flowers",
+          description: "Fragrant perennial herb with purple flowers. Excellent for borders and containers.",
+          imageUrl: "https://plant-images.s3.amazonaws.com/lavender.jpg"
+        },
+        {
+          id: "peace-lily",
+          name: "Peace Lily",
+          category: "indoor",
+          description: "Popular indoor plant with elegant white flowers and glossy dark green leaves. Great air-purifying qualities.",
+          imageUrl: "https://plant-images.s3.amazonaws.com/peace-lily.jpg"
+        },
+        {
+          id: "japanese-maple",
+          name: "Japanese Maple",
+          category: "trees",
+          description: "Small, deciduous tree with delicate, lacy foliage that changes color throughout the seasons.",
+          imageUrl: "https://plant-images.s3.amazonaws.com/japanese-maple.jpg"
+        }
+      ];
+
+      res.json(templates);
+    } catch (error) {
+      console.error('Error fetching plant templates:', error);
+      res.status(500).json({ message: "Failed to fetch plant templates" });
+    }
+  });
 
   // Checkout endpoint
   app.post("/api/checkout", async (req, res) => {
