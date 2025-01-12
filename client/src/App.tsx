@@ -7,6 +7,7 @@ import AuthPage from "./pages/AuthPage";
 import NurseryDashboard from "./pages/NurseryDashboard";
 import ProductPage from "./pages/ProductPage";
 import NurseryProfile from "./pages/NurseryProfile";
+import { CheckoutSuccessPage, CheckoutCancelPage } from "./pages/CheckoutResult";
 import { useUser } from "@/hooks/use-user";
 
 function App() {
@@ -18,6 +19,8 @@ function App() {
       <Route path="/auth" component={AuthPage} />
       <Route path="/plants/:id" component={ProductPage} />
       <Route path="/nurseries/:id" component={NurseryProfile} />
+      <Route path="/checkout/success" component={CheckoutSuccessPage} />
+      <Route path="/checkout/cancel" component={CheckoutCancelPage} />
       {user?.role === "nursery" && (
         <Route path="/dashboard" component={NurseryDashboard} />
       )}

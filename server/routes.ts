@@ -24,7 +24,8 @@ if (!isValidStripeKey(process.env.STRIPE_SECRET_KEY)) {
 
 // Initialize Stripe with proper configuration
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: "2023-10-16",
+  // Use latest stable API version
+  apiVersion: '2023-10-16' as const,
   typescript: true,
 });
 
@@ -116,13 +117,16 @@ export function registerRoutes(app: Express): Server {
         });
       }
 
+      // Get base URL for success and cancel URLs
+      const baseUrl = `${req.protocol}://${req.get("host")}`;
+
       // Create Stripe checkout session with proper configuration
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ["card"],
         line_items: lineItems,
         mode: "payment",
-        success_url: `${req.protocol}://${req.get("host")}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${req.protocol}://${req.get("host")}/checkout/cancel`,
+        success_url: `${baseUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${baseUrl}/checkout/cancel`,
         metadata: {
           userId: req.user.id.toString(),
           items: JSON.stringify(items),
@@ -133,7 +137,7 @@ export function registerRoutes(app: Express): Server {
     } catch (error: any) {
       console.error("Checkout error:", error);
 
-      // Proper error handling with specific error messages
+      // Handle Stripe-specific errors
       if (error instanceof Stripe.errors.StripeError) {
         return res.status(error.statusCode || 500).json({ 
           message: error.message,
@@ -141,6 +145,7 @@ export function registerRoutes(app: Express): Server {
         });
       }
 
+      // Handle general errors
       res.status(500).json({ 
         message: "Unable to process checkout at this time. Please try again later.",
         type: "server_error"
