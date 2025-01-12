@@ -17,35 +17,118 @@ export function registerRoutes(app: Express): Server {
   // Plant templates endpoint
   app.get("/api/plants/templates", async (_req, res) => {
     try {
-      // Basic plant templates that can be used as starting points
+      // Comprehensive plant templates with detailed information
       const templates = [
         {
           id: "red-robin",
           name: "Red Robin",
+          scientificName: "Photinia x fraseri 'Red Robin'",
           category: "shrubs",
+          subCategory: "evergreen",
           description: "Popular evergreen shrub with bright red young leaves that mature to glossy dark green. Perfect for hedging.",
+          growthDetails: {
+            height: "2.5-4m",
+            spread: "2.5-4m",
+            growthRate: "Average",
+            ultimateHeight: "4 meters",
+            timeToUltimateHeight: "10-20 years",
+          },
+          careInstructions: {
+            sunlight: "Full sun to partial shade",
+            watering: "Water regularly until established, then drought tolerant",
+            soil: "Well-drained, fertile soil",
+            pruning: "Prune in spring or early summer to encourage new red growth",
+            fertilizer: "Apply balanced fertilizer in spring",
+          },
+          properties: {
+            hardinessZone: "USDA 7-10",
+            soilType: ["Clay", "Loam", "Sand"],
+            moisture: "Well-drained",
+            ph: "Acid, Neutral, Alkaline",
+            droughtTolerant: true,
+            frostTolerant: true,
+          },
+          seasonalInterest: {
+            spring: "Bright red new growth",
+            summer: "Glossy dark green foliage",
+            autumn: "Continued red new growth",
+            winter: "Evergreen structure",
+          },
           imageUrl: "https://plant-images.s3.amazonaws.com/red-robin.jpg"
         },
         {
-          id: "lavender",
-          name: "English Lavender",
-          category: "flowers",
-          description: "Fragrant perennial herb with purple flowers. Excellent for borders and containers.",
+          id: "lavender-hidcote",
+          name: "Lavender 'Hidcote'",
+          scientificName: "Lavandula angustifolia 'Hidcote'",
+          category: "perennials",
+          subCategory: "herbs",
+          description: "Compact English lavender variety with deep purple flowers and intense fragrance. Perfect for borders and containers.",
+          growthDetails: {
+            height: "40-60cm",
+            spread: "40-60cm",
+            growthRate: "Medium",
+            ultimateHeight: "60cm",
+            timeToUltimateHeight: "2-5 years",
+          },
+          careInstructions: {
+            sunlight: "Full sun",
+            watering: "Low water needs once established",
+            soil: "Well-drained, poor to moderately fertile soil",
+            pruning: "Cut back after first flush of flowers to encourage second bloom",
+            fertilizer: "Light feeding in spring",
+          },
+          properties: {
+            hardinessZone: "USDA 5-9",
+            soilType: ["Chalk", "Loam", "Sand"],
+            moisture: "Well-drained",
+            ph: "Neutral, Alkaline",
+            droughtTolerant: true,
+            frostTolerant: true,
+          },
+          seasonalInterest: {
+            spring: "Silver-grey foliage",
+            summer: "Deep purple flowers",
+            autumn: "Extended flowering",
+            winter: "Evergreen structure",
+          },
           imageUrl: "https://plant-images.s3.amazonaws.com/lavender.jpg"
         },
         {
           id: "peace-lily",
           name: "Peace Lily",
+          scientificName: "Spathiphyllum wallisii",
           category: "indoor",
-          description: "Popular indoor plant with elegant white flowers and glossy dark green leaves. Great air-purifying qualities.",
+          subCategory: "foliage plants",
+          description: "Popular indoor plant with elegant white flowers and glossy dark green leaves. Excellent air-purifying qualities.",
+          growthDetails: {
+            height: "45-65cm",
+            spread: "45-65cm",
+            growthRate: "Medium",
+            ultimateHeight: "65cm",
+            timeToUltimateHeight: "3-5 years",
+          },
+          careInstructions: {
+            sunlight: "Indirect light to partial shade",
+            watering: "Keep soil consistently moist",
+            soil: "Rich, well-draining potting mix",
+            pruning: "Remove spent flowers and yellowed leaves",
+            fertilizer: "Monthly feeding during growing season",
+          },
+          properties: {
+            hardinessZone: "USDA 11-12",
+            soilType: ["Potting mix"],
+            moisture: "Moist but well-drained",
+            ph: "Acid, Neutral",
+            droughtTolerant: false,
+            frostTolerant: false,
+          },
+          seasonalInterest: {
+            spring: "Active growth period",
+            summer: "White flowers",
+            autumn: "Continued growth",
+            winter: "Possible flowering",
+          },
           imageUrl: "https://plant-images.s3.amazonaws.com/peace-lily.jpg"
-        },
-        {
-          id: "japanese-maple",
-          name: "Japanese Maple",
-          category: "trees",
-          description: "Small, deciduous tree with delicate, lacy foliage that changes color throughout the seasons.",
-          imageUrl: "https://plant-images.s3.amazonaws.com/japanese-maple.jpg"
         }
       ];
 

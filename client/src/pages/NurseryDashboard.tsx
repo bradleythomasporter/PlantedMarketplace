@@ -44,8 +44,38 @@ import { NurseryProfileManager } from "@/components/NurseryProfileManager";
 interface PlantTemplate {
   id: string;
   name: string;
+  scientificName: string;
   category: string;
+  subCategory: string;
   description: string;
+  growthDetails: {
+    height: string;
+    spread: string;
+    growthRate: string;
+    ultimateHeight: string;
+    timeToUltimateHeight: string;
+  };
+  careInstructions: {
+    sunlight: string;
+    watering: string;
+    soil: string;
+    pruning: string;
+    fertilizer: string;
+  };
+  properties: {
+    hardinessZone: string;
+    soilType: string[];
+    moisture: string;
+    ph: string;
+    droughtTolerant: boolean;
+    frostTolerant: boolean;
+  };
+  seasonalInterest: {
+    spring: string;
+    summer: string;
+    autumn: string;
+    winter: string;
+  };
   imageUrl: string;
 }
 
@@ -59,6 +89,8 @@ export default function NurseryDashboard() {
   const [plantToDelete, setPlantToDelete] = useState<Plant | null>(null);
   const [activeTab, setActiveTab] = useState("inventory");
   const [selectedTemplate, setSelectedTemplate] = useState<string>("custom");
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [selectedSubCategory, setSelectedSubCategory] = useState<string>("");
 
   const { data: plantTemplates = [], isLoading: isLoadingTemplates } = useQuery<PlantTemplate[]>({
     queryKey: ['/api/plants/templates'],
@@ -249,6 +281,54 @@ export default function NurseryDashboard() {
     .filter(order => order.status !== "cancelled")
     .reduce((sum, order) => sum + Number(order.totalAmount), 0);
 
+  const categories = plantTemplates.reduce((acc, template) => {
+    if (!acc[template.category]) {
+      acc[template.category] = new Set();
+    }
+    acc[template.category].add(template.subCategory);
+    return acc;
+  }, {} as Record<string, Set<string>>);
+
+  const handleTemplateSelection = (value: string) => {
+    setSelectedTemplate(value);
+    const form = document.querySelector('form') as HTMLFormElement;
+    if (!form) return;
+
+    if (value === 'custom') {
+      form.name.value = '';
+      form.scientificName.value = '';
+      form.category.value = '';
+      form.description.value = '';
+      form.height.value = '';
+      form.spread.value = '';
+      form.sunlight.value = '';
+      form.watering.value = '';
+      form.soil.value = '';
+      form.pruning.value = '';
+      form.imageUrl.value = '';
+      setSelectedCategory("");
+      setSelectedSubCategory("");
+      return;
+    }
+
+    const template = plantTemplates.find(p => p.id === value);
+    if (template) {
+      form.name.value = template.name;
+      form.scientificName.value = template.scientificName;
+      form.category.value = template.category;
+      form.description.value = template.description;
+      form.height.value = template.growthDetails.height;
+      form.spread.value = template.growthDetails.spread;
+      form.sunlight.value = template.careInstructions.sunlight;
+      form.watering.value = template.careInstructions.watering;
+      form.soil.value = template.careInstructions.soil;
+      form.pruning.value = template.careInstructions.pruning;
+      form.imageUrl.value = template.imageUrl;
+      setSelectedCategory(template.category);
+      setSelectedSubCategory(template.subCategory);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <header className="bg-primary/10 p-4 md:p-6">
@@ -286,7 +366,7 @@ export default function NurseryDashboard() {
                 <DialogTrigger asChild>
                   <Button className="mb-6">Add New Plant</Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent className="max-w-3xl">
                   <DialogHeader>
                     <DialogTitle>Add New Plant</DialogTitle>
                   </DialogHeader>
@@ -295,27 +375,7 @@ export default function NurseryDashboard() {
                       <Label>Choose a Template (Optional)</Label>
                       <Select
                         value={selectedTemplate}
-                        onValueChange={(value) => {
-                          setSelectedTemplate(value);
-                          const form = document.querySelector('form') as HTMLFormElement;
-                          if (!form) return;
-
-                          if (value === 'custom') {
-                            form.name.value = '';
-                            form.category.value = '';
-                            form.description.value = '';
-                            form.imageUrl.value = '';
-                            return;
-                          }
-
-                          const template = plantTemplates.find(p => p.id === value);
-                          if (template) {
-                            form.name.value = template.name;
-                            form.category.value = template.category;
-                            form.description.value = template.description;
-                            form.imageUrl.value = template.imageUrl;
-                          }
-                        }}
+                        onValueChange={handleTemplateSelection}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Select a template" />
@@ -324,59 +384,108 @@ export default function NurseryDashboard() {
                           <SelectItem value="custom">Custom Plant</SelectItem>
                           {plantTemplates.map((template) => (
                             <SelectItem key={template.id} value={template.id}>
-                              {template.name}
+                              {template.name} ({template.scientificName})
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Plant Name</Label>
-                      <Input id="name" name="name" required />
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="name">Common Name</Label>
+                        <Input id="name" name="name" required />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="scientificName">Scientific Name</Label>
+                        <Input id="scientificName" name="scientificName" required />
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="category">Category</Label>
-                      <Select name="category" required>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="flowers">Flowers</SelectItem>
-                          <SelectItem value="trees">Trees</SelectItem>
-                          <SelectItem value="shrubs">Shrubs</SelectItem>
-                          <SelectItem value="indoor">Indoor</SelectItem>
-                          <SelectItem value="outdoor">Outdoor</SelectItem>
-                        </SelectContent>
-                      </Select>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="category">Category</Label>
+                        <Select
+                          name="category"
+                          value={selectedCategory}
+                          onValueChange={setSelectedCategory}
+                          required
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select category" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Object.keys(categories).map((category) => (
+                              <SelectItem key={category} value={category}>
+                                {category.charAt(0).toUpperCase() + category.slice(1)}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="subCategory">Sub-Category</Label>
+                        <Select
+                          name="subCategory"
+                          value={selectedSubCategory}
+                          onValueChange={setSelectedSubCategory}
+                          required
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select sub-category" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {selectedCategory && Array.from(categories[selectedCategory] || []).map((subCategory) => (
+                              <SelectItem key={subCategory} value={subCategory}>
+                                {subCategory.charAt(0).toUpperCase() + subCategory.slice(1)}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
+
                     <div className="space-y-2">
                       <Label htmlFor="description">Description</Label>
                       <Textarea id="description" name="description" required />
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="price">Price</Label>
-                      <Input
-                        id="price"
-                        name="price"
-                        type="number"
-                        step="0.01"
-                        required
-                      />
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="height">Height</Label>
+                        <Input id="height" name="height" required />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="spread">Spread</Label>
+                        <Input id="spread" name="spread" required />
+                      </div>
                     </div>
+
                     <div className="space-y-2">
-                      <Label htmlFor="quantity">Quantity</Label>
-                      <Input
-                        id="quantity"
-                        name="quantity"
-                        type="number"
-                        required
-                      />
+                      <Label htmlFor="sunlight">Sunlight Requirements</Label>
+                      <Input id="sunlight" name="sunlight" required />
                     </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="watering">Watering Needs</Label>
+                      <Input id="watering" name="watering" required />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="soil">Soil Requirements</Label>
+                      <Input id="soil" name="soil" required />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="pruning">Pruning Instructions</Label>
+                      <Input id="pruning" name="pruning" required />
+                    </div>
+
                     <div className="space-y-2">
                       <Label htmlFor="imageUrl">Image URL</Label>
                       <Input id="imageUrl" name="imageUrl" required />
                     </div>
+
                     <Button type="submit" className="w-full">
                       Add Plant
                     </Button>
