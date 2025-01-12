@@ -720,9 +720,10 @@ export function registerRoutes(app: Express): Server {
         quantity,
         imageUrl: imageUrl || "",
         nurseryId: req.user.id,
-        latitude: req.user.latitude,
-        longitude: req.user.longitude,
-        zipCode: req.user.address.match(/\d{5}/)?.[0] || "00000",
+        // Make location fields optional
+        ...(req.user.latitude && { latitude: req.user.latitude }),
+        ...(req.user.longitude && { longitude: req.user.longitude }),
+        zipCode: req.user.address?.match(/\d{5}/)?.[0] || null,
       };
 
       const [newPlant] = await db

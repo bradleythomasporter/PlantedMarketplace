@@ -671,6 +671,94 @@ export default function NurseryDashboard() {
           <TabsContent value="profile" className="space-y-8">
             <section>
               <h2 className="text-2xl font-semibold mb-6 text-display">Nursery Profile</h2>
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  const formData = new FormData(e.currentTarget);
+                  try {
+                    const response = await fetch("/api/user/profile", {
+                      method: "PATCH",
+                      headers: { "Content-Type": "application/json" },
+                      credentials: "include",
+                      body: JSON.stringify({
+                        name: formData.get("name"),
+                        address: formData.get("address"),
+                        description: formData.get("description"),
+                        hoursOfOperation: formData.get("hoursOfOperation"),
+                        website: formData.get("website"),
+                        phoneNumber: formData.get("phoneNumber"),
+                      }),
+                    });
+
+                    if (!response.ok) {
+                      throw new Error(await response.text());
+                    }
+
+                    toast({
+                      title: "Profile updated successfully",
+                    });
+                  } catch (error) {
+                    toast({
+                      title: "Failed to update profile",
+                      description: error instanceof Error ? error.message : "Please try again",
+                      variant: "destructive",
+                    });
+                  }
+                }}
+                className="space-y-4"
+              >
+                <div className="space-y-2">
+                  <Label htmlFor="name">Business Name</Label>
+                  <Input id="name" name="name" defaultValue={user?.name} required />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="address">Address</Label>
+                  <Input id="address" name="address" defaultValue={user?.address} required />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="description">Business Description</Label>
+                  <Textarea
+                    id="description"
+                    name="description"
+                    defaultValue={user?.description || ""}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="hoursOfOperation">Hours of Operation</Label>
+                  <Input
+                    id="hoursOfOperation"
+                    name="hoursOfOperation"
+                    defaultValue={user?.hoursOfOperation || ""}
+                    placeholder="e.g., Mon-Fri: 9am-5pm"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="website">Website</Label>
+                  <Input
+                    id="website"
+                    name="website"
+                    type="url"
+                    defaultValue={user?.website || ""}
+                    placeholder="https://"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="phoneNumber">Phone Number</Label>
+                  <Input
+                    id="phoneNumber"
+                    name="phoneNumber"
+                    type="tel"
+                    defaultValue={user?.phoneNumber || ""}
+                  />
+                </div>
+
+                <Button type="submit">Save Changes</Button>
+              </form>
             </section>
           </TabsContent>
         </Tabs>
