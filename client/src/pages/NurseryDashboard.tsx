@@ -93,6 +93,7 @@ const mainCategories = {
 } as const;
 
 type MainCategory = keyof typeof mainCategories;
+type SubCategory<T extends MainCategory> = typeof mainCategories[T][number];
 
 export default function NurseryDashboard() {
   const [, setLocation] = useLocation();
@@ -103,11 +104,11 @@ export default function NurseryDashboard() {
   const [isAddingPlant, setIsAddingPlant] = useState(false);
   const [plantToDelete, setPlantToDelete] = useState<Plant | null>(null);
   const [activeTab, setActiveTab] = useState("inventory");
-  const [selectedTemplate, setSelectedTemplate] = useState<string>("none");
-  const [mainCategory, setMainCategory] = useState<MainCategory | "">("");
-  const [subCategory, setSubCategory] = useState<string>("");
-  const [activeSection, setActiveSection] = useState<string>("basics");
-  const [selectedMainCategory, setSelectedMainCategory] = useState<string>("none");
+  const [selectedTemplate, setSelectedTemplate] = useState("none");
+  const [mainCategory, setMainCategory] = useState<MainCategory | null>(null);
+  const [subCategory, setSubCategory] = useState<string | null>(null);
+  const [activeSection, setActiveSection] = useState("basics");
+  const [selectedMainCategory, setSelectedMainCategory] = useState("none");
   const [availablePlants, setAvailablePlants] = useState<PlantTemplate[]>([]);
 
   const { data: plantTemplates = {}, isLoading: isLoadingTemplates } = useQuery<Record<string, PlantTemplate[]>>({
@@ -320,8 +321,8 @@ export default function NurseryDashboard() {
 
     if (templateId === 'none') {
       form.reset();
-      setMainCategory("");
-      setSubCategory("");
+      setMainCategory(null);
+      setSubCategory(null);
       return;
     }
 
@@ -342,7 +343,7 @@ export default function NurseryDashboard() {
         if (input) input.value = value;
       });
 
-      setMainCategory(template.category as MainCategory);
+      setMainCategory(template.mainCategory as MainCategory);
       setSubCategory(template.subCategory);
     }
   };
@@ -353,7 +354,12 @@ export default function NurseryDashboard() {
         <Label>1. Select Plant Type</Label>
         <Select
           value={selectedMainCategory}
-          onValueChange={setSelectedMainCategory}
+          onValueChange={(value) => {
+            setSelectedMainCategory(value);
+            if (value === "none") {
+              setSelectedTemplate("none");
+            }
+          }}
         >
           <SelectTrigger>
             <SelectValue placeholder="Select plant type" />
@@ -369,7 +375,7 @@ export default function NurseryDashboard() {
         </Select>
       </div>
 
-      {selectedMainCategory && selectedMainCategory !== 'none' && (
+      {selectedMainCategory !== "none" && (
         <div className="space-y-2">
           <Label>2. Select Plant</Label>
           <Select
@@ -391,7 +397,7 @@ export default function NurseryDashboard() {
         </div>
       )}
 
-      {selectedTemplate && selectedTemplate !== 'none' && (
+      {selectedTemplate !== "none" && (
         <div className="mt-4">
           <img
             src={availablePlants.find(p => p.id === selectedTemplate)?.imageUrl}
@@ -477,13 +483,17 @@ export default function NurseryDashboard() {
                             <div className="space-y-2">
                               <Label>Main Category</Label>
                               <Select
-                                value={mainCategory}
-                                onValueChange={(value: MainCategory) => setMainCategory(value)}
+                                value={mainCategory || "none"}
+                                onValueChange={(value) => {
+                                  setMainCategory(value === "none" ? null : value as MainCategory);
+                                  setSubCategory(null);
+                                }}
                               >
                                 <SelectTrigger>
                                   <SelectValue placeholder="Select main category" />
                                 </SelectTrigger>
                                 <SelectContent>
+                                  <SelectItem value="none">Select category</SelectItem>
                                   {(Object.keys(mainCategories) as MainCategory[]).map((category) => (
                                     <SelectItem key={category} value={category}>
                                       {category.split('_').map(word =>
@@ -499,13 +509,14 @@ export default function NurseryDashboard() {
                               <div className="space-y-2">
                                 <Label>Sub-Category</Label>
                                 <Select
-                                  value={subCategory}
-                                  onValueChange={setSubCategory}
+                                  value={subCategory || "none"}
+                                  onValueChange={(value) => setSubCategory(value === "none" ? null : value)}
                                 >
                                   <SelectTrigger>
                                     <SelectValue placeholder="Select sub-category" />
                                   </SelectTrigger>
                                   <SelectContent>
+                                    <SelectItem value="none">Select sub-category</SelectItem>
                                     {mainCategories[mainCategory].map((sub) => (
                                       <SelectItem key={sub} value={sub}>
                                         {sub}
