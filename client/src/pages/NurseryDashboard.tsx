@@ -30,7 +30,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/hooks/use-user";
-import { Loader2, PenSquare, Trash2, Package, Sun, Droplets, Tree } from "lucide-react";
+import { Loader2, PenSquare, Trash2, Package, Sun, Droplets } from "lucide-react";
 import { useLocation } from "wouter";
 import type { Plant, Order } from "@db/schema";
 
@@ -39,7 +39,6 @@ interface PlantTemplate {
   name: string;
   scientificName: string;
   category: string;
-  subCategory: string;
   description: string;
   growthDetails: {
     height: string;
@@ -83,8 +82,8 @@ export default function NurseryDashboard() {
   });
 
   const addPlantMutation = useMutation({
-    mutationFn: async (data: FormData) => {
-      const formEntries = Object.fromEntries(data.entries());
+    mutationFn: async (formData: FormData) => {
+      const formEntries = Object.fromEntries(formData.entries());
       const price = parseFloat(formEntries.price as string);
       const quantity = parseInt(formEntries.quantity as string);
 
@@ -141,83 +140,6 @@ export default function NurseryDashboard() {
     addPlantMutation.mutate(formData);
   };
 
-  const renderTemplateSelection = () => {
-    if (isLoadingTemplates) {
-      return (
-        <div className="flex justify-center py-6">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      );
-    }
-
-    return (
-      <div className="space-y-6">
-        <div>
-          <Label>Plant Type</Label>
-          <Button
-            variant="outline"
-            className="mt-2 w-full"
-            onClick={() => {
-              const form = document.querySelector('form') as HTMLFormElement;
-              if (form) form.reset();
-            }}
-          >
-            Custom Plant
-          </Button>
-        </div>
-
-        <Accordion type="single" collapsible className="w-full">
-          {Object.entries(plantTemplates).map(([category, templates]) => (
-            <AccordionItem key={category} value={category}>
-              <AccordionTrigger className="text-lg font-semibold capitalize">
-                {category === "indoor" ? "Indoor Plants" :
-                  category === "outdoor" ? "Outdoor Plants" :
-                    category.charAt(0).toUpperCase() + category.slice(1)}
-              </AccordionTrigger>
-              <AccordionContent>
-                <div className="grid grid-cols-1 gap-2 p-2">
-                  {templates.map((template) => (
-                    <Button
-                      key={template.id}
-                      variant="outline"
-                      className="justify-start h-auto py-4 px-4"
-                      onClick={() => {
-                        const form = document.querySelector('form') as HTMLFormElement;
-                        if (!form) return;
-
-                        form.name.value = template.name;
-                        form.scientificName.value = template.scientificName;
-                        form.category.value = template.mainCategory;
-                        form.description.value = template.description;
-                        form.imageUrl.value = template.imageUrl;
-                        form.price.value = "29.99";
-                        form.quantity.value = "10";
-                        form.sunExposure.value = template.careInstructions.sunlight;
-                        form.wateringNeeds.value = template.careInstructions.watering;
-                        form.soilType.value = template.properties.soilType[0];
-                        form.hardinessZone.value = template.properties.hardinessZone;
-                        form.matureSize.value = template.growthDetails.ultimateHeight;
-                        form.growthRate.value = template.growthDetails.growthRate;
-                        form.maintainanceLevel.value = "medium";
-                      }}
-                    >
-                      <div className="text-left">
-                        <div className="font-medium">{template.name}</div>
-                        <div className="text-sm text-muted-foreground mt-1">
-                          {template.scientificName}
-                        </div>
-                      </div>
-                    </Button>
-                  ))}
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
-      </div>
-    );
-  };
-
   const CareRequirementIcon = ({ type, level }: { type: string; level: string }) => {
     const getIcon = () => {
       switch (type) {
@@ -226,7 +148,7 @@ export default function NurseryDashboard() {
         case 'water':
           return <Droplets className={`h-5 w-5 ${getColorClass(level)}`} />;
         case 'maintenance':
-          return <Tree className={`h-5 w-5 ${getColorClass(level)}`} />;
+          return <Package className={`h-5 w-5 ${getColorClass(level)}`} />;
         default:
           return null;
       }
@@ -311,44 +233,14 @@ export default function NurseryDashboard() {
     },
   });
 
-  const updateOrderStatusMutation = useMutation({
-    mutationFn: async ({ orderId, status }: { orderId: number; status: string }) => {
-      const response = await fetch(`/api/orders/${orderId}/status`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ status }),
-      });
-
-      if (!response.ok) {
-        throw new Error(await response.text());
-      }
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/orders?nurseryId=${user?.id}`] });
-      toast({
-        title: "Order status updated successfully",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Failed to update order status",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
   const handleUpdate = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!selectedPlant) return;
 
     const formData = new FormData(e.currentTarget);
-    const category = formData.get("category") as "flowers" | "trees" | "shrubs" | "indoor" | "outdoor";
     const updates = {
       name: formData.get("name") as string,
-      category,
+      category: formData.get("category") as string,
       description: formData.get("description") as string,
       price: parseFloat(formData.get("price") as string),
       quantity: parseInt(formData.get("quantity") as string),
@@ -366,10 +258,6 @@ export default function NurseryDashboard() {
     await deletePlantMutation.mutateAsync(plant.id);
   };
 
-  const handleUpdateOrderStatus = async (orderId: number, status: string) => {
-    await updateOrderStatusMutation.mutateAsync({ orderId, status });
-  };
-
   const { data: plants = [], isLoading: isLoadingPlants } = useQuery<Plant[]>({
     queryKey: [`/api/plants?nurseryId=${user?.id}`],
   });
@@ -383,6 +271,83 @@ export default function NurseryDashboard() {
   const totalRevenue = orders
     .filter(order => order.status !== "cancelled")
     .reduce((sum, order) => sum + Number(order.totalAmount), 0);
+
+  const renderTemplateSelection = () => {
+    if (isLoadingTemplates) {
+      return (
+        <div className="flex justify-center py-6">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-6">
+        <div>
+          <Label>Plant Type</Label>
+          <Button
+            variant="outline"
+            className="mt-2 w-full"
+            onClick={() => {
+              const form = document.querySelector('form') as HTMLFormElement;
+              if (form) form.reset();
+            }}
+          >
+            Custom Plant
+          </Button>
+        </div>
+
+        <Accordion type="single" collapsible className="w-full">
+          {Object.entries(plantTemplates).map(([category, templates]) => (
+            <AccordionItem key={category} value={category}>
+              <AccordionTrigger className="text-lg font-semibold capitalize">
+                {category === "indoor" ? "Indoor Plants" :
+                  category === "outdoor" ? "Outdoor Plants" :
+                    category.charAt(0).toUpperCase() + category.slice(1)}
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="grid grid-cols-1 gap-2 p-2">
+                  {templates.map((template) => (
+                    <Button
+                      key={template.id}
+                      variant="outline"
+                      className="justify-start h-auto py-4 px-4"
+                      onClick={() => {
+                        const form = document.querySelector('form') as HTMLFormElement;
+                        if (!form) return;
+
+                        form.name.value = template.name;
+                        form.scientificName.value = template.scientificName;
+                        form.category.value = template.mainCategory;
+                        form.description.value = template.description;
+                        form.imageUrl.value = template.imageUrl;
+                        form.price.value = "29.99";
+                        form.quantity.value = "10";
+                        form.sunExposure.value = template.careInstructions.sunlight;
+                        form.wateringNeeds.value = template.careInstructions.watering;
+                        form.soilType.value = template.properties.soilType[0];
+                        form.hardinessZone.value = template.properties.hardinessZone;
+                        form.matureSize.value = template.growthDetails.ultimateHeight;
+                        form.growthRate.value = template.growthDetails.growthRate;
+                        form.maintainanceLevel.value = "medium";
+                      }}
+                    >
+                      <div className="text-left">
+                        <div className="font-medium">{template.name}</div>
+                        <div className="text-sm text-muted-foreground mt-1">
+                          {template.scientificName}
+                        </div>
+                      </div>
+                    </Button>
+                  ))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
+      </div>
+    );
+  };
 
 
   return (
@@ -430,7 +395,7 @@ export default function NurseryDashboard() {
 
           <TabsContent value="inventory" className="space-y-8">
             <section>
-              <h2 className="text-2xl font-semibold mb-6 text-display">Manage Plants</h2>
+              <h2 className="text-2xl font-semibold mb-6">Manage Plants</h2>
 
               <Dialog open={isAddingPlant} onOpenChange={setIsAddingPlant}>
                 <DialogTrigger asChild>
@@ -592,9 +557,7 @@ export default function NurseryDashboard() {
                           <Label htmlFor="imageUrl">Image URL</Label>
                           <Input id="imageUrl" name="imageUrl" />
                         </div>
-                      </div>
 
-                      <div className="pt-4 border-t">
                         <Button
                           type="submit"
                           className="w-full"
@@ -729,7 +692,9 @@ export default function NurseryDashboard() {
                       <div className="space-y-2">
                         <h3 className="font-semibold">{plant.name}</h3>
                         {plant.scientificName && (
-                          <p className="text-sm text-muted-foreground italic">{plant.scientificName}</p>
+                          <p className="text-sm text-muted-foreground italic">
+                            {plant.scientificName}
+                          </p>
                         )}
                         <p className="text-sm text-muted-foreground">
                           Stock: {plant.quantity} | ${Number(plant.price).toFixed(2)}
@@ -742,7 +707,10 @@ export default function NurseryDashboard() {
                             <CareRequirementIcon type="water" level={plant.wateringNeeds} />
                           )}
                           {plant.maintainanceLevel && (
-                            <CareRequirementIcon type="maintenance" level={plant.maintainanceLevel} />
+                            <CareRequirementIcon
+                              type="maintenance"
+                              level={plant.maintainanceLevel}
+                            />
                           )}
                         </div>
                       </div>
@@ -772,21 +740,27 @@ export default function NurseryDashboard() {
           <TabsContent value="orders" className="space-y-8">
             <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="p-4 border rounded-lg">
-                <h3 className="text-sm font-medium text-muted-foreground">Total Orders</h3>
+                <h3 className="text-sm font-medium text-muted-foreground">
+                  Total Orders
+                </h3>
                 <p className="text-2xl font-bold">{totalOrders}</p>
               </div>
               <div className="p-4 border rounded-lg">
-                <h3 className="text-sm font-medium text-muted-foreground">Pending Orders</h3>
+                <h3 className="text-sm font-medium text-muted-foreground">
+                  Pending Orders
+                </h3>
                 <p className="text-2xl font-bold">{pendingOrders}</p>
               </div>
               <div className="p-4 border rounded-lg">
-                <h3 className="text-sm font-medium text-muted-foreground">Total Revenue</h3>
+                <h3 className="text-sm font-medium text-muted-foreground">
+                  Total Revenue
+                </h3>
                 <p className="text-2xl font-bold">${totalRevenue.toFixed(2)}</p>
               </div>
             </section>
 
             <section>
-              <h2 className="text-2xl font-semibold mb-6 text-display">Recent Orders</h2>
+              <h2 className="text-2xl font-semibold mb-6">Recent Orders</h2>
               {isLoadingOrders ? (
                 <div className="flex justify-center py-12">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -846,137 +820,31 @@ export default function NurseryDashboard() {
 
           <TabsContent value="profile" className="space-y-8">
             <section>
-              <h2 className="text-2xl font-semibold mb-6 text-display">Profile Settings</h2>
-              <form
-                onSubmit={async (e) => {
-                  e.preventDefault();
-                  const formData = new FormData(e.currentTarget);
-
-                  try {
-                    const response = await fetch("/api/user/profile", {
-                      method: "PATCH",
-                      headers: { "Content-Type": "application/json" },
-                      credentials: "include",
-                      body: JSON.stringify({
-                        name: formData.get("name"),
-                        email: formData.get("email"),
-                        address: formData.get("address"),
-                        description: formData.get("description"),
-                        hoursOfOperation: formData.get("hoursOfOperation"),
-                        website: formData.get("website"),
-                        phoneNumber: formData.get("phoneNumber"),
-                      }),
-                    });
-
-                    if (!response.ok) {
-                      throw new Error(await response.text());
-                    }
-
-                    toast({
-                      title: "Profile updated successfully",
-                    });
-
-                    queryClient.invalidateQueries({ queryKey: ["user"] });
-                  } catch (error: any) {
-                    toast({
-                      title: "Failed to update profile",
-                      description: error.message,
-                      variant: "destructive",
-                    });
-                  }
-                }}
-                className="space-y-4 max-w-2xl"
-              >
-                <div className="space-y-2">
-                  <Label htmlFor="name">Business Name</Label>
-                  <Input id="name" name="name" defaultValue={user?.name} required />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    defaultValue={user?.email || ""}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="address">Address</Label>
-                  <Input
-                    id="address"
-                    name="address"
-                    defaultValue={user?.address}
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    name="description"
-                    defaultValue={user?.description || ""}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="hoursOfOperation">Hours of Operation</Label>
-                  <Input
-                    id="hoursOfOperation"
-                    name="hoursOfOperation"
-                    defaultValue={user?.hoursOfOperation || ""}
-                    placeholder="e.g., Mon-Fri: 9AM-5PM"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="website">Website</Label>
-                  <Input
-                    id="website"
-                    name="website"
-                    defaultValue={user?.website || ""}
-                    placeholder="https://"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="phoneNumber">Phone Number</Label>
-                  <Input
-                    id="phoneNumber"
-                    name="phoneNumber"
-                    defaultValue={user?.phoneNumber || ""}
-                  />
-                </div>
-
-                <Button type="submit">Save Changes</Button>
-              </form>
+              <h2 className="text-2xl font-semibold mb-6">Profile Settings</h2>
+              {user && (
+                <form className="space-y-4 max-w-2xl">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Business Name</Label>
+                    <Input id="name" name="name" defaultValue={user.name} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input id="email" name="email" type="email" defaultValue={user.email || ""} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="address">Address</Label>
+                    <Input id="address" name="address" defaultValue={user.address} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="phoneNumber">Phone Number</Label>
+                    <Input id="phoneNumber" name="phoneNumber" defaultValue={user.phoneNumber || ""} />
+                  </div>
+                  <Button type="submit">Update Profile</Button>
+                </form>
+              )}
             </section>
           </TabsContent>
         </Tabs>
-
-        <section className="mt-8">
-          <h2 className="text-2xl font-semibold mb-6 text-display">Nursery Information</h2>
-          <div className="p-4 border rounded-lg">
-            <p className="font-semibold">{user?.name}</p>
-            {user?.address && (
-              <p className="text-sm text-muted-foreground mt-2">
-                {user.address}
-              </p>
-            )}
-            {user?.description && (
-              <p className="text-sm text-muted-foreground mt-2">
-                {user.description}
-              </p>
-            )}
-            {user?.hoursOfOperation && (
-              <p className="text-sm text-muted-foreground mt-2">
-                Hours: {user.hoursOfOperation}
-              </p>
-            )}
-          </div>
-        </section>
       </main>
     </div>
   );
