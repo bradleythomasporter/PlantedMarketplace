@@ -816,7 +816,6 @@ export default function NurseryDashboard() {
           <TabsContent value="profile" className="space-y-8">
             <section>
               <h2 className="text-2xl font-semibold mb-6 text-display">Nursery Profile</h2>
-              <NurseryProfileManager />
             </section>
           </TabsContent>
         </Tabs>
