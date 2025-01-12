@@ -15,7 +15,6 @@ class PlantViewSet(viewsets.ModelViewSet):
         queryset = Plant.objects.all().order_by('common_name')
         search = self.request.query_params.get('search', None)
         category = self.request.query_params.get('category', None)
-        plant_type = self.request.query_params.get('type', None)
 
         if search:
             queryset = queryset.filter(
@@ -23,34 +22,31 @@ class PlantViewSet(viewsets.ModelViewSet):
                 Q(scientific_name__icontains=search)
             )
 
-        if category:
-            if category == 'indoor':
-                queryset = queryset.filter(indoor_suitable=True)
-            elif category == 'outdoor':
-                queryset = queryset.filter(indoor_suitable=False)
-
-        if plant_type:
-            if plant_type == 'perennial':
-                queryset = queryset.filter(time_to_maturity__icontains='year')
-            # Add more plant type filters as needed
+        if category == 'indoor':
+            queryset = queryset.filter(indoor_suitable=True)
+        elif category == 'outdoor':
+            queryset = queryset.filter(indoor_suitable=False)
 
         return queryset
 
     @action(detail=True, methods=['post'])
-    def add_to_inventory(self, request, pk=None):
-        plant = self.get_object()
+    def use_as_template(self, request, pk=None):
+        """Use an existing plant as a template for inventory"""
+        template_plant = self.get_object()
         nursery = request.user
 
         if not nursery or not nursery.is_authenticated:
-            return Response({"error": "Authentication required"}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response(
+                {"error": "Authentication required"}, 
+                status=status.HTTP_401_UNAUTHORIZED
+            )
 
+        # Create inventory item with template data
         serializer = PlantInventorySerializer(data={
-            'plant_id': plant.id,
-            'quantity': request.data.get('quantity', 0),
-            'price': request.data.get('price', 0),
-            'size': request.data.get('size', ''),
-            'notes': request.data.get('notes', ''),
-            'seasonal_availability': request.data.get('seasonal_availability', '')
+            'plant_id': template_plant.id,
+            'quantity': request.data.get('quantity', 1),
+            'price': request.data.get('price', 0.00),
+            'size': request.data.get('size', 'Standard')
         })
 
         if serializer.is_valid():
@@ -70,7 +66,7 @@ class PlantInventoryViewSet(viewsets.ModelViewSet):
         if nursery_id:
             queryset = queryset.filter(nursery_id=nursery_id)
 
-        return queryset
+        return queryset.select_related('plant')
 
     def perform_create(self, serializer):
         serializer.save(nursery=self.request.user)
