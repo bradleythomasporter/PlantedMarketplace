@@ -82,7 +82,8 @@ export default function NurseryDashboard() {
   const addPlantMutation = useMutation({
     mutationFn: async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
-      const formData = new FormData(e.currentTarget);
+      const form = e.currentTarget;
+      const formData = new FormData(form);
 
       // Basic validation
       const name = formData.get("name") as string;
@@ -386,9 +387,9 @@ export default function NurseryDashboard() {
                           </div>
                           <div className="space-y-2">
                             <Label htmlFor="category">Category *</Label>
-                            <select 
-                              id="category" 
-                              name="category" 
+                            <select
+                              id="category"
+                              name="category"
                               className="w-full rounded-md border border-input bg-background px-3 py-2"
                               required
                             >
@@ -410,23 +411,23 @@ export default function NurseryDashboard() {
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-2">
                             <Label htmlFor="price">Price ($) *</Label>
-                            <Input 
-                              id="price" 
-                              name="price" 
-                              type="number" 
-                              step="0.01" 
-                              min="0.01" 
-                              required 
+                            <Input
+                              id="price"
+                              name="price"
+                              type="number"
+                              step="0.01"
+                              min="0.01"
+                              required
                             />
                           </div>
                           <div className="space-y-2">
                             <Label htmlFor="quantity">Quantity *</Label>
-                            <Input 
-                              id="quantity" 
-                              name="quantity" 
-                              type="number" 
-                              min="1" 
-                              required 
+                            <Input
+                              id="quantity"
+                              name="quantity"
+                              type="number"
+                              min="1"
+                              required
                             />
                           </div>
                         </div>
@@ -438,8 +439,8 @@ export default function NurseryDashboard() {
                       </div>
 
                       <div className="pt-4 border-t">
-                        <Button 
-                          type="submit" 
+                        <Button
+                          type="submit"
                           className="w-full"
                           disabled={addPlantMutation.isPending}
                         >
