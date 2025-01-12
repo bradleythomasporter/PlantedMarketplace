@@ -25,6 +25,7 @@ import { useToast } from "@/hooks/use-toast";
 export default function AuthPage() {
   const [activeTab, setActiveTab] = useState("login");
   const [isLoading, setIsLoading] = useState(false);
+  const [role, setRole] = useState("customer");
   const { login, register } = useUser();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
@@ -34,11 +35,11 @@ export default function AuthPage() {
     setIsLoading(true);
     const formData = new FormData(e.currentTarget);
     try {
-      const user = await login({
+      await login({
         username: formData.get("username") as string,
         password: formData.get("password") as string,
       });
-      setLocation("/"); // Redirect to home page after successful login
+      setLocation("/");
     } catch (error) {
       setIsLoading(false);
     }
@@ -59,16 +60,20 @@ export default function AuthPage() {
     }
 
     try {
-      const user = await register({
+      await register({
         username: formData.get("username") as string,
         password: formData.get("password") as string,
+        email: formData.get("email") as string,
         role: formData.get("role") as "customer" | "nursery",
         name: formData.get("name") as string,
         address: formData.get("address") as string,
+        phoneNumber: formData.get("phoneNumber") as string,
         description: formData.get("description") as string,
         hoursOfOperation: formData.get("hoursOfOperation") as string,
+        website: formData.get("website") as string,
+        businessLicense: formData.get("businessLicense") as string,
       });
-      setLocation("/"); // Redirect to home page after successful registration
+      setLocation("/");
     } catch (error) {
       setIsLoading(false);
     }
@@ -131,7 +136,12 @@ export default function AuthPage() {
                 <form onSubmit={handleRegister} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="role">Role</Label>
-                    <Select name="role" defaultValue="customer" required>
+                    <Select 
+                      name="role" 
+                      value={role} 
+                      onValueChange={setRole} 
+                      required
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Select role" />
                       </SelectTrigger>
@@ -141,6 +151,7 @@ export default function AuthPage() {
                       </SelectContent>
                     </Select>
                   </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="register-username">Username</Label>
                     <Input
@@ -150,6 +161,18 @@ export default function AuthPage() {
                       autoComplete="username"
                     />
                   </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      name="email"
+                      type="email"
+                      required
+                      autoComplete="email"
+                    />
+                  </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="register-password">Password</Label>
                     <Input
@@ -160,6 +183,7 @@ export default function AuthPage() {
                       autoComplete="new-password"
                     />
                   </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="confirm-password">Confirm Password</Label>
                     <Input
@@ -170,26 +194,63 @@ export default function AuthPage() {
                       autoComplete="new-password"
                     />
                   </div>
+
                   <div className="space-y-2">
-                    <Label htmlFor="name">Name</Label>
+                    <Label htmlFor="name">Full Name</Label>
                     <Input id="name" name="name" required />
                   </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="address">Address</Label>
                     <Input id="address" name="address" required />
                   </div>
+
                   <div className="space-y-2">
-                    <Label htmlFor="description">Description</Label>
-                    <Textarea id="description" name="description" />
+                    <Label htmlFor="phoneNumber">Phone Number</Label>
+                    <Input id="phoneNumber" name="phoneNumber" type="tel" />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="hours">Hours of Operation</Label>
-                    <Input
-                      id="hours"
-                      name="hoursOfOperation"
-                      placeholder="e.g., Mon-Fri 9am-5pm"
-                    />
-                  </div>
+
+                  {role === "nursery" && (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="description">Business Description</Label>
+                        <Textarea 
+                          id="description" 
+                          name="description"
+                          placeholder="Tell us about your nursery..."
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="website">Website</Label>
+                        <Input
+                          id="website"
+                          name="website"
+                          type="url"
+                          placeholder="https://..."
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="hoursOfOperation">Hours of Operation</Label>
+                        <Input
+                          id="hoursOfOperation"
+                          name="hoursOfOperation"
+                          placeholder="e.g., Mon-Fri 9am-5pm"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="businessLicense">Business License Number</Label>
+                        <Input
+                          id="businessLicense"
+                          name="businessLicense"
+                          placeholder="Optional"
+                        />
+                      </div>
+                    </>
+                  )}
+
                   <Button type="submit" className="w-full" disabled={isLoading}>
                     {isLoading ? "Loading..." : "Register"}
                   </Button>
