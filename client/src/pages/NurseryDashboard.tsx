@@ -80,11 +80,7 @@ export default function NurseryDashboard() {
   });
 
   const addPlantMutation = useMutation({
-    mutationFn: async (e: React.FormEvent<HTMLFormElement>) => {
-      e.preventDefault();
-      const form = e.currentTarget;
-      const formData = new FormData(form);
-
+    mutationFn: async (formData: FormData) => {
       // Basic validation
       const name = formData.get("name") as string;
       const category = formData.get("category") as string;
@@ -129,6 +125,12 @@ export default function NurseryDashboard() {
       });
     },
   });
+
+  const handleAddPlant = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    addPlantMutation.mutate(formData);
+  };
 
   const renderTemplateSelection = () => {
     const categories = {
@@ -375,7 +377,7 @@ export default function NurseryDashboard() {
                   <DialogHeader>
                     <DialogTitle>Add New Plant</DialogTitle>
                   </DialogHeader>
-                  <form onSubmit={(e) => addPlantMutation.mutate(e)} className="space-y-6">
+                  <form onSubmit={handleAddPlant} className="space-y-6">
                     <div className="space-y-4">
                       {renderTemplateSelection()}
 
