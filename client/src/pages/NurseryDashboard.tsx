@@ -1,18 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -52,8 +43,6 @@ interface PlantTemplate {
   id: string;
   name: string;
   scientificName: string;
-  category: string;
-  subCategory: string;
   description: string;
   growthDetails: {
     height: string;
@@ -69,30 +58,8 @@ interface PlantTemplate {
     pruning: string;
     fertilizer: string;
   };
-  properties: {
-    hardinessZone: string;
-    soilType: string[];
-    moisture: string;
-    ph: string;
-    droughtTolerant: boolean;
-    frostTolerant: boolean;
-  };
-  seasonalInterest: {
-    spring: string;
-    summer: string;
-    autumn: string;
-    winter: string;
-  };
   imageUrl: string;
-  mainCategory: string;
 }
-
-type TemplateOption = {
-  value: string;
-  label: string;
-  category: string;
-  template?: PlantTemplate;
-};
 
 export default function NurseryDashboard() {
   const [, setLocation] = useLocation();
@@ -103,94 +70,41 @@ export default function NurseryDashboard() {
   const [isAddingPlant, setIsAddingPlant] = useState(false);
   const [plantToDelete, setPlantToDelete] = useState<Plant | null>(null);
   const [activeTab, setActiveTab] = useState("inventory");
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("none");
   const [activeSection, setActiveSection] = useState("template");
 
   const { data: plantTemplates = {}, isLoading: isLoadingTemplates } = useQuery<Record<string, PlantTemplate[]>>({
     queryKey: ['/api/plants/templates'],
   });
 
-  const templateOptions: TemplateOption[] = [
-    { value: "none", label: "Custom Plant", category: "none" },
-    ...Object.entries(plantTemplates).flatMap(([category, templates]) =>
-      templates.map(template => ({
-        value: template.id,
-        label: `${template.name} (${category})`,
-        category,
-        template
-      }))
-    )
-  ];
-
-  const handleTemplateSelection = (value: string) => {
-    setSelectedTemplateId(value);
+  const handleTemplateChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const form = document.querySelector('form') as HTMLFormElement;
     if (!form) return;
 
-    if (value === 'none') {
+    const [category, templateId] = event.target.value.split('|');
+    if (!category || !templateId || category === "none") {
       form.reset();
       return;
     }
 
-    const selectedOption = templateOptions.find(opt => opt.value === value);
-    const template = selectedOption?.template;
+    const template = plantTemplates[category]?.find(t => t.id === templateId);
+    if (!template) return;
 
-    if (template) {
-      form.name.value = template.name;
-      form.scientificName.value = template.scientificName;
-      form.description.value = template.description;
-      form.imageUrl.value = template.imageUrl;
+    // Populate form fields with template data
+    form.name.value = template.name;
+    form.scientificName.value = template.scientificName;
+    form.description.value = template.description;
+    form.imageUrl.value = template.imageUrl;
 
-      Object.entries(template.growthDetails).forEach(([key, value]) => {
-        const input = form.elements.namedItem(key) as HTMLInputElement;
-        if (input) input.value = value;
-      });
+    Object.entries(template.growthDetails).forEach(([key, value]) => {
+      const input = form.elements.namedItem(key) as HTMLInputElement;
+      if (input) input.value = value;
+    });
 
-      Object.entries(template.careInstructions).forEach(([key, value]) => {
-        const input = form.elements.namedItem(key) as HTMLInputElement;
-        if (input) input.value = value;
-      });
-    }
+    Object.entries(template.careInstructions).forEach(([key, value]) => {
+      const input = form.elements.namedItem(key) as HTMLInputElement;
+      if (input) input.value = value;
+    });
   };
-
-  const renderTemplateSelection = () => (
-    <div className="space-y-4">
-      <div className="space-y-2">
-        <Label>Select Plant Template</Label>
-        <Select value={selectedTemplateId} onValueChange={handleTemplateSelection}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select a template" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              <SelectLabel>Custom</SelectLabel>
-              <SelectItem value="none">Custom Plant</SelectItem>
-            </SelectGroup>
-            {Object.keys(plantTemplates).map(category => (
-              <SelectGroup key={category}>
-                <SelectLabel>{category}</SelectLabel>
-                {plantTemplates[category].map(template => (
-                  <SelectItem key={template.id} value={template.id}>
-                    {template.name}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {selectedTemplateId !== "none" && (
-        <div className="mt-4">
-          <img
-            src={templateOptions.find(opt => opt.value === selectedTemplateId)?.template?.imageUrl}
-            alt="Selected plant"
-            className="w-full h-48 object-cover rounded-lg"
-          />
-        </div>
-      )}
-    </div>
-  );
 
   const addPlantMutation = useMutation({
     mutationFn: async (formData: FormData) => {
@@ -378,6 +292,31 @@ export default function NurseryDashboard() {
     .reduce((sum, order) => sum + Number(order.totalAmount), 0);
 
 
+  const renderTemplateSelection = () => (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="template-select">Select Plant Template</Label>
+        <select
+          id="template-select"
+          className="w-full rounded-md border border-input bg-background px-3 py-2"
+          onChange={handleTemplateChange}
+          defaultValue="none|none"
+        >
+          <option value="none|none">Custom Plant</option>
+          {Object.entries(plantTemplates).map(([category, templates]) => (
+            <optgroup key={category} label={category}>
+              {templates.map(template => (
+                <option key={template.id} value={`${category}|${template.id}`}>
+                  {template.name}
+                </option>
+              ))}
+            </optgroup>
+          ))}
+        </select>
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-background">
       <header className="bg-primary/10 p-4 md:p-6">
@@ -548,18 +487,13 @@ export default function NurseryDashboard() {
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="edit-category">Category</Label>
-                        <Select name="category" defaultValue={selectedPlant.category}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="flowers">Flowers</SelectItem>
-                            <SelectItem value="trees">Trees</SelectItem>
-                            <SelectItem value="shrubs">Shrubs</SelectItem>
-                            <SelectItem value="indoor">Indoor</SelectItem>
-                            <SelectItem value="outdoor">Outdoor</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <select id="edit-category" name="category" defaultValue={selectedPlant.category} className="w-full rounded-md border border-input bg-background px-3 py-2">
+                          <option value="flowers">Flowers</option>
+                          <option value="trees">Trees</option>
+                          <option value="shrubs">Shrubs</option>
+                          <option value="indoor">Indoor</option>
+                          <option value="outdoor">Outdoor</option>
+                        </select>
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="edit-description">Description</Label>
@@ -707,22 +641,18 @@ export default function NurseryDashboard() {
                             Placed on {new Date(order.createdAt).toLocaleDateString()}
                           </p>
                         </div>
-                        <Select
+                        <select
                           value={order.status}
-                          onValueChange={(value) => handleUpdateOrderStatus(order.id, value)}
+                          onChange={(e) => handleUpdateOrderStatus(order.id, e.target.value)}
+                          className="w-[180px] rounded-md border border-input bg-background px-3 py-2"
                         >
-                          <SelectTrigger className="w-[180px]">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="pending">Pending</SelectItem>
-                            <SelectItem value="confirmed">Confirmed</SelectItem>
-                            <SelectItem value="processing">Processing</SelectItem>
-                            <SelectItem value="shipped">Shipped</SelectItem>
-                            <SelectItem value="delivered">Delivered</SelectItem>
-                            <SelectItem value="cancelled">Cancelled</SelectItem>
-                          </SelectContent>
-                        </Select>
+                          <option value="pending">Pending</option>
+                          <option value="confirmed">Confirmed</option>
+                          <option value="processing">Processing</option>
+                          <option value="shipped">Shipped</option>
+                          <option value="delivered">Delivered</option>
+                          <option value="cancelled">Cancelled</option>
+                        </select>
                       </div>
                       <div className="flex justify-between items-center text-sm">
                         <span>Total Amount: ${Number(order.totalAmount).toFixed(2)}</span>
