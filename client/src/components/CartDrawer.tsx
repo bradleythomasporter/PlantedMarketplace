@@ -9,7 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ShoppingCart, Trash2, Plus, Minus, X } from "lucide-react";
-import { useCart } from "@/hooks/use-cart";
+import { useCartStore } from "@/lib/cart-store";
 import { useState } from "react";
 import { useUser } from "@/hooks/use-user";
 import { useToast } from "@/hooks/use-toast";
@@ -17,7 +17,7 @@ import { useLocation } from "wouter";
 
 export function CartDrawer() {
   const [open, setOpen] = useState(false);
-  const { items, removeItem, updateQuantity, subtotal, plantingServiceFee, total, clearCart } = useCart();
+  const cartStore = useCartStore();
   const { user } = useUser();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
@@ -26,7 +26,7 @@ export function CartDrawer() {
   const handleQuantityChange = (plantId: number, currentQuantity: number, increment: boolean) => {
     const newQuantity = increment ? currentQuantity + 1 : currentQuantity - 1;
     if (newQuantity >= 1) {
-      updateQuantity(plantId, newQuantity);
+      cartStore.updateQuantity(plantId, newQuantity);
     }
   };
 
@@ -45,7 +45,7 @@ export function CartDrawer() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          items: items.map(item => ({
+          items: cartStore.items.map(item => ({
             plantId: item.plant.id,
             quantity: item.quantity,
             requiresPlanting: item.requiresPlanting,
@@ -76,9 +76,9 @@ export function CartDrawer() {
       <SheetTrigger asChild>
         <Button variant="outline" size="icon" className="relative">
           <ShoppingCart className="h-5 w-5" />
-          {items.length > 0 && (
+          {cartStore.items.length > 0 && (
             <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground rounded-full w-5 h-5 text-xs flex items-center justify-center">
-              {items.length}
+              {cartStore.items.length}
             </span>
           )}
         </Button>
@@ -97,13 +97,13 @@ export function CartDrawer() {
         <div className="flex-1 overflow-hidden">
           <ScrollArea className="h-full">
             <div className="space-y-4 p-1">
-              {items.length === 0 ? (
+              {cartStore.items.length === 0 ? (
                 <p className="text-center text-muted-foreground py-8">
                   Your cart is empty
                 </p>
               ) : (
                 <div className="space-y-4">
-                  {items.map((item) => (
+                  {cartStore.items.map((item) => (
                     <div
                       key={item.plant.id}
                       className="flex items-center gap-4 border-b pb-4"
@@ -146,7 +146,7 @@ export function CartDrawer() {
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8 hover:text-destructive"
-                          onClick={() => removeItem(item.plant.id)}
+                          onClick={() => cartStore.removeItem(item.plant.id)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -159,22 +159,22 @@ export function CartDrawer() {
           </ScrollArea>
         </div>
 
-        {items.length > 0 && (
+        {cartStore.items.length > 0 && (
           <div className="border-t pt-4 mt-auto space-y-4">
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span>Subtotal</span>
-                <span>${subtotal().toFixed(2)}</span>
+                <span>${cartStore.subtotal().toFixed(2)}</span>
               </div>
-              {plantingServiceFee() > 0 && (
+              {cartStore.plantingServiceFee() > 0 && (
                 <div className="flex justify-between text-sm">
                   <span>Planting Service</span>
-                  <span>${plantingServiceFee().toFixed(2)}</span>
+                  <span>${cartStore.plantingServiceFee().toFixed(2)}</span>
                 </div>
               )}
               <div className="flex justify-between text-lg font-semibold">
                 <span>Total</span>
-                <span>${total().toFixed(2)}</span>
+                <span>${cartStore.total().toFixed(2)}</span>
               </div>
             </div>
             <Button
@@ -188,7 +188,7 @@ export function CartDrawer() {
               ) : !user ? (
                 "Login to Checkout"
               ) : (
-                `Checkout • $${total().toFixed(2)}`
+                `Checkout • $${cartStore.total().toFixed(2)}`
               )}
             </Button>
           </div>
