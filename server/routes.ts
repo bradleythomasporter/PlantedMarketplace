@@ -67,13 +67,13 @@ export function registerRoutes(app: Express): Server {
       for (const item of items) {
         const plant = plantsData.find(p => p.id === item.plantId);
         if (!plant) {
-          return res.status(400).json({ 
-            message: `Plant ${item.plantId} not found or no longer available` 
+          return res.status(400).json({
+            message: `Plant ${item.plantId} not found or no longer available`
           });
         }
         if (plant.quantity < item.quantity) {
-          return res.status(400).json({ 
-            message: `Not enough stock for ${plant.name}. Only ${plant.quantity} available` 
+          return res.status(400).json({
+            message: `Not enough stock for ${plant.name}. Only ${plant.quantity} available`
           });
         }
       }
@@ -139,14 +139,14 @@ export function registerRoutes(app: Express): Server {
 
       // Handle Stripe-specific errors
       if (error instanceof Stripe.errors.StripeError) {
-        return res.status(error.statusCode || 500).json({ 
+        return res.status(error.statusCode || 500).json({
           message: error.message,
           type: error.type
         });
       }
 
       // Handle general errors
-      res.status(500).json({ 
+      res.status(500).json({
         message: "Unable to process checkout at this time. Please try again later.",
         type: "server_error"
       });
@@ -223,7 +223,7 @@ export function registerRoutes(app: Express): Server {
 
       const [updatedOrder] = await db
         .update(orders)
-        .set({ 
+        .set({
           status,
           updatedAt: new Date()
         })
@@ -434,6 +434,30 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       console.error('Error fetching nursery:', error);
       res.status(500).json({ message: "Failed to fetch nursery" });
+    }
+  });
+
+  // Add profile update endpoint
+  app.patch("/api/user/profile", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    try {
+      const [updatedUser] = await db
+        .update(users)
+        .set({
+          ...req.body,
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, req.user.id))
+        .returning();
+
+      const { password: _, ...userWithoutPassword } = updatedUser;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      res.status(500).json({ message: "Failed to update profile" });
     }
   });
 

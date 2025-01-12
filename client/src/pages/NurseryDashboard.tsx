@@ -39,6 +39,7 @@ import { useUser } from "@/hooks/use-user";
 import { Loader2, PenSquare, Trash2, Package } from "lucide-react";
 import { useLocation } from "wouter";
 import type { Plant, Order } from "@db/schema";
+import { NurseryProfileManager } from "@/components/NurseryProfileManager";
 
 export default function NurseryDashboard() {
   const [, setLocation] = useLocation();
@@ -264,6 +265,7 @@ export default function NurseryDashboard() {
           <TabsList>
             <TabsTrigger value="inventory">Inventory</TabsTrigger>
             <TabsTrigger value="orders">Orders</TabsTrigger>
+            <TabsTrigger value="profile">Profile</TabsTrigger>
           </TabsList>
 
           <TabsContent value="inventory" className="space-y-8">
@@ -554,6 +556,13 @@ export default function NurseryDashboard() {
                   )}
                 </div>
               )}
+            </section>
+          </TabsContent>
+
+          <TabsContent value="profile" className="space-y-8">
+            <section>
+              <h2 className="text-2xl font-semibold mb-6 text-display">Nursery Profile</h2>
+              <NurseryProfileManager />
             </section>
           </TabsContent>
         </Tabs>
