@@ -5,13 +5,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -24,22 +17,6 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/hooks/use-user";
 import { Loader2, PenSquare, Trash2, Package } from "lucide-react";
@@ -83,64 +60,64 @@ export default function NurseryDashboard() {
     queryKey: ['/api/plants/templates'],
   });
 
-  const handleTemplateChange = (templateId: string) => {
+  const populateForm = (template: PlantTemplate) => {
     const form = document.querySelector('form') as HTMLFormElement;
     if (!form) return;
 
-    // Reset form if "custom" is selected
-    if (templateId === "custom") {
-      form.reset();
-      return;
-    }
-
-    // Find the template in all categories
-    let selectedTemplate: PlantTemplate | undefined;
-    for (const templates of Object.values(plantTemplates)) {
-      selectedTemplate = templates.find(t => t.id === templateId);
-      if (selectedTemplate) break;
-    }
-
-    if (!selectedTemplate) return;
-
-    // Populate form fields with template data
-    form.name.value = selectedTemplate.name;
-    form.scientificName.value = selectedTemplate.scientificName;
-    form.description.value = selectedTemplate.description;
-    form.imageUrl.value = selectedTemplate.imageUrl;
+    form.name.value = template.name;
+    form.scientificName.value = template.scientificName;
+    form.description.value = template.description;
+    form.imageUrl.value = template.imageUrl;
 
     // Populate growth details
-    Object.entries(selectedTemplate.growthDetails).forEach(([key, value]) => {
+    Object.entries(template.growthDetails).forEach(([key, value]) => {
       const input = form.elements.namedItem(key) as HTMLInputElement;
       if (input) input.value = value;
     });
 
     // Populate care instructions
-    Object.entries(selectedTemplate.careInstructions).forEach(([key, value]) => {
+    Object.entries(template.careInstructions).forEach(([key, value]) => {
       const input = form.elements.namedItem(key) as HTMLInputElement;
       if (input) input.value = value;
     });
   };
 
   const renderTemplateSelection = () => (
-    <div className="space-y-4">
-      <div className="space-y-2">
-        <Label>Select Plant Template</Label>
-        <Select onValueChange={handleTemplateChange}>
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Choose a template" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="custom">Custom Plant</SelectItem>
-            {Object.entries(plantTemplates).map(([category, templates]) => (
-              templates.map(template => (
-                <SelectItem key={template.id} value={template.id}>
-                  {template.name} ({category})
-                </SelectItem>
-              ))
-            ))}
-          </SelectContent>
-        </Select>
+    <div className="space-y-6">
+      <div>
+        <Label>Plant Templates</Label>
+        <Button
+          variant="outline"
+          className="mt-2 w-full"
+          onClick={() => {
+            const form = document.querySelector('form') as HTMLFormElement;
+            if (form) form.reset();
+          }}
+        >
+          Custom Plant
+        </Button>
       </div>
+
+      {Object.entries(plantTemplates).map(([category, templates]) => (
+        <div key={category} className="space-y-2">
+          <Label className="text-lg font-semibold capitalize">{category}</Label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            {templates.map((template) => (
+              <Button
+                key={template.id}
+                variant="outline"
+                className="justify-start h-auto py-4 px-4"
+                onClick={() => populateForm(template)}
+              >
+                <div className="text-left">
+                  <div className="font-medium">{template.name}</div>
+                  <div className="text-sm text-muted-foreground">{template.scientificName}</div>
+                </div>
+              </Button>
+            ))}
+          </div>
+        </div>
+      ))}
     </div>
   );
 
