@@ -36,30 +36,28 @@ export function SearchFilters({
         placeholder="Search plants..."
         value={search}
         onChange={(e) => onSearchChange(e.target.value)}
-        className="w-full"
+        className="w-full bg-white"
       />
 
-      <div className="flex flex-wrap gap-4 items-center bg-primary/5 p-4 rounded-lg">
-        <div className="space-y-2 flex-1 min-w-[200px]">
-          <label htmlFor="zipCode" className="text-sm font-medium flex items-center gap-2">
-            <MapPin className="h-4 w-4" />
-            Find plants near you
-          </label>
-          <Input
-            id="zipCode"
-            placeholder="Enter ZIP code"
-            value={zipCode}
-            onChange={handleZipCodeChange}
-            className="w-full"
-            type="text"
-            inputMode="numeric"
-            maxLength={5}
-            pattern="[0-9]*"
-          />
+      <div className="flex items-center gap-4">
+        <div className="flex-1">
+          <div className="flex items-center gap-2 bg-white rounded-lg border px-3 py-2">
+            <MapPin className="h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Enter ZIP code"
+              value={zipCode}
+              onChange={handleZipCodeChange}
+              className="border-0 p-0 focus-visible:ring-0 text-base"
+              type="text"
+              inputMode="numeric"
+              maxLength={5}
+              pattern="[0-9]*"
+            />
+          </div>
         </div>
         <Select value={radius} onValueChange={onRadiusChange}>
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder="Distance" />
+          <SelectTrigger className="w-[140px] bg-white">
+            <SelectValue placeholder="Within 20 miles" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="5">Within 5 miles</SelectItem>
