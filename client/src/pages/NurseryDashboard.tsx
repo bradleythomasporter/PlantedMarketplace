@@ -101,11 +101,11 @@ export default function NurseryDashboard() {
   const [isAddingPlant, setIsAddingPlant] = useState(false);
   const [plantToDelete, setPlantToDelete] = useState<Plant | null>(null);
   const [activeTab, setActiveTab] = useState("inventory");
-  const [selectedTemplate, setSelectedTemplate] = useState<string>("custom");
+  const [selectedTemplate, setSelectedTemplate] = useState<string>("none");
   const [mainCategory, setMainCategory] = useState<string>("");
   const [subCategory, setSubCategory] = useState<string>("");
   const [activeSection, setActiveSection] = useState<string>("basics");
-  const [selectedMainCategory, setSelectedMainCategory] = useState<string>("");
+  const [selectedMainCategory, setSelectedMainCategory] = useState<string>("none");
   const [availablePlants, setAvailablePlants] = useState<PlantTemplate[]>([]);
 
   const { data: plantTemplates = {}, isLoading: isLoadingTemplates } = useQuery<Record<string, PlantTemplate[]>>({
@@ -113,7 +113,7 @@ export default function NurseryDashboard() {
   });
 
   useEffect(() => {
-    if (selectedMainCategory && plantTemplates[selectedMainCategory]) {
+    if (selectedMainCategory && selectedMainCategory !== "none" && plantTemplates[selectedMainCategory]) {
       setAvailablePlants(plantTemplates[selectedMainCategory]);
     } else {
       setAvailablePlants([]);
@@ -316,7 +316,7 @@ export default function NurseryDashboard() {
     const form = document.querySelector('form') as HTMLFormElement;
     if (!form) return;
 
-    if (templateId === 'custom') {
+    if (templateId === 'none') {
       form.reset();
       setMainCategory("");
       setSubCategory("");
@@ -344,6 +344,62 @@ export default function NurseryDashboard() {
       setSubCategory(template.subCategory);
     }
   };
+
+  const renderTemplateSelection = () => (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <Label>1. Select Plant Type</Label>
+        <Select
+          value={selectedMainCategory}
+          onValueChange={setSelectedMainCategory}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select plant type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">Custom Plant</SelectItem>
+            {Object.keys(plantTemplates).map((category) => (
+              <SelectItem key={category} value={category}>
+                {category.charAt(0).toUpperCase() + category.slice(1)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {selectedMainCategory && selectedMainCategory !== 'none' && (
+        <div className="space-y-2">
+          <Label>2. Select Plant</Label>
+          <Select
+            value={selectedTemplate}
+            onValueChange={handleTemplateSelection}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Choose a plant" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Select a plant</SelectItem>
+              {availablePlants.map((plant) => (
+                <SelectItem key={plant.id} value={plant.id}>
+                  {plant.name} ({plant.scientificName})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
+      {selectedTemplate && selectedTemplate !== 'none' && (
+        <div className="mt-4">
+          <img
+            src={availablePlants.find(p => p.id === selectedTemplate)?.imageUrl}
+            alt="Selected plant"
+            className="w-full h-48 object-cover rounded-lg"
+          />
+        </div>
+      )}
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -397,58 +453,7 @@ export default function NurseryDashboard() {
                       <AccordionItem value="template">
                         <AccordionTrigger>Plant Selection</AccordionTrigger>
                         <AccordionContent className="space-y-4 p-4">
-                          <div className="space-y-4">
-                            <div className="space-y-2">
-                              <Label>1. Select Plant Type</Label>
-                              <Select
-                                value={selectedMainCategory}
-                                onValueChange={setSelectedMainCategory}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select plant type" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="custom">Custom Plant</SelectItem>
-                                  {Object.keys(plantTemplates).map((category) => (
-                                    <SelectItem key={category} value={category}>
-                                      {category.charAt(0).toUpperCase() + category.slice(1)}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-
-                            {selectedMainCategory && selectedMainCategory !== 'custom' && (
-                              <div className="space-y-2">
-                                <Label>2. Select Plant</Label>
-                                <Select
-                                  value={selectedTemplate}
-                                  onValueChange={handleTemplateSelection}
-                                >
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Choose a plant" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {availablePlants.map((plant) => (
-                                      <SelectItem key={plant.id} value={plant.id}>
-                                        {plant.name} ({plant.scientificName})
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                            )}
-
-                            {selectedTemplate && selectedTemplate !== 'custom' && (
-                              <div className="mt-4">
-                                <img
-                                  src={availablePlants.find(p => p.id === selectedTemplate)?.imageUrl}
-                                  alt="Selected plant"
-                                  className="w-full h-48 object-cover rounded-lg"
-                                />
-                              </div>
-                            )}
-                          </div>
+                          {renderTemplateSelection()}
                         </AccordionContent>
                       </AccordionItem>
 
