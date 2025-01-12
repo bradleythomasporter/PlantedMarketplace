@@ -7,7 +7,9 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -85,15 +87,12 @@ interface PlantTemplate {
   mainCategory: string;
 }
 
-const mainCategories = {
-  outdoor: ["Perennials", "Shrubs", "Trees", "Climbers", "Bulbs"],
-  indoor: ["Foliage Plants", "Flowering Plants", "Succulents", "Air Plants"],
-  garden_type: ["Cottage Garden", "Mediterranean", "Tropical", "Woodland"],
-  special_features: ["Fragrant", "Bee Friendly", "Drought Resistant", "Shade Loving"]
-} as const;
-
-type MainCategory = keyof typeof mainCategories;
-type SubCategory<T extends MainCategory> = typeof mainCategories[T][number];
+type TemplateOption = {
+  value: string;
+  label: string;
+  category: string;
+  template?: PlantTemplate;
+};
 
 export default function NurseryDashboard() {
   const [, setLocation] = useLocation();
@@ -104,32 +103,94 @@ export default function NurseryDashboard() {
   const [isAddingPlant, setIsAddingPlant] = useState(false);
   const [plantToDelete, setPlantToDelete] = useState<Plant | null>(null);
   const [activeTab, setActiveTab] = useState("inventory");
-  const [selectedTemplate, setSelectedTemplate] = useState<string>("none");
-  const [mainCategory, setMainCategory] = useState<MainCategory | null>(null);
-  const [subCategory, setSubCategory] = useState<string | null>(null);
-  const [activeSection, setActiveSection] = useState("basics");
-  const [selectedMainCategory, setSelectedMainCategory] = useState<string>("none");
-  const [availablePlants, setAvailablePlants] = useState<PlantTemplate[]>([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("none");
+  const [activeSection, setActiveSection] = useState("template");
 
   const { data: plantTemplates = {}, isLoading: isLoadingTemplates } = useQuery<Record<string, PlantTemplate[]>>({
     queryKey: ['/api/plants/templates'],
   });
 
-  useEffect(() => {
-    if (selectedMainCategory && selectedMainCategory !== "none" && plantTemplates[selectedMainCategory]) {
-      setAvailablePlants(plantTemplates[selectedMainCategory]);
-    } else {
-      setAvailablePlants([]);
+  const templateOptions: TemplateOption[] = [
+    { value: "none", label: "Custom Plant", category: "none" },
+    ...Object.entries(plantTemplates).flatMap(([category, templates]) =>
+      templates.map(template => ({
+        value: template.id,
+        label: `${template.name} (${category})`,
+        category,
+        template
+      }))
+    )
+  ];
+
+  const handleTemplateSelection = (value: string) => {
+    setSelectedTemplateId(value);
+    const form = document.querySelector('form') as HTMLFormElement;
+    if (!form) return;
+
+    if (value === 'none') {
+      form.reset();
+      return;
     }
-  }, [selectedMainCategory, plantTemplates]);
 
-  const { data: plants = [], isLoading: isLoadingPlants } = useQuery<Plant[]>({
-    queryKey: [`/api/plants?nurseryId=${user?.id}`],
-  });
+    const selectedOption = templateOptions.find(opt => opt.value === value);
+    const template = selectedOption?.template;
 
-  const { data: orders = [], isLoading: isLoadingOrders } = useQuery<Order[]>({
-    queryKey: [`/api/orders?nurseryId=${user?.id}`],
-  });
+    if (template) {
+      form.name.value = template.name;
+      form.scientificName.value = template.scientificName;
+      form.description.value = template.description;
+      form.imageUrl.value = template.imageUrl;
+
+      Object.entries(template.growthDetails).forEach(([key, value]) => {
+        const input = form.elements.namedItem(key) as HTMLInputElement;
+        if (input) input.value = value;
+      });
+
+      Object.entries(template.careInstructions).forEach(([key, value]) => {
+        const input = form.elements.namedItem(key) as HTMLInputElement;
+        if (input) input.value = value;
+      });
+    }
+  };
+
+  const renderTemplateSelection = () => (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <Label>Select Plant Template</Label>
+        <Select value={selectedTemplateId} onValueChange={handleTemplateSelection}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select a template" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <SelectLabel>Custom</SelectLabel>
+              <SelectItem value="none">Custom Plant</SelectItem>
+            </SelectGroup>
+            {Object.keys(plantTemplates).map(category => (
+              <SelectGroup key={category}>
+                <SelectLabel>{category}</SelectLabel>
+                {plantTemplates[category].map(template => (
+                  <SelectItem key={template.id} value={template.id}>
+                    {template.name}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {selectedTemplateId !== "none" && (
+        <div className="mt-4">
+          <img
+            src={templateOptions.find(opt => opt.value === selectedTemplateId)?.template?.imageUrl}
+            alt="Selected plant"
+            className="w-full h-48 object-cover rounded-lg"
+          />
+        </div>
+      )}
+    </div>
+  );
 
   const addPlantMutation = useMutation({
     mutationFn: async (formData: FormData) => {
@@ -302,110 +363,20 @@ export default function NurseryDashboard() {
     await updateOrderStatusMutation.mutateAsync({ orderId, status });
   };
 
+  const { data: plants = [], isLoading: isLoadingPlants } = useQuery<Plant[]>({
+    queryKey: [`/api/plants?nurseryId=${user?.id}`],
+  });
+
+  const { data: orders = [], isLoading: isLoadingOrders } = useQuery<Order[]>({
+    queryKey: [`/api/orders?nurseryId=${user?.id}`],
+  });
+
   const totalOrders = orders.length;
   const pendingOrders = orders.filter(order => order.status === "pending").length;
   const totalRevenue = orders
     .filter(order => order.status !== "cancelled")
     .reduce((sum, order) => sum + Number(order.totalAmount), 0);
 
-  const categories = Object.keys(plantTemplates).reduce((acc, category) => {
-    acc[category] = new Set();
-    (plantTemplates[category] || []).forEach(template => acc[category]?.add(template.subCategory));
-    return acc;
-  }, {} as Record<string, Set<string>>);
-
-  const handleTemplateSelection = (templateId: string) => {
-    setSelectedTemplate(templateId);
-    const form = document.querySelector('form') as HTMLFormElement;
-    if (!form) return;
-
-    if (templateId === 'none') {
-      form.reset();
-      setMainCategory(null);
-      setSubCategory(null);
-      return;
-    }
-
-    const template = availablePlants.find(p => p.id === templateId);
-    if (template) {
-      form.name.value = template.name;
-      form.scientificName.value = template.scientificName;
-      form.description.value = template.description;
-      form.imageUrl.value = template.imageUrl;
-
-      Object.entries(template.growthDetails).forEach(([key, value]) => {
-        const input = form.elements.namedItem(key) as HTMLInputElement;
-        if (input) input.value = value;
-      });
-
-      Object.entries(template.careInstructions).forEach(([key, value]) => {
-        const input = form.elements.namedItem(key) as HTMLInputElement;
-        if (input) input.value = value;
-      });
-
-      setMainCategory(template.mainCategory as MainCategory);
-      setSubCategory(template.subCategory);
-    }
-  };
-
-  const renderTemplateSelection = () => (
-    <div className="space-y-4">
-      <div className="space-y-2">
-        <Label>Plant Type</Label>
-        <Select
-          value={selectedMainCategory}
-          onValueChange={(value) => {
-            setSelectedMainCategory(value);
-            setSelectedTemplate("none");
-          }}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Select plant type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="none">Custom Plant</SelectItem>
-            {Object.keys(plantTemplates).map((category) => (
-              <SelectItem key={category} value={category}>
-                {category}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {selectedMainCategory !== "none" && (
-        <div className="space-y-2">
-          <Label>Plant Template</Label>
-          <Select
-            value={selectedTemplate}
-            onValueChange={handleTemplateSelection}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select a plant template" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">None</SelectItem>
-              {availablePlants.map((plant) => (
-                <SelectItem key={plant.id} value={plant.id}>
-                  {plant.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
-
-      {selectedTemplate !== "none" && (
-        <div className="mt-4">
-          <img
-            src={availablePlants.find(p => p.id === selectedTemplate)?.imageUrl}
-            alt="Selected plant"
-            className="w-full h-48 object-cover rounded-lg"
-          />
-        </div>
-      )}
-    </div>
-  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -479,60 +450,12 @@ export default function NurseryDashboard() {
 
                           <div className="space-y-4">
                             <div className="space-y-2">
-                              <Label>Main Category</Label>
-                              <Select
-                                value={mainCategory || "none"}
-                                onValueChange={(value) => {
-                                  setMainCategory(value === "none" ? null : value as MainCategory);
-                                  setSubCategory(null);
-                                }}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select main category" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="none">Select category</SelectItem>
-                                  {(Object.keys(mainCategories) as MainCategory[]).map((category) => (
-                                    <SelectItem key={category} value={category}>
-                                      {category.split('_').map(word =>
-                                        word.charAt(0).toUpperCase() + word.slice(1)
-                                      ).join(' ')}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
+                              <Label htmlFor="description">Description</Label>
+                              <Textarea id="description" name="description" required />
                             </div>
-
-                            {mainCategory && (
-                              <div className="space-y-2">
-                                <Label>Sub-Category</Label>
-                                <Select
-                                  value={subCategory || "none"}
-                                  onValueChange={(value) => setSubCategory(value === "none" ? null : value)}
-                                >
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select sub-category" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="none">Select sub-category</SelectItem>
-                                    {mainCategories[mainCategory].map((sub) => (
-                                      <SelectItem key={sub} value={sub}>
-                                        {sub}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                            )}
-                          </div>
-
-                          <div className="space-y-2">
-                            <Label htmlFor="description">Description</Label>
-                            <Textarea id="description" name="description" required />
                           </div>
                         </AccordionContent>
                       </AccordionItem>
-
                       <AccordionItem value="growth">
                         <AccordionTrigger>Growth Details</AccordionTrigger>
                         <AccordionContent className="space-y-4 p-4">
