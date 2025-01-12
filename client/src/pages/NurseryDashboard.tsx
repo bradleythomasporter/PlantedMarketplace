@@ -45,7 +45,6 @@ import { useUser } from "@/hooks/use-user";
 import { Loader2, PenSquare, Trash2, Package } from "lucide-react";
 import { useLocation } from "wouter";
 import type { Plant, Order } from "@db/schema";
-import { NurseryProfileManager } from "@/components/NurseryProfileManager";
 
 interface PlantTemplate {
   id: string;
@@ -120,7 +119,6 @@ export default function NurseryDashboard() {
       setAvailablePlants([]);
     }
   }, [selectedMainCategory, plantTemplates]);
-
 
   const { data: plants = [], isLoading: isLoadingPlants } = useQuery<Plant[]>({
     queryKey: [`/api/plants?nurseryId=${user?.id}`],
@@ -307,11 +305,9 @@ export default function NurseryDashboard() {
     .filter(order => order.status !== "cancelled")
     .reduce((sum, order) => sum + Number(order.totalAmount), 0);
 
-  const categories = plantTemplates.reduce((acc, template) => {
-    if (!acc[template.category]) {
-      acc[template.category] = new Set();
-    }
-    acc[template.category].add(template.subCategory);
+  const categories = Object.keys(plantTemplates).reduce((acc, category) => {
+    acc[category] = new Set();
+    (plantTemplates[category] || []).forEach(template => acc[category]?.add(template.subCategory));
     return acc;
   }, {} as Record<string, Set<string>>);
 
