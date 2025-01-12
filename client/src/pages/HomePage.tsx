@@ -11,22 +11,45 @@ import { useUser } from "@/hooks/use-user";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 
+const defaultFilters = {
+  search: "",
+  zipCode: "",
+  radius: "20",
+  category: "all",
+  priceRange: [0, 1000] as [number, number],
+  sortBy: "relevance",
+};
+
 export default function HomePage() {
-  const [search, setSearch] = useState("");
-  const [zipCode, setZipCode] = useState("");
-  const [radius, setRadius] = useState("20");
+  const [filters, setFilters] = useState(defaultFilters);
   const { user } = useUser();
   const [location] = useLocation();
   const { toast } = useToast();
 
-  // Extract category from URL
-  const category = new URLSearchParams(location.split('?')[1]).get('category') || 'all';
+  // Parse URL parameters
+  useEffect(() => {
+    const params = new URLSearchParams(location.split('?')[1]);
+    const category = params.get('category');
+    if (category) {
+      setFilters(prev => ({ ...prev, category }));
+    }
+  }, [location]);
 
-  // Handle search and filter logic
+  // Build query string for API
+  const queryString = new URLSearchParams({
+    search: filters.search,
+    category: filters.category,
+    zipCode: filters.zipCode,
+    radius: filters.radius,
+    minPrice: filters.priceRange[0].toString(),
+    maxPrice: filters.priceRange[1].toString(),
+    sortBy: filters.sortBy,
+  }).toString();
+
+  // Fetch plants with filters
   const { data: plants = [], isLoading, error } = useQuery<Plant[]>({
-    queryKey: [`/api/plants?search=${search}&category=${category}&zipCode=${zipCode}&radius=${radius}`],
-    enabled: !zipCode || zipCode.length === 5, // Only enable if no ZIP code or if it's valid
-    retry: false,
+    queryKey: [`/api/plants?${queryString}`],
+    enabled: !filters.zipCode || filters.zipCode.length === 5,
   });
 
   // Show error toast if the search fails
@@ -39,6 +62,10 @@ export default function HomePage() {
       });
     }
   }, [error, toast]);
+
+  const handleClearFilters = () => {
+    setFilters(defaultFilters);
+  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -57,12 +84,14 @@ export default function HomePage() {
             </p>
             <div className="max-w-2xl mx-auto">
               <SearchFilters
-                search={search}
-                zipCode={zipCode}
-                radius={radius}
-                onSearchChange={setSearch}
-                onZipCodeChange={setZipCode}
-                onRadiusChange={setRadius}
+                {...filters}
+                onSearchChange={(search) => setFilters(prev => ({ ...prev, search }))}
+                onZipCodeChange={(zipCode) => setFilters(prev => ({ ...prev, zipCode }))}
+                onRadiusChange={(radius) => setFilters(prev => ({ ...prev, radius }))}
+                onCategoryChange={(category) => setFilters(prev => ({ ...prev, category }))}
+                onPriceRangeChange={(priceRange) => setFilters(prev => ({ ...prev, priceRange }))}
+                onSortByChange={(sortBy) => setFilters(prev => ({ ...prev, sortBy }))}
+                onClearFilters={handleClearFilters}
               />
             </div>
           </div>
@@ -77,17 +106,33 @@ export default function HomePage() {
           ) : plants.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-lg text-muted-foreground">
-                {zipCode && zipCode.length !== 5 
+                {filters.zipCode && filters.zipCode.length !== 5 
                   ? "Please enter a valid 5-digit ZIP code"
                   : "No plants found. Try adjusting your search or location."}
               </p>
+              {Object.values(filters).some(v => v !== defaultFilters[v as keyof typeof defaultFilters]) && (
+                <Button 
+                  variant="outline" 
+                  onClick={handleClearFilters}
+                  className="mt-4"
+                >
+                  Clear All Filters
+                </Button>
+              )}
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {plants.map((plant) => (
-                <PlantCard key={plant.id} plant={plant} />
-              ))}
-            </div>
+            <>
+              <div className="flex justify-between items-center mb-6">
+                <p className="text-muted-foreground">
+                  Showing {plants.length} result{plants.length === 1 ? '' : 's'}
+                </p>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {plants.map((plant) => (
+                  <PlantCard key={plant.id} plant={plant} />
+                ))}
+              </div>
+            </>
           )}
         </main>
 

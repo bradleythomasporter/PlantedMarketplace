@@ -335,10 +335,21 @@ export function registerRoutes(app: Express): Server {
   // Plants listing and search
   app.get("/api/plants", async (req, res) => {
     try {
-      const { search, category, zipCode, radius, nurseryId } = req.query;
+      const {
+        search,
+        category,
+        zipCode,
+        radius,
+        nurseryId,
+        minPrice,
+        maxPrice,
+        sortBy
+      } = req.query;
+
       let query = db.select().from(plants);
       const conditions = [];
 
+      // Search by name or description (case-insensitive)
       if (typeof search === 'string' && search) {
         conditions.push(sql`(
           LOWER(${plants.name}) LIKE ${`%${search.toLowerCase()}%`} OR
@@ -346,14 +357,26 @@ export function registerRoutes(app: Express): Server {
         )`);
       }
 
+      // Filter by category
       if (typeof category === 'string' && category && category !== 'all') {
         conditions.push(eq(plants.category, category));
       }
 
+      // Filter by nursery
       if (typeof nurseryId === 'string' && nurseryId) {
         conditions.push(eq(plants.nurseryId, parseInt(nurseryId)));
       }
 
+      // Price range filter
+      if (typeof minPrice === 'string' && typeof maxPrice === 'string') {
+        const min = parseFloat(minPrice);
+        const max = parseFloat(maxPrice);
+        if (!isNaN(min) && !isNaN(max)) {
+          conditions.push(sql`${plants.price} BETWEEN ${min} AND ${max}`);
+        }
+      }
+
+      // Location-based search
       if (typeof zipCode === 'string' && zipCode && typeof radius === 'string' && radius) {
         try {
           const [location] = await geocoder.geocode(zipCode);
@@ -367,12 +390,16 @@ export function registerRoutes(app: Express): Server {
                        ll_to_earth(latitude, longitude) AS plant_point,
                        *
                 FROM plants
+                ${conditions.length > 0 ? sql`WHERE ${and(...conditions)}` : sql``}
               )
               SELECT *, 
                 earth_distance(search_point, plant_point) * 0.000621371 AS distance_miles
               FROM point_data
               WHERE earth_distance(search_point, plant_point) * 0.000621371 <= ${radiusMiles}
-              ORDER BY distance_miles ASC
+              ${sortBy === 'price_asc' ? sql`ORDER BY price ASC, distance_miles ASC` :
+                sortBy === 'price_desc' ? sql`ORDER BY price DESC, distance_miles ASC` :
+                sortBy === 'newest' ? sql`ORDER BY created_at DESC, distance_miles ASC` :
+                sql`ORDER BY distance_miles ASC`}
             `);
 
             return res.json(result.rows);
@@ -383,9 +410,25 @@ export function registerRoutes(app: Express): Server {
         }
       }
 
-      // If we're not doing location search, use the regular query
+      // If not doing location search, use regular query with sorting
       if (conditions.length > 0) {
         query = query.where(and(...conditions));
+      }
+
+      // Apply sorting
+      if (typeof sortBy === 'string') {
+        switch (sortBy) {
+          case 'price_asc':
+            query = query.orderBy(plants.price);
+            break;
+          case 'price_desc':
+            query = query.orderBy(sql`${plants.price} DESC`);
+            break;
+          case 'newest':
+            query = query.orderBy(sql`${plants.createdAt} DESC`);
+            break;
+          // Default to relevance (no specific ordering)
+        }
       }
 
       const results = await query;
