@@ -30,7 +30,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/hooks/use-user";
-import { Loader2, PenSquare, Trash2, Package } from "lucide-react";
+import { Loader2, PenSquare, Trash2, Package, Sun, Droplets, Tree } from "lucide-react";
 import { useLocation } from "wouter";
 import type { Plant, Order } from "@db/schema";
 
@@ -38,6 +38,8 @@ interface PlantTemplate {
   id: string;
   name: string;
   scientificName: string;
+  category: string;
+  subCategory: string;
   description: string;
   growthDetails: {
     height: string;
@@ -53,7 +55,16 @@ interface PlantTemplate {
     pruning: string;
     fertilizer: string;
   };
+  properties: {
+    hardinessZone: string;
+    soilType: string[];
+    moisture: string;
+    ph: string;
+    droughtTolerant: boolean;
+    frostTolerant: boolean;
+  };
   imageUrl: string;
+  mainCategory: string;
 }
 
 export default function NurseryDashboard() {
@@ -65,29 +76,19 @@ export default function NurseryDashboard() {
   const [isAddingPlant, setIsAddingPlant] = useState(false);
   const [plantToDelete, setPlantToDelete] = useState<Plant | null>(null);
   const [activeTab, setActiveTab] = useState("inventory");
-  const [activeSection, setActiveSection] = useState("template");
 
   const { data: plantTemplates = {}, isLoading: isLoadingTemplates } = useQuery<Record<string, PlantTemplate[]>>({
     queryKey: ['/api/plants/templates'],
-    retry: 2,
-    onError: (error) => {
-      toast({
-        title: "Error loading templates",
-        description: "Please try again or contact support if the issue persists.",
-        variant: "destructive",
-      });
-    }
+    retry: 2
   });
 
   const addPlantMutation = useMutation({
-    mutationFn: async (formData: FormData) => {
-      // Basic validation
-      const name = formData.get("name") as string;
-      const category = formData.get("category") as string;
-      const price = parseFloat(formData.get("price") as string);
-      const quantity = parseInt(formData.get("quantity") as string);
+    mutationFn: async (data: FormData) => {
+      const formEntries = Object.fromEntries(data.entries());
+      const price = parseFloat(formEntries.price as string);
+      const quantity = parseInt(formEntries.quantity as string);
 
-      if (!name || !category || isNaN(price) || isNaN(quantity)) {
+      if (!formEntries.name || !formEntries.category || isNaN(price) || isNaN(quantity)) {
         throw new Error("Please fill in all required fields");
       }
 
@@ -96,12 +97,20 @@ export default function NurseryDashboard() {
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
-          name,
-          category,
-          description: formData.get("description"),
+          name: formEntries.name,
+          scientificName: formEntries.scientificName || null,
+          category: formEntries.category,
+          description: formEntries.description || "",
           price,
           quantity,
-          imageUrl: formData.get("imageUrl"),
+          imageUrl: formEntries.imageUrl || "",
+          sunExposure: formEntries.sunExposure || null,
+          wateringNeeds: formEntries.wateringNeeds || null,
+          soilType: formEntries.soilType || null,
+          hardinessZone: formEntries.hardinessZone || null,
+          matureSize: formEntries.matureSize || null,
+          growthRate: formEntries.growthRate || null,
+          maintainanceLevel: formEntries.maintainanceLevel || null,
         }),
       });
 
@@ -129,20 +138,6 @@ export default function NurseryDashboard() {
   const handleAddPlant = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-
-    // Ensure numeric values are properly formatted
-    const price = parseFloat(formData.get("price") as string);
-    const quantity = parseInt(formData.get("quantity") as string);
-
-    const plantData = {
-      name: formData.get("name"),
-      category: formData.get("category"),
-      description: formData.get("description"),
-      price: isNaN(price) ? 0 : price,
-      quantity: isNaN(quantity) ? 0 : quantity,
-      imageUrl: formData.get("imageUrl"),
-    };
-
     addPlantMutation.mutate(formData);
   };
 
@@ -176,8 +171,8 @@ export default function NurseryDashboard() {
             <AccordionItem key={category} value={category}>
               <AccordionTrigger className="text-lg font-semibold capitalize">
                 {category === "indoor" ? "Indoor Plants" :
-                 category === "outdoor" ? "Outdoor Plants" :
-                 category.charAt(0).toUpperCase() + category.slice(1)}
+                  category === "outdoor" ? "Outdoor Plants" :
+                    category.charAt(0).toUpperCase() + category.slice(1)}
               </AccordionTrigger>
               <AccordionContent>
                 <div className="grid grid-cols-1 gap-2 p-2">
@@ -191,11 +186,19 @@ export default function NurseryDashboard() {
                         if (!form) return;
 
                         form.name.value = template.name;
-                        form.category.value = category;
+                        form.scientificName.value = template.scientificName;
+                        form.category.value = template.mainCategory;
                         form.description.value = template.description;
                         form.imageUrl.value = template.imageUrl;
                         form.price.value = "29.99";
                         form.quantity.value = "10";
+                        form.sunExposure.value = template.careInstructions.sunlight;
+                        form.wateringNeeds.value = template.careInstructions.watering;
+                        form.soilType.value = template.properties.soilType[0];
+                        form.hardinessZone.value = template.properties.hardinessZone;
+                        form.matureSize.value = template.growthDetails.ultimateHeight;
+                        form.growthRate.value = template.growthDetails.growthRate;
+                        form.maintainanceLevel.value = "medium";
                       }}
                     >
                       <div className="text-left">
@@ -211,6 +214,42 @@ export default function NurseryDashboard() {
             </AccordionItem>
           ))}
         </Accordion>
+      </div>
+    );
+  };
+
+  const CareRequirementIcon = ({ type, level }: { type: string; level: string }) => {
+    const getIcon = () => {
+      switch (type) {
+        case 'sunlight':
+          return <Sun className={`h-5 w-5 ${getColorClass(level)}`} />;
+        case 'water':
+          return <Droplets className={`h-5 w-5 ${getColorClass(level)}`} />;
+        case 'maintenance':
+          return <Tree className={`h-5 w-5 ${getColorClass(level)}`} />;
+        default:
+          return null;
+      }
+    };
+
+    const getColorClass = (level: string) => {
+      switch (level.toLowerCase()) {
+        case 'high':
+          return 'text-red-500';
+        case 'medium':
+        case 'moderate':
+          return 'text-yellow-500';
+        case 'low':
+          return 'text-green-500';
+        default:
+          return 'text-gray-500';
+      }
+    };
+
+    return (
+      <div className="flex items-center gap-1 tooltip" data-tip={`${type}: ${level}`}>
+        {getIcon()}
+        <span className="text-xs">{level}</span>
       </div>
     );
   };
@@ -314,6 +353,7 @@ export default function NurseryDashboard() {
       price: parseFloat(formData.get("price") as string),
       quantity: parseInt(formData.get("quantity") as string),
       imageUrl: formData.get("imageUrl") as string,
+      scientificName: formData.get("scientificName") as string,
     };
 
     await updatePlantMutation.mutateAsync({
@@ -350,7 +390,7 @@ export default function NurseryDashboard() {
       <header className="bg-primary/10 p-4 md:p-6">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-4">
-            <h1 className="text-2xl font-bold text-primary text-display">Planted 🌱</h1>
+            <h1 className="text-2xl font-bold text-primary">Planted 🌱</h1>
             <Button variant="ghost" onClick={() => setLocation("/")}>
               View Store
             </Button>
@@ -411,26 +451,117 @@ export default function NurseryDashboard() {
                             <Input id="name" name="name" required />
                           </div>
                           <div className="space-y-2">
-                            <Label htmlFor="category">Category *</Label>
-                            <select
-                              id="category"
-                              name="category"
-                              className="w-full rounded-md border border-input bg-background px-3 py-2"
-                              required
-                            >
-                              <option value="">Select Category</option>
-                              <option value="indoor">Indoor Plants</option>
-                              <option value="outdoor">Outdoor Plants</option>
-                              <option value="flowers">Flowers</option>
-                              <option value="trees">Trees</option>
-                              <option value="shrubs">Shrubs</option>
-                            </select>
+                            <Label htmlFor="scientificName">Scientific Name</Label>
+                            <Input id="scientificName" name="scientificName" />
                           </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="category">Category *</Label>
+                          <select
+                            id="category"
+                            name="category"
+                            className="w-full rounded-md border border-input bg-background px-3 py-2"
+                            required
+                          >
+                            <option value="">Select Category</option>
+                            <option value="indoor">Indoor Plants</option>
+                            <option value="outdoor">Outdoor Plants</option>
+                            <option value="flowers">Flowers</option>
+                            <option value="trees">Trees</option>
+                            <option value="shrubs">Shrubs</option>
+                          </select>
                         </div>
 
                         <div className="space-y-2">
                           <Label htmlFor="description">Description</Label>
                           <Textarea id="description" name="description" />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>Care Requirements</Label>
+                          <div className="grid grid-cols-3 gap-4">
+                            <div>
+                              <Label htmlFor="sunExposure">Sunlight</Label>
+                              <select
+                                id="sunExposure"
+                                name="sunExposure"
+                                className="w-full rounded-md border border-input bg-background px-3 py-2"
+                              >
+                                <option value="full_sun">Full Sun</option>
+                                <option value="partial_sun">Partial Sun</option>
+                                <option value="partial_shade">Partial Shade</option>
+                                <option value="full_shade">Full Shade</option>
+                              </select>
+                            </div>
+                            <div>
+                              <Label htmlFor="wateringNeeds">Watering</Label>
+                              <select
+                                id="wateringNeeds"
+                                name="wateringNeeds"
+                                className="w-full rounded-md border border-input bg-background px-3 py-2"
+                              >
+                                <option value="high">High</option>
+                                <option value="moderate">Moderate</option>
+                                <option value="low">Low</option>
+                              </select>
+                            </div>
+                            <div>
+                              <Label htmlFor="soilType">Soil Type</Label>
+                              <select
+                                id="soilType"
+                                name="soilType"
+                                className="w-full rounded-md border border-input bg-background px-3 py-2"
+                              >
+                                <option value="well_draining">Well-draining</option>
+                                <option value="clay">Clay</option>
+                                <option value="sandy">Sandy</option>
+                                <option value="loamy">Loamy</option>
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="hardinessZone">Hardiness Zone</Label>
+                            <Input
+                              id="hardinessZone"
+                              name="hardinessZone"
+                              placeholder="e.g., USDA 6-9"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="matureSize">Mature Size</Label>
+                            <Input
+                              id="matureSize"
+                              name="matureSize"
+                              placeholder="e.g., 3-4 ft tall"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="growthRate">Growth Rate</Label>
+                            <Input
+                              id="growthRate"
+                              name="growthRate"
+                              placeholder="e.g., Fast, Moderate, Slow"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="maintainanceLevel">Maintenance Level</Label>
+                            <select
+                              id="maintainanceLevel"
+                              name="maintainanceLevel"
+                              className="w-full rounded-md border border-input bg-background px-3 py-2"
+                            >
+                              <option value="high">High</option>
+                              <option value="moderate">Moderate</option>
+                              <option value="low">Low</option>
+                            </select>
+                          </div>
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
@@ -494,6 +625,14 @@ export default function NurseryDashboard() {
                           name="name"
                           defaultValue={selectedPlant.name}
                           required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="edit-scientificName">Scientific Name</Label>
+                        <Input
+                          id="edit-scientificName"
+                          name="scientificName"
+                          defaultValue={selectedPlant.scientificName}
                         />
                       </div>
                       <div className="space-y-2">
@@ -587,11 +726,25 @@ export default function NurseryDashboard() {
                       key={plant.id}
                       className="flex items-center justify-between p-4 border rounded-lg"
                     >
-                      <div>
+                      <div className="space-y-2">
                         <h3 className="font-semibold">{plant.name}</h3>
+                        {plant.scientificName && (
+                          <p className="text-sm text-muted-foreground italic">{plant.scientificName}</p>
+                        )}
                         <p className="text-sm text-muted-foreground">
                           Stock: {plant.quantity} | ${Number(plant.price).toFixed(2)}
                         </p>
+                        <div className="flex gap-4 mt-2">
+                          {plant.sunExposure && (
+                            <CareRequirementIcon type="sunlight" level={plant.sunExposure} />
+                          )}
+                          {plant.wateringNeeds && (
+                            <CareRequirementIcon type="water" level={plant.wateringNeeds} />
+                          )}
+                          {plant.maintainanceLevel && (
+                            <CareRequirementIcon type="maintenance" level={plant.maintainanceLevel} />
+                          )}
+                        </div>
                       </div>
                       <div className="flex gap-2">
                         <Button
@@ -693,11 +846,12 @@ export default function NurseryDashboard() {
 
           <TabsContent value="profile" className="space-y-8">
             <section>
-              <h2 className="text-2xl font-semibold mb-6 text-display">Nursery Profile</h2>
+              <h2 className="text-2xl font-semibold mb-6 text-display">Profile Settings</h2>
               <form
                 onSubmit={async (e) => {
                   e.preventDefault();
                   const formData = new FormData(e.currentTarget);
+
                   try {
                     const response = await fetch("/api/user/profile", {
                       method: "PATCH",
@@ -721,15 +875,17 @@ export default function NurseryDashboard() {
                     toast({
                       title: "Profile updated successfully",
                     });
-                  } catch (error) {
+
+                    queryClient.invalidateQueries({ queryKey: ["user"] });
+                  } catch (error: any) {
                     toast({
                       title: "Failed to update profile",
-                      description: error instanceof Error ? error.message : "Please try again",
+                      description: error.message,
                       variant: "destructive",
                     });
                   }
                 }}
-                className="space-y-4"
+                className="space-y-4 max-w-2xl"
               >
                 <div className="space-y-2">
                   <Label htmlFor="name">Business Name</Label>
@@ -748,11 +904,16 @@ export default function NurseryDashboard() {
 
                 <div className="space-y-2">
                   <Label htmlFor="address">Address</Label>
-                  <Input id="address" name="address" defaultValue={user?.address} required />
+                  <Input
+                    id="address"
+                    name="address"
+                    defaultValue={user?.address}
+                    required
+                  />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="description">Business Description</Label>
+                  <Label htmlFor="description">Description</Label>
                   <Textarea
                     id="description"
                     name="description"
@@ -766,7 +927,7 @@ export default function NurseryDashboard() {
                     id="hoursOfOperation"
                     name="hoursOfOperation"
                     defaultValue={user?.hoursOfOperation || ""}
-                    placeholder="e.g., Mon-Fri: 9am-5pm"
+                    placeholder="e.g., Mon-Fri: 9AM-5PM"
                   />
                 </div>
 
@@ -775,7 +936,6 @@ export default function NurseryDashboard() {
                   <Input
                     id="website"
                     name="website"
-                    type="url"
                     defaultValue={user?.website || ""}
                     placeholder="https://"
                   />
@@ -786,7 +946,6 @@ export default function NurseryDashboard() {
                   <Input
                     id="phoneNumber"
                     name="phoneNumber"
-                    type="tel"
                     defaultValue={user?.phoneNumber || ""}
                   />
                 </div>
