@@ -19,6 +19,12 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -79,6 +85,13 @@ interface PlantTemplate {
   imageUrl: string;
 }
 
+const mainCategories = {
+  outdoor: ["Perennials", "Shrubs", "Trees", "Climbers", "Bulbs"],
+  indoor: ["Foliage Plants", "Flowering Plants", "Succulents", "Air Plants"],
+  garden_type: ["Cottage Garden", "Mediterranean", "Tropical", "Woodland"],
+  special_features: ["Fragrant", "Bee Friendly", "Drought Resistant", "Shade Loving"]
+};
+
 export default function NurseryDashboard() {
   const [, setLocation] = useLocation();
   const { user, logout } = useUser();
@@ -89,8 +102,9 @@ export default function NurseryDashboard() {
   const [plantToDelete, setPlantToDelete] = useState<Plant | null>(null);
   const [activeTab, setActiveTab] = useState("inventory");
   const [selectedTemplate, setSelectedTemplate] = useState<string>("custom");
-  const [selectedCategory, setSelectedCategory] = useState<string>("");
-  const [selectedSubCategory, setSelectedSubCategory] = useState<string>("");
+  const [mainCategory, setMainCategory] = useState<string>("");
+  const [subCategory, setSubCategory] = useState<string>("");
+  const [activeSection, setActiveSection] = useState<string>("basics");
 
   const { data: plantTemplates = [], isLoading: isLoadingTemplates } = useQuery<PlantTemplate[]>({
     queryKey: ['/api/plants/templates'],
@@ -295,37 +309,40 @@ export default function NurseryDashboard() {
     if (!form) return;
 
     if (value === 'custom') {
-      form.name.value = '';
-      form.scientificName.value = '';
-      form.category.value = '';
-      form.description.value = '';
-      form.height.value = '';
-      form.spread.value = '';
-      form.sunlight.value = '';
-      form.watering.value = '';
-      form.soil.value = '';
-      form.pruning.value = '';
-      form.imageUrl.value = '';
-      setSelectedCategory("");
-      setSelectedSubCategory("");
+      // Reset all form fields
+      form.reset();
+      setMainCategory("");
+      setSubCategory("");
       return;
     }
 
     const template = plantTemplates.find(p => p.id === value);
     if (template) {
-      form.name.value = template.name;
-      form.scientificName.value = template.scientificName;
-      form.category.value = template.category;
-      form.description.value = template.description;
-      form.height.value = template.growthDetails.height;
-      form.spread.value = template.growthDetails.spread;
-      form.sunlight.value = template.careInstructions.sunlight;
-      form.watering.value = template.careInstructions.watering;
-      form.soil.value = template.careInstructions.soil;
-      form.pruning.value = template.careInstructions.pruning;
-      form.imageUrl.value = template.imageUrl;
-      setSelectedCategory(template.category);
-      setSelectedSubCategory(template.subCategory);
+      // Auto-populate form fields from template
+      Object.entries(template).forEach(([key, value]) => {
+        const input = form.elements.namedItem(key) as HTMLInputElement | HTMLTextAreaElement;
+        if (input && typeof value === 'string') {
+          input.value = value;
+        }
+      });
+
+      // Special handling for nested objects
+      if (template.growthDetails) {
+        Object.entries(template.growthDetails).forEach(([key, value]) => {
+          const input = form.elements.namedItem(key) as HTMLInputElement;
+          if (input) input.value = value;
+        });
+      }
+
+      if (template.careInstructions) {
+        Object.entries(template.careInstructions).forEach(([key, value]) => {
+          const input = form.elements.namedItem(key) as HTMLInputElement;
+          if (input) input.value = value;
+        });
+      }
+
+      setMainCategory(template.category);
+      setSubCategory(template.subCategory);
     }
   };
 
@@ -366,129 +383,180 @@ export default function NurseryDashboard() {
                 <DialogTrigger asChild>
                   <Button className="mb-6">Add New Plant</Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-3xl">
+                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>Add New Plant</DialogTitle>
                   </DialogHeader>
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label>Choose a Template (Optional)</Label>
-                      <Select
-                        value={selectedTemplate}
-                        onValueChange={handleTemplateSelection}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a template" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="custom">Custom Plant</SelectItem>
-                          {plantTemplates.map((template) => (
-                            <SelectItem key={template.id} value={template.id}>
-                              {template.name} ({template.scientificName})
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                  <form onSubmit={handleSubmit} className="space-y-6">
+                    <Accordion
+                      type="single"
+                      collapsible
+                      value={activeSection}
+                      onValueChange={setActiveSection}
+                      className="w-full"
+                    >
+                      <AccordionItem value="template">
+                        <AccordionTrigger>Template Selection</AccordionTrigger>
+                        <AccordionContent className="space-y-4 p-4">
+                          <div className="space-y-2">
+                            <Label>Choose a Template (Optional)</Label>
+                            <Select
+                              value={selectedTemplate}
+                              onValueChange={handleTemplateSelection}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select a template" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="custom">Custom Plant</SelectItem>
+                                {plantTemplates.map((template) => (
+                                  <SelectItem key={template.id} value={template.id}>
+                                    {template.name} ({template.scientificName})
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="name">Common Name</Label>
-                        <Input id="name" name="name" required />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="scientificName">Scientific Name</Label>
-                        <Input id="scientificName" name="scientificName" required />
-                      </div>
-                    </div>
+                      <AccordionItem value="basics">
+                        <AccordionTrigger>Basic Information</AccordionTrigger>
+                        <AccordionContent className="space-y-4 p-4">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="name">Common Name</Label>
+                              <Input id="name" name="name" required />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="scientificName">Scientific Name</Label>
+                              <Input id="scientificName" name="scientificName" required />
+                            </div>
+                          </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="category">Category</Label>
-                        <Select
-                          name="category"
-                          value={selectedCategory}
-                          onValueChange={setSelectedCategory}
-                          required
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select category" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {Object.keys(categories).map((category) => (
-                              <SelectItem key={category} value={category}>
-                                {category.charAt(0).toUpperCase() + category.slice(1)}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="subCategory">Sub-Category</Label>
-                        <Select
-                          name="subCategory"
-                          value={selectedSubCategory}
-                          onValueChange={setSelectedSubCategory}
-                          required
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select sub-category" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {selectedCategory && Array.from(categories[selectedCategory] || []).map((subCategory) => (
-                              <SelectItem key={subCategory} value={subCategory}>
-                                {subCategory.charAt(0).toUpperCase() + subCategory.slice(1)}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
+                          <div className="space-y-4">
+                            <div className="space-y-2">
+                              <Label>Main Category</Label>
+                              <Select
+                                value={mainCategory}
+                                onValueChange={setMainCategory}
+                                required
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select main category" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {Object.entries(mainCategories).map(([key, _]) => (
+                                    <SelectItem key={key} value={key}>
+                                      {key.split('_').map(word => 
+                                        word.charAt(0).toUpperCase() + word.slice(1)
+                                      ).join(' ')}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="description">Description</Label>
-                      <Textarea id="description" name="description" required />
-                    </div>
+                            {mainCategory && (
+                              <div className="space-y-2">
+                                <Label>Sub-Category</Label>
+                                <Select
+                                  value={subCategory}
+                                  onValueChange={setSubCategory}
+                                  required
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select sub-category" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {mainCategories[mainCategory as keyof typeof mainCategories]?.map((sub) => (
+                                      <SelectItem key={sub} value={sub}>
+                                        {sub}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            )}
+                          </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="height">Height</Label>
-                        <Input id="height" name="height" required />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="spread">Spread</Label>
-                        <Input id="spread" name="spread" required />
-                      </div>
-                    </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="description">Description</Label>
+                            <Textarea id="description" name="description" required />
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="sunlight">Sunlight Requirements</Label>
-                      <Input id="sunlight" name="sunlight" required />
-                    </div>
+                      <AccordionItem value="growth">
+                        <AccordionTrigger>Growth Details</AccordionTrigger>
+                        <AccordionContent className="space-y-4 p-4">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="height">Height</Label>
+                              <Input id="height" name="height" required />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="spread">Spread</Label>
+                              <Input id="spread" name="spread" required />
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="growthRate">Growth Rate</Label>
+                            <Input id="growthRate" name="growthRate" required />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="ultimateHeight">Ultimate Height</Label>
+                            <Input id="ultimateHeight" name="ultimateHeight" required />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="timeToUltimateHeight">Time to Ultimate Height</Label>
+                            <Input id="timeToUltimateHeight" name="timeToUltimateHeight" required />
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="watering">Watering Needs</Label>
-                      <Input id="watering" name="watering" required />
-                    </div>
+                      <AccordionItem value="care">
+                        <AccordionTrigger>Care Instructions</AccordionTrigger>
+                        <AccordionContent className="space-y-4 p-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="sunlight">Sunlight Requirements</Label>
+                            <Input id="sunlight" name="sunlight" required />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="watering">Watering Needs</Label>
+                            <Input id="watering" name="watering" required />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="soil">Soil Requirements</Label>
+                            <Input id="soil" name="soil" required />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="pruning">Pruning Instructions</Label>
+                            <Input id="pruning" name="pruning" required />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="fertilizer">Fertilizer</Label>
+                            <Input id="fertilizer" name="fertilizer" required />
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="soil">Soil Requirements</Label>
-                      <Input id="soil" name="soil" required />
-                    </div>
+                      <AccordionItem value="image">
+                        <AccordionTrigger>Image</AccordionTrigger>
+                        <AccordionContent className="space-y-4 p-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="imageUrl">Image URL</Label>
+                            <Input id="imageUrl" name="imageUrl" required />
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+                    </Accordion>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="pruning">Pruning Instructions</Label>
-                      <Input id="pruning" name="pruning" required />
+                    <div className="pt-4 border-t">
+                      <Button type="submit" className="w-full">
+                        Add Plant
+                      </Button>
                     </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="imageUrl">Image URL</Label>
-                      <Input id="imageUrl" name="imageUrl" required />
-                    </div>
-
-                    <Button type="submit" className="w-full">
-                      Add Plant
-                    </Button>
                   </form>
                 </DialogContent>
               </Dialog>
