@@ -31,14 +31,14 @@ export function registerRoutes(app: Express): Server {
             spread: "2.5-4m",
             growthRate: "Average",
             ultimateHeight: "4 meters",
-            timeToUltimateHeight: "10-20 years",
+            timeToUltimateHeight: "10-20 years"
           },
           careInstructions: {
             sunlight: "Full sun to partial shade",
             watering: "Water regularly until established, then drought tolerant",
             soil: "Well-drained, fertile soil",
             pruning: "Prune in spring or early summer to encourage new red growth",
-            fertilizer: "Apply balanced fertilizer in spring",
+            fertilizer: "Apply balanced fertilizer in spring"
           },
           properties: {
             hardinessZone: "USDA 7-10",
@@ -46,13 +46,13 @@ export function registerRoutes(app: Express): Server {
             moisture: "Well-drained",
             ph: "Acid, Neutral, Alkaline",
             droughtTolerant: true,
-            frostTolerant: true,
+            frostTolerant: true
           },
           seasonalInterest: {
             spring: "Bright red new growth",
             summer: "Glossy dark green foliage",
             autumn: "Continued red new growth",
-            winter: "Evergreen structure",
+            winter: "Evergreen structure"
           },
           imageUrl: "https://plant-images.s3.amazonaws.com/red-robin.jpg",
           mainCategory: "outdoor"
@@ -69,14 +69,14 @@ export function registerRoutes(app: Express): Server {
             spread: "40-60cm",
             growthRate: "Medium",
             ultimateHeight: "60cm",
-            timeToUltimateHeight: "2-5 years",
+            timeToUltimateHeight: "2-5 years"
           },
           careInstructions: {
             sunlight: "Full sun",
             watering: "Low water needs once established",
             soil: "Well-drained, poor to moderately fertile soil",
             pruning: "Cut back after first flush of flowers to encourage second bloom",
-            fertilizer: "Light feeding in spring",
+            fertilizer: "Light feeding in spring"
           },
           properties: {
             hardinessZone: "USDA 5-9",
@@ -84,13 +84,13 @@ export function registerRoutes(app: Express): Server {
             moisture: "Well-drained",
             ph: "Neutral, Alkaline",
             droughtTolerant: true,
-            frostTolerant: true,
+            frostTolerant: true
           },
           seasonalInterest: {
             spring: "Silver-grey foliage",
             summer: "Deep purple flowers",
             autumn: "Extended flowering",
-            winter: "Evergreen structure",
+            winter: "Evergreen structure"
           },
           imageUrl: "https://plant-images.s3.amazonaws.com/lavender.jpg",
           mainCategory: "outdoor"
@@ -107,14 +107,14 @@ export function registerRoutes(app: Express): Server {
             spread: "45-65cm",
             growthRate: "Medium",
             ultimateHeight: "65cm",
-            timeToUltimateHeight: "3-5 years",
+            timeToUltimateHeight: "3-5 years"
           },
           careInstructions: {
             sunlight: "Indirect light to partial shade",
             watering: "Keep soil consistently moist",
             soil: "Rich, well-draining potting mix",
             pruning: "Remove spent flowers and yellowed leaves",
-            fertilizer: "Monthly feeding during growing season",
+            fertilizer: "Monthly feeding during growing season"
           },
           properties: {
             hardinessZone: "USDA 11-12",
@@ -122,13 +122,13 @@ export function registerRoutes(app: Express): Server {
             moisture: "Moist but well-drained",
             ph: "Acid, Neutral",
             droughtTolerant: false,
-            frostTolerant: false,
+            frostTolerant: false
           },
           seasonalInterest: {
             spring: "Active growth period",
             summer: "White flowers",
             autumn: "Continued growth",
-            winter: "Possible flowering",
+            winter: "Possible flowering"
           },
           imageUrl: "https://plant-images.s3.amazonaws.com/peace-lily.jpg",
           mainCategory: "indoor"
@@ -144,10 +144,10 @@ export function registerRoutes(app: Express): Server {
         return acc;
       }, {} as Record<string, any[]>);
 
-      res.json(groupedTemplates);
+      return res.json(groupedTemplates);
     } catch (error) {
       console.error('Error fetching plant templates:', error);
-      res.status(500).json({ message: "Failed to fetch plant templates" });
+      return res.status(500).json({ message: "Failed to fetch plant templates" });
     }
   });
 
@@ -244,7 +244,7 @@ export function registerRoutes(app: Express): Server {
         },
       });
 
-      res.json({ url: session.url });
+      return res.json({ url: session.url });
     } catch (error: any) {
       console.error("Checkout error:", error);
 
@@ -257,7 +257,7 @@ export function registerRoutes(app: Express): Server {
       }
 
       // Handle general errors
-      res.status(500).json({
+      return res.status(500).json({
         message: "Unable to process checkout at this time. Please try again later.",
         type: "server_error"
       });
@@ -277,10 +277,10 @@ export function registerRoutes(app: Express): Server {
         return res.status(404).json({ message: "Plant not found" });
       }
 
-      res.json(plant);
+      return res.json(plant);
     } catch (error) {
       console.error('Error fetching plant:', error);
-      res.status(500).json({ message: "Failed to fetch plant" });
+      return res.status(500).json({ message: "Failed to fetch plant" });
     }
   });
 
@@ -297,10 +297,10 @@ export function registerRoutes(app: Express): Server {
         .where(eq(orders.nurseryId, req.user.id))
         .orderBy(orders.createdAt);
 
-      res.json(nurseryOrders);
+      return res.json(nurseryOrders);
     } catch (error) {
       console.error('Error fetching orders:', error);
-      res.status(500).json({ message: "Failed to fetch orders" });
+      return res.status(500).json({ message: "Failed to fetch orders" });
     }
   });
 
@@ -341,10 +341,10 @@ export function registerRoutes(app: Express): Server {
         .where(eq(orders.id, orderId))
         .returning();
 
-      res.json(updatedOrder);
+      return res.json(updatedOrder);
     } catch (error) {
       console.error('Error updating order:', error);
-      res.status(500).json({ message: "Failed to update order" });
+      return res.status(500).json({ message: "Failed to update order" });
     }
   });
 
@@ -377,10 +377,10 @@ export function registerRoutes(app: Express): Server {
         .where(eq(plants.id, plantId))
         .returning();
 
-      res.json(updatedPlant);
+      return res.json(updatedPlant);
     } catch (error) {
       console.error('Error updating plant:', error);
-      res.status(500).json({ message: "Failed to update plant" });
+      return res.status(500).json({ message: "Failed to update plant" });
     }
   });
 
@@ -411,10 +411,10 @@ export function registerRoutes(app: Express): Server {
         .delete(plants)
         .where(eq(plants.id, plantId));
 
-      res.json({ message: "Plant deleted successfully" });
+      return res.json({ message: "Plant deleted successfully" });
     } catch (error) {
       console.error('Error deleting plant:', error);
-      res.status(500).json({ message: "Failed to delete plant" });
+      return res.status(500).json({ message: "Failed to delete plant" });
     }
   });
 
@@ -431,14 +431,14 @@ export function registerRoutes(app: Express): Server {
         return res.status(404).json({ message: "Location not found" });
       }
 
-      res.json({
+      return res.json({
         latitude: location.latitude,
         longitude: location.longitude,
         zipCode: location.zipcode || "00000" // Fallback ZIP code
       });
     } catch (error) {
       console.error('Geocoding error:', error);
-      res.status(500).json({ message: "Failed to geocode address" });
+      return res.status(500).json({ message: "Failed to geocode address" });
     }
   });
 
@@ -536,10 +536,10 @@ export function registerRoutes(app: Express): Server {
       }
 
       const results = await query;
-      res.json(results);
+      return res.json(results);
     } catch (error) {
       console.error('Error fetching plants:', error);
-      res.status(500).json({ message: "Failed to fetch plants" });
+      return res.status(500).json({ message: "Failed to fetch plants" });
     }
   });
 
@@ -573,10 +573,10 @@ export function registerRoutes(app: Express): Server {
         .values(plantData)
         .returning();
 
-      res.json(newPlant);
+      return res.json(newPlant);
     } catch (error) {
       console.error('Error adding plant:', error);
-      res.status(500).json({ message: "Failed to add plant" });
+      return res.status(500).json({ message: "Failed to add plant" });
     }
   });
 
@@ -598,10 +598,10 @@ export function registerRoutes(app: Express): Server {
 
       // Don't send the password
       const { password: _, ...nurseryWithoutPassword } = nursery;
-      res.json(nurseryWithoutPassword);
+      return res.json(nurseryWithoutPassword);
     } catch (error) {
       console.error('Error fetching nursery:', error);
-      res.status(500).json({ message: "Failed to fetch nursery" });
+      return res.status(500).json({ message: "Failed to fetch nursery" });
     }
   });
 
@@ -622,10 +622,10 @@ export function registerRoutes(app: Express): Server {
         .returning();
 
       const { password: _, ...userWithoutPassword } = updatedUser;
-      res.json(userWithoutPassword);
+      return res.json(userWithoutPassword);
     } catch (error) {
       console.error('Error updating profile:', error);
-      res.status(500).json({ message: "Failed to update profile" });
+      return res.status(500).json({ message: "Failed to update profile" });
     }
   });
 
