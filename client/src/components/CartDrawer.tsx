@@ -4,10 +4,11 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
+  SheetClose,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ShoppingCart, Trash2, Plus, Minus } from "lucide-react";
+import { ShoppingCart, Trash2, Plus, Minus, X } from "lucide-react";
 import { useCart } from "@/hooks/use-cart";
 import { useState } from "react";
 import { useUser } from "@/hooks/use-user";
@@ -16,7 +17,7 @@ import { useLocation } from "wouter";
 
 export function CartDrawer() {
   const [open, setOpen] = useState(false);
-  const { items, removeItem, updateQuantity, total, clearCart } = useCart();
+  const { items, removeItem, updateQuantity, subtotal, plantingServiceFee, total, clearCart } = useCart();
   const { user } = useUser();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
@@ -53,15 +54,16 @@ export function CartDrawer() {
       });
 
       if (!response.ok) {
-        throw new Error("Checkout failed");
+        const errorText = await response.text();
+        throw new Error(errorText);
       }
 
       const { url } = await response.json();
       window.location.href = url;
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Checkout Error",
-        description: "There was a problem processing your checkout. Please try again.",
+        description: error.message || "There was a problem processing your checkout. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -81,16 +83,22 @@ export function CartDrawer() {
           )}
         </Button>
       </SheetTrigger>
-      <SheetContent className="flex flex-col h-full">
-        <SheetHeader>
-          <SheetTitle>Shopping Cart</SheetTitle>
+      <SheetContent className="flex flex-col h-full w-full sm:max-w-md">
+        <SheetHeader className="flex flex-row items-center justify-between border-b pb-4 space-y-0">
+          <SheetTitle className="text-lg font-semibold">Shopping Cart</SheetTitle>
+          <SheetClose asChild>
+            <Button variant="ghost" size="icon" className="rounded-full">
+              <X className="h-4 w-4" />
+              <span className="sr-only">Close</span>
+            </Button>
+          </SheetClose>
         </SheetHeader>
 
         <div className="flex-1 overflow-hidden">
           <ScrollArea className="h-full">
             <div className="space-y-4 p-1">
               {items.length === 0 ? (
-                <p className="text-center text-muted-foreground py-4">
+                <p className="text-center text-muted-foreground py-8">
                   Your cart is empty
                 </p>
               ) : (
@@ -137,7 +145,7 @@ export function CartDrawer() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8"
+                          className="h-8 w-8 hover:text-destructive"
                           onClick={() => removeItem(item.plant.id)}
                         >
                           <Trash2 className="h-4 w-4" />
@@ -152,28 +160,35 @@ export function CartDrawer() {
         </div>
 
         {items.length > 0 && (
-          <div className="border-t pt-4 mt-auto">
+          <div className="border-t pt-4 mt-auto space-y-4">
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span>Subtotal</span>
-                <span>${total().toFixed(2)}</span>
+                <span>${subtotal().toFixed(2)}</span>
               </div>
-              <div className="flex justify-between font-semibold">
+              {plantingServiceFee() > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span>Planting Service</span>
+                  <span>${plantingServiceFee().toFixed(2)}</span>
+                </div>
+              )}
+              <div className="flex justify-between text-lg font-semibold">
                 <span>Total</span>
                 <span>${total().toFixed(2)}</span>
               </div>
             </div>
             <Button
-              className="w-full mt-4"
+              className="w-full"
+              size="lg"
               onClick={handleCheckout}
-              disabled={isCheckingOut || !user}
+              disabled={isCheckingOut}
             >
               {isCheckingOut ? (
                 "Processing..."
               ) : !user ? (
                 "Login to Checkout"
               ) : (
-                "Checkout"
+                `Checkout • $${total().toFixed(2)}`
               )}
             </Button>
           </div>
