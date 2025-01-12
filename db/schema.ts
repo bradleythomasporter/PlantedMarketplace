@@ -40,6 +40,18 @@ export const plants = pgTable("plants", {
   inStock: boolean("in_stock").notNull().default(true),
   seasonalAvailability: text("seasonal_availability"),
   careInstructions: text("care_instructions"),
+  height: text("height"),
+  spread: text("spread"),
+  growthRate: text("growth_rate"),
+  sunExposure: text("sun_exposure"),
+  soilType: text("soil_type"),
+  wateringNeeds: text("watering_needs"),
+  hardinessZone: text("hardiness_zone"),
+  floweringSeason: text("flowering_season"),
+  matureSize: text("mature_size"),
+  maintainanceLevel: text("maintainance_level", { enum: ["low", "medium", "high"] }),
+  additionalImages: text("additional_images").array(),
+  plantingInstructions: text("planting_instructions"),
 });
 
 export const orders = pgTable("orders", {
