@@ -19,6 +19,7 @@ export function registerRoutes(app: Express): Server {
     try {
       // Comprehensive plant templates with detailed information
       const templates = [
+        // Outdoor Plants - Trees and Shrubs
         {
           id: "red-robin",
           name: "Red Robin",
@@ -54,9 +55,48 @@ export function registerRoutes(app: Express): Server {
             autumn: "Continued red new growth",
             winter: "Evergreen structure"
           },
-          imageUrl: "https://plant-images.s3.amazonaws.com/red-robin.jpg",
+          imageUrl: "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae",
           mainCategory: "outdoor"
         },
+        {
+          id: "japanese-maple",
+          name: "Japanese Maple",
+          scientificName: "Acer palmatum",
+          category: "trees",
+          subCategory: "deciduous",
+          description: "Elegant ornamental tree known for its delicate foliage and stunning autumn colors.",
+          growthDetails: {
+            height: "4-6m",
+            spread: "3-5m",
+            growthRate: "Slow",
+            ultimateHeight: "6 meters",
+            timeToUltimateHeight: "20-50 years"
+          },
+          careInstructions: {
+            sunlight: "Partial shade to dappled sunlight",
+            watering: "Regular watering, keep soil moist",
+            soil: "Rich, well-draining acidic soil",
+            pruning: "Light pruning in late winter",
+            fertilizer: "Spring and early summer feeding"
+          },
+          properties: {
+            hardinessZone: "USDA 5-8",
+            soilType: ["Loam", "Sandy"],
+            moisture: "Moist but well-drained",
+            ph: "Acidic to neutral",
+            droughtTolerant: false,
+            frostTolerant: true
+          },
+          seasonalInterest: {
+            spring: "Fresh lime-green leaves",
+            summer: "Deep purple-red foliage",
+            autumn: "Brilliant red and orange colors",
+            winter: "Attractive bark structure"
+          },
+          imageUrl: "https://images.unsplash.com/photo-1615672968435-75cd1c6a36e5",
+          mainCategory: "outdoor"
+        },
+        // Outdoor Plants - Perennials
         {
           id: "lavender-hidcote",
           name: "Lavender 'Hidcote'",
@@ -92,9 +132,48 @@ export function registerRoutes(app: Express): Server {
             autumn: "Extended flowering",
             winter: "Evergreen structure"
           },
-          imageUrl: "https://plant-images.s3.amazonaws.com/lavender.jpg",
+          imageUrl: "https://images.unsplash.com/photo-1468327768560-75b778cbb551",
           mainCategory: "outdoor"
         },
+        {
+          id: "purple-coneflower",
+          name: "Purple Coneflower",
+          scientificName: "Echinacea purpurea",
+          category: "perennials",
+          subCategory: "flowering",
+          description: "Stunning native perennial with large daisy-like flowers that attract butterflies and bees.",
+          growthDetails: {
+            height: "60-90cm",
+            spread: "45-60cm",
+            growthRate: "Fast",
+            ultimateHeight: "90cm",
+            timeToUltimateHeight: "2-3 years"
+          },
+          careInstructions: {
+            sunlight: "Full sun",
+            watering: "Moderate, drought tolerant once established",
+            soil: "Well-drained, rich soil",
+            pruning: "Deadhead spent flowers",
+            fertilizer: "Light feeding in spring"
+          },
+          properties: {
+            hardinessZone: "USDA 3-9",
+            soilType: ["Clay", "Loam", "Sand"],
+            moisture: "Medium",
+            ph: "Neutral",
+            droughtTolerant: true,
+            frostTolerant: true
+          },
+          seasonalInterest: {
+            spring: "Fresh green growth",
+            summer: "Purple-pink flowers",
+            autumn: "Extended blooming",
+            winter: "Seedheads for birds"
+          },
+          imageUrl: "https://images.unsplash.com/photo-1597892657493-6847b6770acd",
+          mainCategory: "outdoor"
+        },
+        // Indoor Plants
         {
           id: "peace-lily",
           name: "Peace Lily",
@@ -130,7 +209,83 @@ export function registerRoutes(app: Express): Server {
             autumn: "Continued growth",
             winter: "Possible flowering"
           },
-          imageUrl: "https://plant-images.s3.amazonaws.com/peace-lily.jpg",
+          imageUrl: "https://images.unsplash.com/photo-1593691509543-c55fb32e7355",
+          mainCategory: "indoor"
+        },
+        {
+          id: "monstera",
+          name: "Swiss Cheese Plant",
+          scientificName: "Monstera deliciosa",
+          category: "indoor",
+          subCategory: "foliage plants",
+          description: "Trendy tropical plant with distinctive split leaves, perfect for creating a jungle atmosphere indoors.",
+          growthDetails: {
+            height: "2-3m",
+            spread: "1-2m",
+            growthRate: "Fast",
+            ultimateHeight: "3m indoors",
+            timeToUltimateHeight: "5-10 years"
+          },
+          careInstructions: {
+            sunlight: "Bright indirect light",
+            watering: "Allow top soil to dry between waterings",
+            soil: "Well-draining, rich potting mix",
+            pruning: "Remove yellow leaves, control size",
+            fertilizer: "Monthly during growing season"
+          },
+          properties: {
+            hardinessZone: "USDA 10-12",
+            soilType: ["Potting mix"],
+            moisture: "Medium",
+            ph: "Slightly acidic to neutral",
+            droughtTolerant: false,
+            frostTolerant: false
+          },
+          seasonalInterest: {
+            spring: "New leaf growth",
+            summer: "Rapid growth",
+            autumn: "Continued growth",
+            winter: "Slower growth"
+          },
+          imageUrl: "https://images.unsplash.com/photo-1614594975525-e45190c55d0b",
+          mainCategory: "indoor"
+        },
+        {
+          id: "orchid",
+          name: "Phalaenopsis Orchid",
+          scientificName: "Phalaenopsis hybrid",
+          category: "indoor",
+          subCategory: "flowering plants",
+          description: "Elegant moth orchid with long-lasting blooms, perfect for brightening indoor spaces.",
+          growthDetails: {
+            height: "45-60cm",
+            spread: "30-45cm",
+            growthRate: "Slow",
+            ultimateHeight: "60cm",
+            timeToUltimateHeight: "2-3 years"
+          },
+          careInstructions: {
+            sunlight: "Bright indirect light",
+            watering: "Weekly, allow to dry slightly",
+            soil: "Specialized orchid mix",
+            pruning: "Cut spent flower stems",
+            fertilizer: "Weak orchid fertilizer bi-weekly"
+          },
+          properties: {
+            hardinessZone: "USDA 10-12",
+            soilType: ["Orchid mix"],
+            moisture: "Medium",
+            ph: "Slightly acidic",
+            droughtTolerant: false,
+            frostTolerant: false
+          },
+          seasonalInterest: {
+            spring: "Potential blooming",
+            summer: "Active growth",
+            autumn: "Potential blooming",
+            winter: "Rest period"
+          },
+          imageUrl: "https://images.unsplash.com/photo-1624809781812-9129d89c6764",
           mainCategory: "indoor"
         }
       ];
