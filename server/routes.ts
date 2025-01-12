@@ -8,6 +8,7 @@ import { setupAuth } from "./auth";
 import distance from "@turf/distance";
 import { point } from "@turf/helpers";
 import Stripe from "stripe";
+import { sql } from 'drizzle-orm/sql';
 
 // Validate Stripe key format
 const isValidStripeKey = (key: string) => {
@@ -340,8 +341,8 @@ export function registerRoutes(app: Express): Server {
 
       if (typeof search === 'string' && search) {
         conditions.push(or(
-          like(plants.name, `%${search}%`),
-          like(plants.description, `%${search}%`)
+          like(plants.name, `%${search.toLowerCase()}%`),
+          like(plants.description, `%${search.toLowerCase()}%`)
         ));
       }
 
@@ -355,24 +356,29 @@ export function registerRoutes(app: Express): Server {
 
       if (typeof zipCode === 'string' && zipCode && typeof radius === 'string' && radius) {
         try {
+          // Geocode the search ZIP code
           const [location] = await geocoder.geocode(zipCode);
           if (location) {
             const radiusMiles = parseInt(radius);
             const center = point([location.longitude, location.latitude]);
 
-            // Get all plants and filter by distance
-            const allPlants = await query;
-            const filteredPlants = allPlants.filter(plant => {
-              if (!plant.latitude || !plant.longitude) return false;
-              const plantPoint = point([plant.longitude, plant.latitude]);
-              const distanceInMiles = distance(center, plantPoint, { units: 'miles' });
-              return distanceInMiles <= radiusMiles;
-            });
+            // First get nurseries within radius to optimize the query
+            const [allPlants] = await db.execute(
+              sql.raw(`
+                SELECT *,
+                  (point(longitude, latitude) <@> point($1, $2)) * 1.609344 as distance
+                FROM plants
+                WHERE (point(longitude, latitude) <@> point($1, $2)) * 1.609344 <= $3
+                ORDER BY distance
+              `),
+              [location.longitude, location.latitude, radiusMiles]
+            );
 
-            return res.json(filteredPlants);
+            return res.json(allPlants);
           }
         } catch (error) {
           console.error('Geocoding error:', error);
+          return res.status(400).json({ message: "Invalid ZIP code or location not found" });
         }
       }
 
@@ -395,9 +401,22 @@ export function registerRoutes(app: Express): Server {
     }
 
     try {
+      if (!req.user.address) {
+        return res.status(400).json({ message: "Nursery address is required to add plants" });
+      }
+
+      // Get location data from nursery's address
+      const [location] = await geocoder.geocode(req.user.address);
+      if (!location) {
+        return res.status(400).json({ message: "Could not determine nursery location" });
+      }
+
       const plantData = {
         ...req.body,
         nurseryId: req.user.id,
+        latitude: location.latitude,
+        longitude: location.longitude,
+        zipCode: location.zipcode || req.user.address.match(/\d{5}/)?.[0] || "00000",
       };
 
       const [newPlant] = await db
