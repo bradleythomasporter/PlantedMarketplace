@@ -2,13 +2,12 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { db } from "@db";
 import { plants, orders, users } from "@db/schema";
-import { like, and, or, eq, inArray, gte } from "drizzle-orm";
+import { like, and, or, eq, inArray, gte, sql } from "drizzle-orm";
 import NodeGeocoder from "node-geocoder";
 import { setupAuth } from "./auth";
 import distance from "@turf/distance";
 import { point } from "@turf/helpers";
 import Stripe from "stripe";
-import { sql } from 'drizzle-orm/sql';
 
 // Validate Stripe key format
 const isValidStripeKey = (key: string) => {
@@ -340,7 +339,6 @@ export function registerRoutes(app: Express): Server {
         category,
         zipCode,
         radius,
-        nurseryId,
         minPrice,
         maxPrice,
         sortBy
@@ -359,12 +357,7 @@ export function registerRoutes(app: Express): Server {
 
       // Filter by category
       if (typeof category === 'string' && category && category !== 'all') {
-        conditions.push(eq(plants.category, category));
-      }
-
-      // Filter by nursery
-      if (typeof nurseryId === 'string' && nurseryId) {
-        conditions.push(eq(plants.nurseryId, parseInt(nurseryId)));
+        conditions.push(sql`${plants.category} = ${category}`);
       }
 
       // Price range filter
@@ -412,14 +405,14 @@ export function registerRoutes(app: Express): Server {
 
       // If not doing location search, use regular query with sorting
       if (conditions.length > 0) {
-        query = query.where(and(...conditions));
+        query = query.where(sql`${and(...conditions)}`);
       }
 
       // Apply sorting
       if (typeof sortBy === 'string') {
         switch (sortBy) {
           case 'price_asc':
-            query = query.orderBy(plants.price);
+            query = query.orderBy(sql`${plants.price} ASC`);
             break;
           case 'price_desc':
             query = query.orderBy(sql`${plants.price} DESC`);
