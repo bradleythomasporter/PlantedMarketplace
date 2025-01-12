@@ -129,17 +129,31 @@ export default function NurseryDashboard() {
   const handleAddPlant = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
+
+    // Ensure numeric values are properly formatted
+    const price = parseFloat(formData.get("price") as string);
+    const quantity = parseInt(formData.get("quantity") as string);
+
+    const plantData = {
+      name: formData.get("name"),
+      category: formData.get("category"),
+      description: formData.get("description"),
+      price: isNaN(price) ? 0 : price,
+      quantity: isNaN(quantity) ? 0 : quantity,
+      imageUrl: formData.get("imageUrl"),
+    };
+
     addPlantMutation.mutate(formData);
   };
 
   const renderTemplateSelection = () => {
-    const categories = {
-      indoor: "Indoor Plants",
-      outdoor: "Outdoor Plants",
-      flowers: "Flowers",
-      trees: "Trees",
-      shrubs: "Shrubs"
-    };
+    if (isLoadingTemplates) {
+      return (
+        <div className="flex justify-center py-6">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      );
+    }
 
     return (
       <div className="space-y-6">
@@ -157,37 +171,46 @@ export default function NurseryDashboard() {
           </Button>
         </div>
 
-        {Object.entries(categories).map(([category, label]) => (
-          <div key={category} className="space-y-2">
-            <Label className="text-lg font-semibold">{label}</Label>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              {plantTemplates[category]?.map((template) => (
-                <Button
-                  key={template.id}
-                  variant="outline"
-                  className="justify-start h-auto py-4 px-4"
-                  onClick={() => {
-                    const form = document.querySelector('form') as HTMLFormElement;
-                    if (!form) return;
+        <Accordion type="single" collapsible className="w-full">
+          {Object.entries(plantTemplates).map(([category, templates]) => (
+            <AccordionItem key={category} value={category}>
+              <AccordionTrigger className="text-lg font-semibold capitalize">
+                {category === "indoor" ? "Indoor Plants" :
+                 category === "outdoor" ? "Outdoor Plants" :
+                 category.charAt(0).toUpperCase() + category.slice(1)}
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="grid grid-cols-1 gap-2 p-2">
+                  {templates.map((template) => (
+                    <Button
+                      key={template.id}
+                      variant="outline"
+                      className="justify-start h-auto py-4 px-4"
+                      onClick={() => {
+                        const form = document.querySelector('form') as HTMLFormElement;
+                        if (!form) return;
 
-                    form.name.value = template.name;
-                    form.category.value = category;
-                    form.description.value = template.description;
-                    form.imageUrl.value = template.imageUrl;
-
-                    // Set some default values for required fields
-                    form.price.value = "29.99";
-                    form.quantity.value = "10";
-                  }}
-                >
-                  <div className="text-left">
-                    <div className="font-medium">{template.name}</div>
-                  </div>
-                </Button>
-              ))}
-            </div>
-          </div>
-        ))}
+                        form.name.value = template.name;
+                        form.category.value = category;
+                        form.description.value = template.description;
+                        form.imageUrl.value = template.imageUrl;
+                        form.price.value = "29.99";
+                        form.quantity.value = "10";
+                      }}
+                    >
+                      <div className="text-left">
+                        <div className="font-medium">{template.name}</div>
+                        <div className="text-sm text-muted-foreground mt-1">
+                          {template.scientificName}
+                        </div>
+                      </div>
+                    </Button>
+                  ))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
       </div>
     );
   };
@@ -682,6 +705,7 @@ export default function NurseryDashboard() {
                       credentials: "include",
                       body: JSON.stringify({
                         name: formData.get("name"),
+                        email: formData.get("email"),
                         address: formData.get("address"),
                         description: formData.get("description"),
                         hoursOfOperation: formData.get("hoursOfOperation"),
@@ -710,6 +734,16 @@ export default function NurseryDashboard() {
                 <div className="space-y-2">
                   <Label htmlFor="name">Business Name</Label>
                   <Input id="name" name="name" defaultValue={user?.name} required />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    defaultValue={user?.email || ""}
+                  />
                 </div>
 
                 <div className="space-y-2">
