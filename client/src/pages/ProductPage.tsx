@@ -31,7 +31,16 @@ import {
   Share2,
   Facebook,
   Twitter,
-  Mail
+  Mail,
+  Thermometer,
+  Sprout,
+  Globe,
+  Shield,
+  Leaf,
+  Home,
+  CloudRain,
+  Bug,
+  UtensilsCrossed
 } from "lucide-react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
@@ -184,6 +193,29 @@ export default function ProductPage({ params }: { params: { id: string } }) {
                 </div>
               )}
 
+              {/* Scientific Information Card */}
+              <Card className="p-4 bg-muted/50">
+                <h3 className="font-semibold mb-2 text-sm uppercase tracking-wide">Botanical Details</h3>
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Scientific Name:</span>
+                    <span className="italic">{plant.scientificName}</span>
+                  </div>
+                  {plant.nativeRegion && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Native Region:</span>
+                      <span>{plant.nativeRegion}</span>
+                    </div>
+                  )}
+                  {plant.hardinessZone && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Hardiness Zone:</span>
+                      <span>{plant.hardinessZone}</span>
+                    </div>
+                  )}
+                </div>
+              </Card>
+
               {/* Share Buttons */}
               <div className="flex items-center gap-4 pt-4 border-t">
                 <span className="text-sm font-medium flex items-center gap-2">
@@ -220,6 +252,10 @@ export default function ProductPage({ params }: { params: { id: string } }) {
             <div className="space-y-6">
               <div>
                 <h1 className="text-3xl font-bold text-display mb-2">{plant.name}</h1>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Globe className="h-4 w-4" />
+                  <span className="italic">{plant.scientificName}</span>
+                </div>
                 <Button 
                   variant="link" 
                   className="flex items-center gap-2 text-muted-foreground hover:text-primary"
@@ -233,45 +269,111 @@ export default function ProductPage({ params }: { params: { id: string } }) {
                 </p>
               </div>
 
-              {/* Key Features */}
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {plant.height && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <Ruler className="h-4 w-4 text-primary" />
-                    <span>Height: {plant.height}</span>
-                  </div>
-                )}
-                {plant.spread && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <Scale className="h-4 w-4 text-primary" />
-                    <span>Spread: {plant.spread}</span>
-                  </div>
-                )}
-                {plant.sunExposure && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <Sun className="h-4 w-4 text-primary" />
-                    <span>{plant.sunExposure}</span>
-                  </div>
-                )}
-                {plant.wateringNeeds && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <Droplets className="h-4 w-4 text-primary" />
-                    <span>{plant.wateringNeeds}</span>
-                  </div>
-                )}
-                {plant.hardinessZone && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <ThermometerSun className="h-4 w-4 text-primary" />
-                    <span>Zone: {plant.hardinessZone}</span>
-                  </div>
-                )}
-                {plant.floweringSeason && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <Calendar className="h-4 w-4 text-primary" />
-                    <span>{plant.floweringSeason}</span>
-                  </div>
-                )}
-              </div>
+              {/* Plant Characteristics */}
+              <Card className="p-4">
+                <h3 className="font-semibold mb-4">Key Features</h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {plant.matureHeight && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Ruler className="h-4 w-4 text-primary" />
+                      <div>
+                        <p className="font-medium">Height</p>
+                        <p className="text-muted-foreground">{plant.matureHeight}cm</p>
+                      </div>
+                    </div>
+                  )}
+                  {plant.matureSpread && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Scale className="h-4 w-4 text-primary" />
+                      <div>
+                        <p className="font-medium">Spread</p>
+                        <p className="text-muted-foreground">{plant.matureSpread}cm</p>
+                      </div>
+                    </div>
+                  )}
+                  {plant.growthRate && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Sprout className="h-4 w-4 text-primary" />
+                      <div>
+                        <p className="font-medium">Growth Rate</p>
+                        <p className="text-muted-foreground capitalize">{plant.growthRate}</p>
+                      </div>
+                    </div>
+                  )}
+                  {plant.timeToMaturity && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Calendar className="h-4 w-4 text-primary" />
+                      <div>
+                        <p className="font-medium">Time to Maturity</p>
+                        <p className="text-muted-foreground">{plant.timeToMaturity}</p>
+                      </div>
+                    </div>
+                  )}
+                  {(plant.temperatureMin || plant.temperatureMax) && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Thermometer className="h-4 w-4 text-primary" />
+                      <div>
+                        <p className="font-medium">Temperature</p>
+                        <p className="text-muted-foreground">
+                          {plant.temperatureMin}°C to {plant.temperatureMax}°C
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  {plant.humidityRequirement && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <CloudRain className="h-4 w-4 text-primary" />
+                      <div>
+                        <p className="font-medium">Humidity</p>
+                        <p className="text-muted-foreground">{plant.humidityRequirement}%</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </Card>
+
+              {/* Plant Properties */}
+              <Card className="p-4">
+                <h3 className="font-semibold mb-4">Properties</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  {plant.indoorSuitable && (
+                    <div className="flex flex-col items-center gap-2 text-center p-2 rounded-lg bg-primary/5">
+                      <Home className="h-5 w-5 text-primary" />
+                      <span className="text-xs">Indoor Suitable</span>
+                    </div>
+                  )}
+                  {plant.droughtTolerant && (
+                    <div className="flex flex-col items-center gap-2 text-center p-2 rounded-lg bg-primary/5">
+                      <Sun className="h-5 w-5 text-primary" />
+                      <span className="text-xs">Drought Tolerant</span>
+                    </div>
+                  )}
+                  {plant.deerResistant && (
+                    <div className="flex flex-col items-center gap-2 text-center p-2 rounded-lg bg-primary/5">
+                      <Shield className="h-5 w-5 text-primary" />
+                      <span className="text-xs">Deer Resistant</span>
+                    </div>
+                  )}
+                  {plant.pestResistant && (
+                    <div className="flex flex-col items-center gap-2 text-center p-2 rounded-lg bg-primary/5">
+                      <Bug className="h-5 w-5 text-primary" />
+                      <span className="text-xs">Pest Resistant</span>
+                    </div>
+                  )}
+                  {plant.fragrant && (
+                    <div className="flex flex-col items-center gap-2 text-center p-2 rounded-lg bg-primary/5">
+                      <Leaf className="h-5 w-5 text-primary" />
+                      <span className="text-xs">Fragrant</span>
+                    </div>
+                  )}
+                  {plant.edible && (
+                    <div className="flex flex-col items-center gap-2 text-center p-2 rounded-lg bg-primary/5">
+                      <UtensilsCrossed className="h-5 w-5 text-primary" />
+                      <span className="text-xs">Edible</span>
+                    </div>
+                  )}
+                </div>
+              </Card>
 
               <div className="space-y-4">
                 <Button className="w-full" size="lg" onClick={handleAddToCart}>
@@ -342,26 +444,59 @@ export default function ProductPage({ params }: { params: { id: string } }) {
                 </TabsContent>
                 <TabsContent value="care" className="mt-4">
                   <div className="prose prose-stone dark:prose-invert">
-                    {plant.careInstructions && (
-                      <div dangerouslySetInnerHTML={{ __html: plant.careInstructions }} />
-                    )}
-                    <div className="mt-4 space-y-4">
-                      {plant.soilType && (
-                        <div>
-                          <h4 className="text-lg font-semibold">Soil Requirements</h4>
-                          <p>{plant.soilType}</p>
-                        </div>
-                      )}
-                      {plant.wateringNeeds && (
-                        <div>
-                          <h4 className="text-lg font-semibold">Watering</h4>
-                          <p>{plant.wateringNeeds}</p>
-                        </div>
-                      )}
-                      {plant.sunExposure && (
-                        <div>
-                          <h4 className="text-lg font-semibold">Light Requirements</h4>
-                          <p>{plant.sunExposure}</p>
+                    <div className="space-y-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Card className="p-4">
+                          <div className="flex items-center gap-2 mb-3">
+                            <Sun className="h-5 w-5 text-primary" />
+                            <h4 className="font-semibold">Light Requirements</h4>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            {plant.lightRequirement === 'low' && 'Thrives in low light conditions, perfect for shaded areas.'}
+                            {plant.lightRequirement === 'medium' && 'Prefers bright, indirect light for optimal growth.'}
+                            {plant.lightRequirement === 'high' && 'Requires full sun exposure for best results.'}
+                          </p>
+                        </Card>
+
+                        <Card className="p-4">
+                          <div className="flex items-center gap-2 mb-3">
+                            <Droplets className="h-5 w-5 text-primary" />
+                            <h4 className="font-semibold">Watering Needs</h4>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            {plant.waterRequirement === 'low' && 'Drought-tolerant, requires minimal watering.'}
+                            {plant.waterRequirement === 'medium' && 'Keep soil consistently moist but not waterlogged.'}
+                            {plant.waterRequirement === 'high' && 'Requires frequent watering to maintain moisture.'}
+                          </p>
+                        </Card>
+
+                        {plant.soilType && (
+                          <Card className="p-4">
+                            <div className="flex items-center gap-2 mb-3">
+                              <Sprout className="h-5 w-5 text-primary" />
+                              <h4 className="font-semibold">Soil Type</h4>
+                            </div>
+                            <p className="text-sm text-muted-foreground">{plant.soilType}</p>
+                          </Card>
+                        )}
+
+                        {plant.fertilizerRequirements && (
+                          <Card className="p-4">
+                            <div className="flex items-center gap-2 mb-3">
+                              <LeafyGreen className="h-5 w-5 text-primary" />
+                              <h4 className="font-semibold">Fertilizer</h4>
+                            </div>
+                            <p className="text-sm text-muted-foreground">{plant.fertilizerRequirements}</p>
+                          </Card>
+                        )}
+                      </div>
+
+                      {plant.careInstructions && (
+                        <div className="mt-6">
+                          <h4 className="text-lg font-semibold mb-3">Additional Care Instructions</h4>
+                          <div className="prose prose-sm max-w-none text-muted-foreground" 
+                               dangerouslySetInnerHTML={{ __html: plant.careInstructions }} 
+                          />
                         </div>
                       )}
                     </div>
@@ -385,10 +520,41 @@ export default function ProductPage({ params }: { params: { id: string } }) {
               </Tabs>
 
               {/* Seasonal Information */}
-              {plant.seasonalAvailability && (
+              {(plant.seasonalAvailability || plant.floweringSeason || plant.fruitingSeason) && (
                 <Card className="p-4">
-                  <h3 className="font-semibold mb-2">Seasonal Information</h3>
-                  <p className="text-sm text-muted-foreground">{plant.seasonalAvailability}</p>
+                  <h3 className="font-semibold mb-4">Seasonal Information</h3>
+                  <div className="space-y-3">
+                    {plant.floweringSeason && (
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-primary" />
+                        <div>
+                          <p className="text-sm font-medium">Flowering Season</p>
+                          <p className="text-sm text-muted-foreground capitalize">
+                            {plant.floweringSeason}
+                            {plant.floweringColor && ` - ${plant.floweringColor} flowers`}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    {plant.fruitingSeason && (
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-primary" />
+                        <div>
+                          <p className="text-sm font-medium">Fruiting Season</p>
+                          <p className="text-sm text-muted-foreground capitalize">{plant.fruitingSeason}</p>
+                        </div>
+                      </div>
+                    )}
+                    {plant.seasonalAvailability && (
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-primary" />
+                        <div>
+                          <p className="text-sm font-medium">Availability</p>
+                          <p className="text-sm text-muted-foreground">{plant.seasonalAvailability}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </Card>
               )}
             </div>
