@@ -104,11 +104,11 @@ export default function NurseryDashboard() {
   const [isAddingPlant, setIsAddingPlant] = useState(false);
   const [plantToDelete, setPlantToDelete] = useState<Plant | null>(null);
   const [activeTab, setActiveTab] = useState("inventory");
-  const [selectedTemplate, setSelectedTemplate] = useState("none");
+  const [selectedTemplate, setSelectedTemplate] = useState<string | null>("none");
   const [mainCategory, setMainCategory] = useState<MainCategory | null>(null);
   const [subCategory, setSubCategory] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState("basics");
-  const [selectedMainCategory, setSelectedMainCategory] = useState("none");
+  const [selectedMainCategory, setSelectedMainCategory] = useState<string | null>("none");
   const [availablePlants, setAvailablePlants] = useState<PlantTemplate[]>([]);
 
   const { data: plantTemplates = {}, isLoading: isLoadingTemplates } = useQuery<Record<string, PlantTemplate[]>>({
@@ -353,16 +353,16 @@ export default function NurseryDashboard() {
       <div className="space-y-2">
         <Label>1. Select Plant Type</Label>
         <Select
-          value={selectedMainCategory}
+          value={selectedMainCategory || "none"}
           onValueChange={(value) => {
             setSelectedMainCategory(value);
-            if (value === "none") {
-              setSelectedTemplate("none");
-            }
+            setSelectedTemplate("none");
           }}
         >
-          <SelectTrigger>
-            <SelectValue placeholder="Select plant type" />
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Select plant type" defaultValue="none">
+              {selectedMainCategory === "none" ? "Custom Plant" : selectedMainCategory}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="none">Custom Plant</SelectItem>
@@ -379,11 +379,13 @@ export default function NurseryDashboard() {
         <div className="space-y-2">
           <Label>2. Select Plant</Label>
           <Select
-            value={selectedTemplate}
+            value={selectedTemplate || "none"}
             onValueChange={handleTemplateSelection}
           >
-            <SelectTrigger>
-              <SelectValue placeholder="Choose a plant" />
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Choose a plant" defaultValue="none">
+                {selectedTemplate === "none" ? "Select a plant" : availablePlants.find(p => p.id === selectedTemplate)?.name || "Select a plant"}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="none">Select a plant</SelectItem>
