@@ -340,14 +340,14 @@ export function registerRoutes(app: Express): Server {
       const conditions = [];
 
       if (typeof search === 'string' && search) {
-        conditions.push(or(
-          like(plants.name, `%${search.toLowerCase()}%`),
-          like(plants.description, `%${search.toLowerCase()}%`)
-        ));
+        conditions.push(sql`(
+          LOWER(${plants.name}) LIKE ${`%${search.toLowerCase()}%`} OR
+          LOWER(${plants.description}) LIKE ${`%${search.toLowerCase()}%`}
+        )`);
       }
 
       if (typeof category === 'string' && category && category !== 'all') {
-        conditions.push(like(plants.category, category));
+        conditions.push(eq(plants.category, category));
       }
 
       if (typeof nurseryId === 'string' && nurseryId) {
@@ -356,25 +356,26 @@ export function registerRoutes(app: Express): Server {
 
       if (typeof zipCode === 'string' && zipCode && typeof radius === 'string' && radius) {
         try {
-          // Geocode the search ZIP code
           const [location] = await geocoder.geocode(zipCode);
           if (location) {
             const radiusMiles = parseInt(radius);
-            const center = point([location.longitude, location.latitude]);
 
-            // First get nurseries within radius to optimize the query
-            const [allPlants] = await db.execute(
-              sql.raw(`
-                SELECT *,
-                  (point(longitude, latitude) <@> point($1, $2)) * 1.609344 as distance
+            // Create an earth_box around the search point using the radius
+            const result = await db.execute(sql`
+              WITH point_data AS (
+                SELECT ll_to_earth(${location.latitude}, ${location.longitude}) AS search_point,
+                       ll_to_earth(latitude, longitude) AS plant_point,
+                       *
                 FROM plants
-                WHERE (point(longitude, latitude) <@> point($1, $2)) * 1.609344 <= $3
-                ORDER BY distance
-              `),
-              [location.longitude, location.latitude, radiusMiles]
-            );
+              )
+              SELECT *, 
+                earth_distance(search_point, plant_point) * 0.000621371 AS distance_miles
+              FROM point_data
+              WHERE earth_distance(search_point, plant_point) * 0.000621371 <= ${radiusMiles}
+              ORDER BY distance_miles ASC
+            `);
 
-            return res.json(allPlants);
+            return res.json(result.rows);
           }
         } catch (error) {
           console.error('Geocoding error:', error);
@@ -382,6 +383,7 @@ export function registerRoutes(app: Express): Server {
         }
       }
 
+      // If we're not doing location search, use the regular query
       if (conditions.length > 0) {
         query = query.where(and(...conditions));
       }
