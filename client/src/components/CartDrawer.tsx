@@ -4,11 +4,10 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-  SheetClose,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ShoppingCart, Trash2, Plus, Minus, X } from "lucide-react";
+import { ShoppingCart, Trash2, Plus, Minus } from "lucide-react";
 import { useCartStore } from "@/lib/cart-store";
 import { useState } from "react";
 import { useUser } from "@/hooks/use-user";
@@ -84,14 +83,8 @@ export function CartDrawer() {
         </Button>
       </SheetTrigger>
       <SheetContent className="flex flex-col h-full w-full sm:max-w-md">
-        <SheetHeader className="flex flex-row items-center justify-between border-b pb-4 space-y-0">
-          <SheetTitle className="text-lg font-semibold">Shopping Cart</SheetTitle>
-          <SheetClose asChild>
-            <Button variant="ghost" size="icon" className="rounded-full">
-              <X className="h-4 w-4" />
-              <span className="sr-only">Close</span>
-            </Button>
-          </SheetClose>
+        <SheetHeader className="border-b pb-4">
+          <SheetTitle>Shopping Cart</SheetTitle>
         </SheetHeader>
 
         <div className="flex-1 overflow-hidden">

@@ -14,13 +14,13 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, LeafyGreen, MapPin } from "lucide-react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { useCart } from "@/hooks/use-cart";
+import { useCartStore } from "@/lib/cart-store";
 import type { Plant } from "@db/schema";
 
 export default function ProductPage({ params }: { params: { id: string } }) {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const { addItem } = useCart();
+  const cartStore = useCartStore();
   const [showGardenerModal, setShowGardenerModal] = useState(false);
 
   const { data: plant, isLoading } = useQuery<Plant>({
@@ -29,7 +29,7 @@ export default function ProductPage({ params }: { params: { id: string } }) {
 
   const handleAddToCart = () => {
     if (plant) {
-      addItem(plant, 1);
+      cartStore.addItem(plant, 1);
       toast({
         title: "Added to Cart",
         description: `${plant.name} has been added to your cart.`,
@@ -132,14 +132,15 @@ export default function ProductPage({ params }: { params: { id: string } }) {
                       <Button 
                         className="w-full"
                         onClick={() => {
+                          cartStore.addItem(plant, 1, true);
                           toast({
-                            title: "Service Request Sent",
-                            description: "A gardener will contact you to schedule the planting.",
+                            title: "Added to Cart",
+                            description: `${plant.name} with planting service has been added to your cart.`,
                           });
                           setShowGardenerModal(false);
                         }}
                       >
-                        Request Service (+$49.99)
+                        Add to Cart (+$49.99)
                       </Button>
                     </div>
                   </DialogContent>
