@@ -22,7 +22,11 @@ export default function AuthPage() {
   const { toast } = useToast();
   const { login, register } = useUser();
   const [isLoading, setIsLoading] = useState(false);
-  const [role, setRole] = useState("customer");
+  const [role, setRole] = useState(() => {
+    // Get role from URL if it exists
+    const params = new URLSearchParams(window.location.search);
+    return params.get("role") || "customer";
+  });
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -123,9 +127,9 @@ export default function AuthPage() {
                 <form onSubmit={handleRegister} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="role">Role</Label>
-                    <Select 
-                      name="role" 
-                      value={role} 
+                    <Select
+                      name="role"
+                      value={role}
                       onValueChange={setRole}
                       required
                     >
@@ -201,8 +205,8 @@ export default function AuthPage() {
                     <>
                       <div className="space-y-2">
                         <Label htmlFor="description">Business Description</Label>
-                        <Textarea 
-                          id="description" 
+                        <Textarea
+                          id="description"
                           name="description"
                           placeholder="Tell us about your nursery..."
                         />
