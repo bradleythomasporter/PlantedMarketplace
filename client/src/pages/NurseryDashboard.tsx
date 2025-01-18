@@ -32,6 +32,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface PlantTemplate {
   name: string;
@@ -854,22 +864,22 @@ Japanese Maple,Acer palmatum,trees,"Elegant ornamental tree",89.99,5,,partial_sh
                 </DialogContent>
               </Dialog>
 
-              <AlertDialog
-                open={!!plantToDelete}
-                onOpenChange={(open) => !open && setPlantToDelete(null)}
-              >
+              <AlertDialog open={!!plantToDelete} onOpenChange={(open) => !open && setPlantToDelete(null)}>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                    <AlertDialogTitle>Delete Plant</AlertDialogTitle>
                     <AlertDialogDescription>
-                      This action cannot be undone. This will permanently delete the plant from your inventory.
+                      Are you sure you want to delete this plant? This action cannot be undone.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <AlertDialogAction
-                      onClick={() => plantToDelete && handleDelete(plantToDelete)}
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      onClick={() => {
+                        if (plantToDelete) {
+                          handleDelete(plantToDelete);
+                        }
+                      }}
                     >
                       Delete
                     </AlertDialogAction>
@@ -913,13 +923,13 @@ Japanese Maple,Acer palmatum,trees,"Elegant ornamental tree",89.99,5,,partial_sh
                           )}
                         </div>
                       </div>
-                      <div className="flex gap-2">                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setSelectedPlant(plant)}
-                        >
-                          <PenSquare className="h-4 w-4" />
-                        </Button>
+                      <div className="flex gap-2">
+                        <Button                        variant="ghost"
+                        size="icon"
+                        onClick={() => setSelectedPlant(plant)}
+                      >
+                        <PenSquare className="h-4 w-4" />
+                      </Button>
                         <Button
                           variant="ghost"
                           size="icon"
