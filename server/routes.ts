@@ -39,6 +39,40 @@ export function registerRoutes(app: Express): Server {
                 soil: "Well-drained",
                 maintenance: "Low",
               }
+            },
+            {
+              name: "Echinacea 'Magnus'",
+              scientificName: "Echinacea purpurea 'Magnus'",
+              category: "perennials",
+              description: "Bold purple coneflower, excellent for attracting butterflies.",
+              growthDetails: {
+                height: "70-90cm",
+                spread: "45-60cm",
+                growthRate: "Fast",
+              },
+              care: {
+                sunlight: "Full sun",
+                watering: "Medium",
+                soil: "Well-drained",
+                maintenance: "Low",
+              }
+            },
+            {
+              name: "Salvia 'May Night'",
+              scientificName: "Salvia x sylvestris 'May Night'",
+              category: "perennials",
+              description: "Deep purple-blue spikes, long blooming period.",
+              growthDetails: {
+                height: "45-60cm",
+                spread: "45-60cm",
+                growthRate: "Medium",
+              },
+              care: {
+                sunlight: "Full sun",
+                watering: "Medium",
+                soil: "Well-drained",
+                maintenance: "Low",
+              }
             }
           ],
           shrubs: [
@@ -51,6 +85,40 @@ export function registerRoutes(app: Express): Server {
                 height: "2.5-4m",
                 spread: "2.5-4m",
                 growthRate: "Medium",
+              },
+              care: {
+                sunlight: "Full sun to partial shade",
+                watering: "Medium",
+                soil: "Well-drained",
+                maintenance: "Low",
+              }
+            },
+            {
+              name: "Hydrangea 'Annabelle'",
+              scientificName: "Hydrangea arborescens 'Annabelle'",
+              category: "shrubs",
+              description: "Stunning white snowball blooms, reliable performer.",
+              growthDetails: {
+                height: "1-1.5m",
+                spread: "1-1.5m",
+                growthRate: "Fast",
+              },
+              care: {
+                sunlight: "Partial shade",
+                watering: "High",
+                soil: "Rich, moist",
+                maintenance: "Medium",
+              }
+            },
+            {
+              name: "Japanese Holly",
+              scientificName: "Ilex crenata",
+              category: "shrubs",
+              description: "Compact evergreen shrub, perfect for hedging.",
+              growthDetails: {
+                height: "1-2m",
+                spread: "1-1.5m",
+                growthRate: "Slow",
               },
               care: {
                 sunlight: "Full sun to partial shade",
@@ -77,6 +145,40 @@ export function registerRoutes(app: Express): Server {
                 soil: "Well-drained",
                 maintenance: "Low",
               }
+            },
+            {
+              name: "Star Jasmine",
+              scientificName: "Trachelospermum jasminoides",
+              category: "climbers",
+              description: "Evergreen climber with fragrant white flowers.",
+              growthDetails: {
+                height: "3-6m",
+                spread: "2-3m",
+                growthRate: "Medium",
+              },
+              care: {
+                sunlight: "Full sun to partial shade",
+                watering: "Medium",
+                soil: "Well-drained",
+                maintenance: "Medium",
+              }
+            },
+            {
+              name: "Boston Ivy",
+              scientificName: "Parthenocissus tricuspidata",
+              category: "climbers",
+              description: "Self-clinging climber with stunning autumn color.",
+              growthDetails: {
+                height: "15-25m",
+                spread: "5-8m",
+                growthRate: "Fast",
+              },
+              care: {
+                sunlight: "Any aspect",
+                watering: "Medium",
+                soil: "Any well-drained",
+                maintenance: "Low",
+              }
             }
           ],
           bulbs: [
@@ -89,6 +191,40 @@ export function registerRoutes(app: Express): Server {
                 height: "50-60cm",
                 spread: "10-15cm",
                 growthRate: "Medium",
+              },
+              care: {
+                sunlight: "Full sun",
+                watering: "Medium",
+                soil: "Well-drained",
+                maintenance: "Low",
+              }
+            },
+            {
+              name: "Allium 'Purple Sensation'",
+              scientificName: "Allium hollandicum",
+              category: "bulbs",
+              description: "Large purple spherical flowers on tall stems.",
+              growthDetails: {
+                height: "80-100cm",
+                spread: "15-20cm",
+                growthRate: "Fast",
+              },
+              care: {
+                sunlight: "Full sun",
+                watering: "Low",
+                soil: "Well-drained",
+                maintenance: "Low",
+              }
+            },
+            {
+              name: "Tulip 'Queen of Night'",
+              scientificName: "Tulipa 'Queen of Night'",
+              category: "bulbs",
+              description: "Deep purple-black tulip, stunning in groups.",
+              growthDetails: {
+                height: "45-60cm",
+                spread: "10-15cm",
+                growthRate: "Fast",
               },
               care: {
                 sunlight: "Full sun",
@@ -118,6 +254,24 @@ export function registerRoutes(app: Express): Server {
                 soil: "Rich, moist",
                 maintenance: "Low",
               }
+            },
+            {
+              name: "Coral Bells 'Obsidian'",
+              scientificName: "Heuchera 'Obsidian'",
+              category: "perennials",
+              description: "Dark purple-black foliage plant, perfect for contrast.",
+              isNew: true,
+              growthDetails: {
+                height: "20-30cm",
+                spread: "30-45cm",
+                growthRate: "Medium",
+              },
+              care: {
+                sunlight: "Partial shade",
+                watering: "Medium",
+                soil: "Well-drained",
+                maintenance: "Low",
+              }
             }
           ],
           hellebores: [
@@ -130,6 +284,24 @@ export function registerRoutes(app: Express): Server {
               growthDetails: {
                 height: "30cm",
                 spread: "30cm",
+                growthRate: "Slow",
+              },
+              care: {
+                sunlight: "Partial shade",
+                watering: "Medium",
+                soil: "Rich, well-drained",
+                maintenance: "Low",
+              }
+            },
+            {
+              name: "Lenten Rose",
+              scientificName: "Helleborus orientalis",
+              category: "perennials",
+              description: "Late winter to early spring blooms in various colors.",
+              seasonal: "winter",
+              growthDetails: {
+                height: "45cm",
+                spread: "45cm",
                 growthRate: "Slow",
               },
               care: {
@@ -158,47 +330,23 @@ export function registerRoutes(app: Express): Server {
                 soil: "Rich, well-drained",
                 maintenance: "Medium",
               }
-            }
-          ]
-        },
-        winterSale: {
-          shrubs: [
+            },
             {
-              name: "Winter Beauty Honeysuckle",
-              scientificName: "Lonicera × purpusii 'Winter Beauty'",
-              category: "shrubs",
-              description: "Winter-flowering shrub with fragrant cream flowers.",
-              discount: 50,
+              name: "David Austin Rose 'Lady Emma Hamilton'",
+              scientificName: "Rosa 'Lady Emma Hamilton'",
+              category: "roses",
+              description: "Tangerine-orange blooms with fruity fragrance.",
+              seasonal: "summer",
               growthDetails: {
-                height: "2m",
-                spread: "2.5m",
+                height: "1m",
+                spread: "90cm",
                 growthRate: "Medium",
               },
               care: {
-                sunlight: "Full sun to partial shade",
+                sunlight: "Full sun",
                 watering: "Medium",
-                soil: "Well-drained",
-                maintenance: "Low",
-              }
-            }
-          ],
-          perennials: [
-            {
-              name: "Hardy Geranium",
-              scientificName: "Geranium 'Rozanne'",
-              category: "perennials",
-              description: "Long-flowering perennial with violet-blue flowers.",
-              discount: 50,
-              growthDetails: {
-                height: "60cm",
-                spread: "80cm",
-                growthRate: "Fast",
-              },
-              care: {
-                sunlight: "Full sun to partial shade",
-                watering: "Medium",
-                soil: "Well-drained",
-                maintenance: "Low",
+                soil: "Rich, well-drained",
+                maintenance: "Medium",
               }
             }
           ]

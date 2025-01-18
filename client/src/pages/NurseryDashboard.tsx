@@ -61,10 +61,6 @@ interface TemplateResponse {
     hellebores: PlantTemplate[];
     roses: PlantTemplate[];
   };
-  winterSale: {
-    shrubs: PlantTemplate[];
-    perennials: PlantTemplate[];
-  };
 }
 
 export default function NurseryDashboard() {
@@ -397,58 +393,6 @@ export default function NurseryDashboard() {
               </div>
             </AccordionContent>
           </AccordionItem>
-
-          {/* Winter Sale Section */}
-          <AccordionItem value="winter_sale">
-            <AccordionTrigger className="text-lg font-semibold">
-              Winter Sale
-            </AccordionTrigger>
-            <AccordionContent>
-              <div className="space-y-4">
-                {Object.entries(templates.winterSale).map(([category, plantList]) => (
-                  <div key={category} className="space-y-2">
-                    <h3 className="font-medium capitalize">{category}</h3>
-                    <div className="grid grid-cols-1 gap-2">
-                      {plantList.map((template) => (
-                        <Button
-                          key={template.name}
-                          variant="outline"
-                          className="justify-start h-auto py-4 px-4"
-                          onClick={() => {
-                            const form = document.querySelector('form') as HTMLFormElement;
-                            if (!form) return;
-
-                            form.name.value = template.name;
-                            form.scientificName.value = template.scientificName;
-                            form.category.value = template.category;
-                            form.description.value = template.description;
-                            form.sunExposure.value = template.care.sunlight;
-                            form.wateringNeeds.value = template.care.watering;
-                            form.soilType.value = template.care.soil;
-                            form.growthRate.value = template.growthDetails.growthRate;
-                            form.maintainanceLevel.value = template.care.maintenance;
-                            // Apply winter sale discount
-                            form.price.value = "14.99";
-                            form.quantity.value = "10";
-                          }}
-                        >
-                          <div className="text-left">
-                            <div className="font-medium">{template.name}</div>
-                            <div className="text-sm text-muted-foreground mt-1">
-                              {template.scientificName}
-                            </div>
-                            <div className="text-sm text-red-500 mt-1">
-                              50% Off - Winter Sale
-                            </div>
-                          </div>
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </AccordionContent>
-          </AccordionItem>
         </Accordion>
       </div>
     );
@@ -710,7 +654,7 @@ export default function NurseryDashboard() {
                       Import CSV
                     </Button>
                   </DialogTrigger>
-                  <DialogContent>
+                  <DialogContent className="max-w-2xl">
                     <DialogHeader>
                       <DialogTitle>Import Plants from CSV</DialogTitle>
                       <DialogDescription>
@@ -725,12 +669,14 @@ export default function NurseryDashboard() {
                           <p className="text-sm text-muted-foreground mb-4">
                             Your CSV file should include the following columns:
                           </p>
-                          <pre className="bg-muted p-4 rounded-md text-xs whitespace-pre-wrap">
-                            name,scientificName,category,description,price,quantity,imageUrl,sunExposure,wateringNeeds,soilType,hardinessZone,matureSize,growthRate,maintainanceLevel
-                          </pre>
+                          <div className="bg-muted p-4 rounded-md overflow-x-auto">
+                            <pre className="text-xs whitespace-pre-wrap">
+                              name,scientificName,category,description,price,quantity,imageUrl,sunExposure,wateringNeeds,soilType,hardinessZone,matureSize,growthRate,maintainanceLevel
+                            </pre>
+                          </div>
                           <Button
                             variant="link"
-                            className="px-0 text-xs"
+                            className="px-0 mt-2 text-xs"
                             onClick={() => {
                               const csvContent = `name,scientificName,category,description,price,quantity,imageUrl,sunExposure,wateringNeeds,soilType,hardinessZone,matureSize,growthRate,maintainanceLevel
 Lavender 'Hidcote',Lavandula angustifolia 'Hidcote',perennials,"Compact English lavender variety",29.99,10,,full_sun,low,well_draining,USDA 5-9,40-60cm,medium,low
@@ -772,10 +718,7 @@ Japanese Maple,Acer palmatum,trees,"Elegant ornamental tree",89.99,5,,partial_sh
                               description: result.message,
                             });
 
-                            // Refresh the plants list
                             queryClient.invalidateQueries({ queryKey: [`/api/plants?nurseryId=${user?.id}`] });
-
-                            // Reset the form
                             e.currentTarget.reset();
                           } catch (error: any) {
                             toast({
@@ -797,7 +740,7 @@ Japanese Maple,Acer palmatum,trees,"Elegant ornamental tree",89.99,5,,partial_sh
                             required
                           />
                         </div>
-                        <Button type="submit">Upload</Button>
+                        <Button type="submit" className="w-full">Upload</Button>
                       </form>
                     </div>
                   </DialogContent>
@@ -990,7 +933,7 @@ Japanese Maple,Acer palmatum,trees,"Elegant ornamental tree",89.99,5,,partial_sh
             </section>
 
             <section>
-              <h2 className="text-2xl font-semibold mb-6">Recent Orders</h2>
+              <h2 className="text-2xl font-semibold mb6">Recent Orders</h2>
               {isLoadingOrders ? (
                 <div className="flex justify-center py-12">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
