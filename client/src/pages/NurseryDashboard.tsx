@@ -37,7 +37,6 @@ import type { Plant, Order } from "@db/schema";
 import { Card, CardContent } from "@/components/ui/card";
 
 interface PlantTemplate {
-  id: string;
   name: string;
   scientificName: string;
   category: string;
@@ -46,26 +45,26 @@ interface PlantTemplate {
     height: string;
     spread: string;
     growthRate: string;
-    ultimateHeight: string;
-    timeToUltimateHeight: string;
   };
-  careInstructions: {
+  care: {
     sunlight: string;
     watering: string;
     soil: string;
-    pruning: string;
-    fertilizer: string;
+    maintenance: string;
   };
-  properties: {
-    hardinessZone: string;
-    soilType: string[];
-    moisture: string;
-    ph: string;
-    droughtTolerant: boolean;
-    frostTolerant: boolean;
+}
+
+interface TemplateResponse {
+  plantsByType: Record<string, PlantTemplate[]>;
+  seasonalPlants: {
+    newPlants: PlantTemplate[];
+    hellebores: PlantTemplate[];
+    roses: PlantTemplate[];
   };
-  imageUrl: string;
-  mainCategory: string;
+  winterSale: {
+    shrubs: PlantTemplate[];
+    perennials: PlantTemplate[];
+  };
 }
 
 export default function NurseryDashboard() {
@@ -78,7 +77,7 @@ export default function NurseryDashboard() {
   const [plantToDelete, setPlantToDelete] = useState<Plant | null>(null);
   const [activeTab, setActiveTab] = useState("inventory");
 
-  const { data: plantTemplates = {}, isLoading: isLoadingTemplates } = useQuery<Record<string, PlantTemplate[]>>({
+  const { data: templates, isLoading: isLoadingTemplates } = useQuery<TemplateResponse>({
     queryKey: ['/api/plants/templates'],
     retry: 2
   });
@@ -283,6 +282,14 @@ export default function NurseryDashboard() {
       );
     }
 
+    if (!templates) {
+      return (
+        <div className="text-center py-6 text-muted-foreground">
+          No plant templates available
+        </div>
+      );
+    }
+
     return (
       <div className="space-y-6">
         <div>
@@ -300,18 +307,17 @@ export default function NurseryDashboard() {
         </div>
 
         <Accordion type="single" collapsible className="w-full">
-          {Object.entries(plantTemplates).map(([category, templates]) => (
+          {/* Plants By Type Section */}
+          {Object.entries(templates.plantsByType).map(([category, plantList]) => (
             <AccordionItem key={category} value={category}>
               <AccordionTrigger className="text-lg font-semibold capitalize">
-                {category === "indoor" ? "Indoor Plants" :
-                  category === "outdoor" ? "Outdoor Plants" :
-                    category.charAt(0).toUpperCase() + category.slice(1)}
+                {category.replace(/_/g, ' ')}
               </AccordionTrigger>
               <AccordionContent>
                 <div className="grid grid-cols-1 gap-2 p-2">
-                  {templates.map((template) => (
+                  {plantList.map((template) => (
                     <Button
-                      key={template.id}
+                      key={template.name}
                       variant="outline"
                       className="justify-start h-auto py-4 px-4"
                       onClick={() => {
@@ -320,18 +326,15 @@ export default function NurseryDashboard() {
 
                         form.name.value = template.name;
                         form.scientificName.value = template.scientificName;
-                        form.category.value = template.mainCategory;
+                        form.category.value = template.category;
                         form.description.value = template.description;
-                        form.imageUrl.value = template.imageUrl;
+                        form.sunExposure.value = template.care.sunlight;
+                        form.wateringNeeds.value = template.care.watering;
+                        form.soilType.value = template.care.soil;
+                        form.growthRate.value = template.growthDetails.growthRate;
+                        form.maintainanceLevel.value = template.care.maintenance;
                         form.price.value = "29.99";
                         form.quantity.value = "10";
-                        form.sunExposure.value = template.careInstructions.sunlight;
-                        form.wateringNeeds.value = template.careInstructions.watering;
-                        form.soilType.value = template.properties.soilType[0];
-                        form.hardinessZone.value = template.properties.hardinessZone;
-                        form.matureSize.value = template.growthDetails.ultimateHeight;
-                        form.growthRate.value = template.growthDetails.growthRate;
-                        form.maintainanceLevel.value = "medium";
                       }}
                     >
                       <div className="text-left">
@@ -346,10 +349,134 @@ export default function NurseryDashboard() {
               </AccordionContent>
             </AccordionItem>
           ))}
+
+          {/* Seasonal Plants Section */}
+          <AccordionItem value="seasonal">
+            <AccordionTrigger className="text-lg font-semibold">
+              Seasonal Plants
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-4">
+                {Object.entries(templates.seasonalPlants).map(([category, plantList]) => (
+                  <div key={category} className="space-y-2">
+                    <h3 className="font-medium capitalize">{category.replace(/_/g, ' ')}</h3>
+                    <div className="grid grid-cols-1 gap-2">
+                      {plantList.map((template) => (
+                        <Button
+                          key={template.name}
+                          variant="outline"
+                          className="justify-start h-auto py-4 px-4"
+                          onClick={() => {
+                            const form = document.querySelector('form') as HTMLFormElement;
+                            if (!form) return;
+
+                            form.name.value = template.name;
+                            form.scientificName.value = template.scientificName;
+                            form.category.value = template.category;
+                            form.description.value = template.description;
+                            form.sunExposure.value = template.care.sunlight;
+                            form.wateringNeeds.value = template.care.watering;
+                            form.soilType.value = template.care.soil;
+                            form.growthRate.value = template.growthDetails.growthRate;
+                            form.maintainanceLevel.value = template.care.maintenance;
+                            form.price.value = "29.99";
+                            form.quantity.value = "10";
+                          }}
+                        >
+                          <div className="text-left">
+                            <div className="font-medium">{template.name}</div>
+                            <div className="text-sm text-muted-foreground mt-1">
+                              {template.scientificName}
+                            </div>
+                          </div>
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* Winter Sale Section */}
+          <AccordionItem value="winter_sale">
+            <AccordionTrigger className="text-lg font-semibold">
+              Winter Sale
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-4">
+                {Object.entries(templates.winterSale).map(([category, plantList]) => (
+                  <div key={category} className="space-y-2">
+                    <h3 className="font-medium capitalize">{category}</h3>
+                    <div className="grid grid-cols-1 gap-2">
+                      {plantList.map((template) => (
+                        <Button
+                          key={template.name}
+                          variant="outline"
+                          className="justify-start h-auto py-4 px-4"
+                          onClick={() => {
+                            const form = document.querySelector('form') as HTMLFormElement;
+                            if (!form) return;
+
+                            form.name.value = template.name;
+                            form.scientificName.value = template.scientificName;
+                            form.category.value = template.category;
+                            form.description.value = template.description;
+                            form.sunExposure.value = template.care.sunlight;
+                            form.wateringNeeds.value = template.care.watering;
+                            form.soilType.value = template.care.soil;
+                            form.growthRate.value = template.growthDetails.growthRate;
+                            form.maintainanceLevel.value = template.care.maintenance;
+                            // Apply winter sale discount
+                            form.price.value = "14.99";
+                            form.quantity.value = "10";
+                          }}
+                        >
+                          <div className="text-left">
+                            <div className="font-medium">{template.name}</div>
+                            <div className="text-sm text-muted-foreground mt-1">
+                              {template.scientificName}
+                            </div>
+                            <div className="text-sm text-red-500 mt-1">
+                              50% Off - Winter Sale
+                            </div>
+                          </div>
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
         </Accordion>
       </div>
     );
   };
+
+  const handleUpdateOrderStatus = async (orderId: number, newStatus: string) => {
+    try {
+      const response = await fetch(`/api/orders/${orderId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+
+      queryClient.invalidateQueries({ queryKey: [`/api/orders?nurseryId=${user?.id}`] });
+      toast({ title: "Order status updated successfully" });
+    } catch (error) {
+      toast({
+        title: "Failed to update order status",
+        description: (error as Error).message,
+        variant: "destructive",
+      });
+    }
+  };
+
 
   return (
     <div className="min-h-screen bg-background">
