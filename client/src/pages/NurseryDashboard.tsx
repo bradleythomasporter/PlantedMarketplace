@@ -18,16 +18,6 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/hooks/use-user";
@@ -35,6 +25,13 @@ import { Loader2, PenSquare, Trash2, Package, Sun, Droplets, Upload } from "luci
 import { useLocation } from "wouter";
 import type { Plant, Order } from "@db/schema";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface PlantTemplate {
   name: string;
@@ -286,6 +283,23 @@ export default function NurseryDashboard() {
       );
     }
 
+    const handleTemplateSelect = (template: PlantTemplate, quantity: string) => {
+      const form = document.querySelector('form') as HTMLFormElement;
+      if (!form) return;
+
+      form.name.value = template.name;
+      form.scientificName.value = template.scientificName;
+      form.category.value = template.category;
+      form.description.value = template.description;
+      form.sunExposure.value = template.care.sunlight;
+      form.wateringNeeds.value = template.care.watering;
+      form.soilType.value = template.care.soil;
+      form.growthRate.value = template.growthDetails.growthRate;
+      form.maintainanceLevel.value = template.care.maintenance;
+      form.price.value = "29.99";
+      form.quantity.value = quantity;
+    };
+
     return (
       <div className="space-y-6">
         <div>
@@ -303,7 +317,6 @@ export default function NurseryDashboard() {
         </div>
 
         <Accordion type="single" collapsible className="w-full">
-          {/* Plants By Type Section */}
           {Object.entries(templates.plantsByType).map(([category, plantList]) => (
             <AccordionItem key={category} value={category}>
               <AccordionTrigger className="text-lg font-semibold capitalize">
@@ -312,41 +325,46 @@ export default function NurseryDashboard() {
               <AccordionContent>
                 <div className="grid grid-cols-1 gap-2 p-2">
                   {plantList.map((template) => (
-                    <Button
-                      key={template.name}
-                      variant="outline"
-                      className="justify-start h-auto py-4 px-4"
-                      onClick={() => {
-                        const form = document.querySelector('form') as HTMLFormElement;
-                        if (!form) return;
-
-                        form.name.value = template.name;
-                        form.scientificName.value = template.scientificName;
-                        form.category.value = template.category;
-                        form.description.value = template.description;
-                        form.sunExposure.value = template.care.sunlight;
-                        form.wateringNeeds.value = template.care.watering;
-                        form.soilType.value = template.care.soil;
-                        form.growthRate.value = template.growthDetails.growthRate;
-                        form.maintainanceLevel.value = template.care.maintenance;
-                        form.price.value = "29.99";
-                        form.quantity.value = "10";
-                      }}
-                    >
-                      <div className="text-left">
-                        <div className="font-medium">{template.name}</div>
-                        <div className="text-sm text-muted-foreground mt-1">
-                          {template.scientificName}
+                    <div key={template.name} className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        className="flex-1 justify-start h-auto py-4 px-4"
+                        onClick={() => handleTemplateSelect(template, "10")}
+                      >
+                        <div className="text-left">
+                          <div className="font-medium">{template.name}</div>
+                          <div className="text-sm text-muted-foreground mt-1">
+                            {template.scientificName}
+                          </div>
+                          <div className="flex gap-2 mt-2">
+                            <CareRequirementIcon type="sunlight" level={template.care.sunlight} />
+                            <CareRequirementIcon type="water" level={template.care.watering} />
+                            <CareRequirementIcon type="maintenance" level={template.care.maintenance} />
+                          </div>
                         </div>
-                      </div>
-                    </Button>
+                      </Button>
+                      <Select
+                        onValueChange={(value) => handleTemplateSelect(template, value)}
+                        defaultValue="10"
+                      >
+                        <SelectTrigger className="w-24">
+                          <SelectValue placeholder="Qty" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {[5, 10, 25, 50, 100].map((qty) => (
+                            <SelectItem key={qty} value={qty.toString()}>
+                              {qty}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   ))}
                 </div>
               </AccordionContent>
             </AccordionItem>
           ))}
 
-          {/* Seasonal Plants Section */}
           <AccordionItem value="seasonal">
             <AccordionTrigger className="text-lg font-semibold">
               Seasonal Plants
@@ -358,34 +376,40 @@ export default function NurseryDashboard() {
                     <h3 className="font-medium capitalize">{category.replace(/_/g, ' ')}</h3>
                     <div className="grid grid-cols-1 gap-2">
                       {plantList.map((template) => (
-                        <Button
-                          key={template.name}
-                          variant="outline"
-                          className="justify-start h-auto py-4 px-4"
-                          onClick={() => {
-                            const form = document.querySelector('form') as HTMLFormElement;
-                            if (!form) return;
-
-                            form.name.value = template.name;
-                            form.scientificName.value = template.scientificName;
-                            form.category.value = template.category;
-                            form.description.value = template.description;
-                            form.sunExposure.value = template.care.sunlight;
-                            form.wateringNeeds.value = template.care.watering;
-                            form.soilType.value = template.care.soil;
-                            form.growthRate.value = template.growthDetails.growthRate;
-                            form.maintainanceLevel.value = template.care.maintenance;
-                            form.price.value = "29.99";
-                            form.quantity.value = "10";
-                          }}
-                        >
-                          <div className="text-left">
-                            <div className="font-medium">{template.name}</div>
-                            <div className="text-sm text-muted-foreground mt-1">
-                              {template.scientificName}
+                        <div key={template.name} className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            className="flex-1 justify-start h-auto py-4 px-4"
+                            onClick={() => handleTemplateSelect(template, "10")}
+                          >
+                            <div className="text-left">
+                              <div className="font-medium">{template.name}</div>
+                              <div className="text-sm text-muted-foreground mt-1">
+                                {template.scientificName}
+                              </div>
+                              <div className="flex gap-2 mt-2">
+                                <CareRequirementIcon type="sunlight" level={template.care.sunlight} />
+                                <CareRequirementIcon type="water" level={template.care.watering} />
+                                <CareRequirementIcon type="maintenance" level={template.care.maintenance} />
+                              </div>
                             </div>
-                          </div>
-                        </Button>
+                          </Button>
+                          <Select
+                            onValueChange={(value) => handleTemplateSelect(template, value)}
+                            defaultValue="10"
+                          >
+                            <SelectTrigger className="w-24">
+                              <SelectValue placeholder="Qty" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {[5, 10, 25, 50, 100].map((qty) => (
+                                <SelectItem key={qty} value={qty.toString()}>
+                                  {qty}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -424,42 +448,44 @@ export default function NurseryDashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="bg-primary/10 p-4 md:p-6">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <div className="flex items-center gap-4">
+      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container flex h-14 items-center">
+          <div className="mr-4 flex">
             <h1 className="text-2xl font-bold text-primary">Planted 🌱</h1>
+          </div>
+          <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
             <Button variant="ghost" onClick={() => setLocation("/")}>
               View Store
             </Button>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm hidden md:inline">
-              Welcome, {user?.name}
-            </span>
-            <Button
-              variant="outline"
-              onClick={async () => {
-                try {
-                  await logout();
-                  setLocation("/login");
-                } catch (error) {
-                  toast({
-                    title: "Error logging out",
-                    description: "Please try again",
-                    variant: "destructive",
-                  });
-                }
-              }}
-            >
-              Logout
-            </Button>
+            <div className="flex items-center gap-2">
+              <span className="text-sm hidden md:inline">
+                Welcome, {user?.name}
+              </span>
+              <Button
+                variant="outline"
+                onClick={async () => {
+                  try {
+                    await logout();
+                    setLocation("/login");
+                  } catch (error) {
+                    toast({
+                      title: "Error logging out",
+                      description: "Please try again",
+                      variant: "destructive",
+                    });
+                  }
+                }}
+              >
+                Logout
+              </Button>
+            </div>
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 md:px-6 py-8">
+      <main className="container py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-          <TabsList>
+          <TabsList className="w-full justify-start">
             <TabsTrigger value="inventory">Inventory</TabsTrigger>
             <TabsTrigger value="orders">Orders</TabsTrigger>
             <TabsTrigger value="profile">Profile</TabsTrigger>
@@ -887,8 +913,7 @@ Japanese Maple,Acer palmatum,trees,"Elegant ornamental tree",89.99,5,,partial_sh
                           )}
                         </div>
                       </div>
-                      <div className="flex gap-2">
-                        <Button
+                      <div className="flex gap-2">                        <Button
                           variant="ghost"
                           size="icon"
                           onClick={() => setSelectedPlant(plant)}
