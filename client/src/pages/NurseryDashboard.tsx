@@ -632,7 +632,7 @@ export default function NurseryDashboard() {
                         Import CSV
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="sm:max-w-[625px]">
+                    <DialogContent className="sm:max-w-[800px]">
                       <DialogHeader>
                         <DialogTitle>Import Plants from CSV</DialogTitle>
                         <DialogDescription>
@@ -647,14 +647,16 @@ export default function NurseryDashboard() {
                             <p className="text-sm text-muted-foreground mb-4">
                               Your CSV file should include the following columns:
                             </p>
-                            <div className="relative">
-                              <pre className="max-h-[200px] overflow-auto rounded-lg border bg-muted px-4 py-3 font-mono text-xs">
-                                name,scientificName,category,description,price,quantity,imageUrl,sunExposure,wateringNeeds,soilType,hardinessZone,matureSize,growthRate,maintainanceLevel
-                              </pre>
+                            <div className="relative bg-muted/50 rounded-lg p-4">
+                              <div className="font-mono text-xs text-muted-foreground break-all">
+                                name,scientificName,category,description,price,quantity,imageUrl,
+                                sunExposure,wateringNeeds,soilType,hardinessZone,matureSize,
+                                growthRate,maintainanceLevel
+                              </div>
                             </div>
                             <Button
                               variant="link"
-                              className="h-auto p-0 text-xs mt-2"
+                              className="h-auto p-0 text-xs mt-4"
                               onClick={() => {
                                 const csvContent = `name,scientificName,category,description,price,quantity,imageUrl,sunExposure,wateringNeeds,soilType,hardinessZone,matureSize,growthRate,maintainanceLevel
 Lavender 'Hidcote',Lavandula angustifolia 'Hidcote',flowers,"Compact English lavender variety",29.99,10,,full_sun,low,well-draining,USDA 5-9,40-60cm,medium,low
