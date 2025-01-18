@@ -38,8 +38,10 @@ export function Header() {
   return (
     <header 
       className={cn(
-        "fixed top-0 left-0 right-0 z-50 bg-emerald-600",
-        scrolled && "shadow-md"
+        "fixed top-0 left-0 right-0 z-50 transition-colors duration-200",
+        scrolled 
+          ? "bg-white shadow-md" 
+          : "bg-emerald-600"
       )}
     >
       <div className="max-w-7xl mx-auto">
@@ -49,8 +51,14 @@ export function Header() {
             className="flex items-center gap-2 cursor-pointer mr-8" 
             onClick={() => setLocation("/")}
           >
-            <Leaf className="h-6 w-6 text-white" />
-            <h1 className="text-2xl font-bold text-white tracking-tight">
+            <Leaf className={cn(
+              "h-6 w-6 transition-colors duration-200",
+              scrolled ? "text-emerald-600" : "text-white"
+            )} />
+            <h1 className={cn(
+              "text-2xl font-bold tracking-tight transition-colors duration-200",
+              scrolled ? "text-emerald-600" : "text-white"
+            )}>
               Planted
             </h1>
           </div>
@@ -60,8 +68,13 @@ export function Header() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button 
-                  variant="ghost" 
-                  className="flex items-center gap-1 font-medium text-white hover:bg-emerald-500"
+                  variant={scrolled ? "ghost" : "secondary"}
+                  className={cn(
+                    "flex items-center gap-1 font-medium transition-colors duration-200",
+                    scrolled 
+                      ? "text-gray-700 hover:bg-gray-100" 
+                      : "text-emerald-600 bg-white hover:bg-white/90"
+                  )}
                 >
                   Shop <ChevronDown className="h-4 w-4" />
                 </Button>
@@ -81,7 +94,12 @@ export function Header() {
 
             <Button 
               variant="ghost" 
-              className="font-medium text-white hover:bg-emerald-500"
+              className={cn(
+                "font-medium transition-colors duration-200",
+                scrolled 
+                  ? "text-gray-700 hover:bg-gray-100" 
+                  : "text-white hover:bg-emerald-500"
+              )}
               onClick={() => setLocation("/about")}
             >
               About
@@ -89,7 +107,12 @@ export function Header() {
 
             <Button 
               variant="ghost" 
-              className="font-medium text-white hover:bg-emerald-500"
+              className={cn(
+                "font-medium transition-colors duration-200",
+                scrolled 
+                  ? "text-gray-700 hover:bg-gray-100" 
+                  : "text-white hover:bg-emerald-500"
+              )}
               onClick={() => setLocation("/contact")}
             >
               Contact
@@ -104,19 +127,32 @@ export function Header() {
                   <Button 
                     variant="ghost" 
                     onClick={() => setLocation("/dashboard")}
-                    className="font-medium text-white hover:bg-emerald-500"
+                    className={cn(
+                      "font-medium transition-colors duration-200",
+                      scrolled 
+                        ? "text-gray-700 hover:bg-gray-100" 
+                        : "text-white hover:bg-emerald-500"
+                    )}
                   >
                     Dashboard
                   </Button>
                 )}
-                <span className="text-sm hidden md:inline font-medium text-white">
+                <span className={cn(
+                  "text-sm hidden md:inline font-medium transition-colors duration-200",
+                  scrolled ? "text-gray-700" : "text-white"
+                )}>
                   Welcome, {user.name}
                 </span>
                 <CartDrawer />
                 <Button 
-                  variant="outline" 
+                  variant={scrolled ? "outline" : "secondary"}
                   onClick={() => logout()}
-                  className="text-white border-white hover:bg-emerald-500"
+                  className={cn(
+                    "transition-colors duration-200",
+                    scrolled 
+                      ? "border-emerald-600 text-emerald-600 hover:bg-emerald-50" 
+                      : "bg-white text-emerald-600 hover:bg-white/90"
+                  )}
                 >
                   Logout
                 </Button>
@@ -125,9 +161,14 @@ export function Header() {
               <>
                 <CartDrawer />
                 <Button 
-                  variant="outline" 
+                  variant={scrolled ? "outline" : "secondary"}
                   onClick={() => setLocation("/auth")}
-                  className="text-white border-white hover:bg-emerald-500"
+                  className={cn(
+                    "transition-colors duration-200",
+                    scrolled 
+                      ? "border-emerald-600 text-emerald-600 hover:bg-emerald-50" 
+                      : "bg-white text-emerald-600 hover:bg-white/90"
+                  )}
                 >
                   Login
                 </Button>
