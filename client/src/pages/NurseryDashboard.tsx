@@ -429,13 +429,26 @@ export default function NurseryDashboard() {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+      setLocation("/");
+    } catch (error) {
+      toast({
+        title: "Error logging out",
+        description: "Please try again",
+        variant: "destructive",
+      });
+    }
+  };
+
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
 
       <div className="flex-1 pt-[72px] md:pt-[88px]">
-        <main className="container py-8">
+        <main className="container py-8 px-4 md:px-6">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
             <TabsList className="w-full justify-start">
               <TabsTrigger value="inventory">Inventory</TabsTrigger>
