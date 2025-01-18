@@ -5,304 +5,268 @@ import { plants, orders, users } from "@db/schema";
 import { like, and, or, eq, inArray, gte, sql } from "drizzle-orm";
 import NodeGeocoder from "node-geocoder";
 import { setupAuth } from "./auth";
+import multer from "multer";
+import { parse } from "csv-parse";
 
 const geocoder = NodeGeocoder({
   provider: 'openstreetmap'
 });
 
+const upload = multer({ storage: multer.memoryStorage() });
+
 export function registerRoutes(app: Express): Server {
-  // Setup authentication routes and middleware first
   setupAuth(app);
 
-  // Plant templates endpoint
+  // Plant templates endpoint with organized categories
   app.get("/api/plants/templates", async (_req, res) => {
     try {
-      // Comprehensive plant templates with detailed information
-      const templates = [
-        // Outdoor Plants - Trees and Shrubs
-        {
-          id: "red-robin",
-          name: "Red Robin",
-          scientificName: "Photinia x fraseri 'Red Robin'",
-          category: "shrubs",
-          subCategory: "evergreen",
-          description: "Popular evergreen shrub with bright red young leaves that mature to glossy dark green. Perfect for hedging.",
-          growthDetails: {
-            height: "2.5-4m",
-            spread: "2.5-4m",
-            growthRate: "Average",
-            ultimateHeight: "4 meters",
-            timeToUltimateHeight: "10-20 years"
-          },
-          careInstructions: {
-            sunlight: "Full sun to partial shade",
-            watering: "Water regularly until established, then drought tolerant",
-            soil: "Well-drained, fertile soil",
-            pruning: "Prune in spring or early summer to encourage new red growth",
-            fertilizer: "Apply balanced fertilizer in spring"
-          },
-          properties: {
-            hardinessZone: "USDA 7-10",
-            soilType: ["Clay", "Loam", "Sand"],
-            moisture: "Well-drained",
-            ph: "Acid, Neutral, Alkaline",
-            droughtTolerant: true,
-            frostTolerant: true
-          },
-          seasonalInterest: {
-            spring: "Bright red new growth",
-            summer: "Glossy dark green foliage",
-            autumn: "Continued red new growth",
-            winter: "Evergreen structure"
-          },
-          imageUrl: "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae",
-          mainCategory: "outdoor"
+      const templates = {
+        plantsByType: {
+          perennials: [
+            {
+              name: "Lavender 'Hidcote'",
+              scientificName: "Lavandula angustifolia 'Hidcote'",
+              category: "perennials",
+              description: "Compact English lavender variety with deep purple flowers and intense fragrance.",
+              growthDetails: {
+                height: "40-60cm",
+                spread: "40-60cm",
+                growthRate: "Medium",
+              },
+              care: {
+                sunlight: "Full sun",
+                watering: "Low",
+                soil: "Well-drained",
+                maintenance: "Low",
+              }
+            }
+          ],
+          shrubs: [
+            {
+              name: "Red Robin",
+              scientificName: "Photinia x fraseri 'Red Robin'",
+              category: "shrubs",
+              description: "Evergreen shrub with bright red young leaves.",
+              growthDetails: {
+                height: "2.5-4m",
+                spread: "2.5-4m",
+                growthRate: "Medium",
+              },
+              care: {
+                sunlight: "Full sun to partial shade",
+                watering: "Medium",
+                soil: "Well-drained",
+                maintenance: "Low",
+              }
+            }
+          ],
+          climbers: [
+            {
+              name: "Clematis Montana",
+              scientificName: "Clematis montana",
+              category: "climbers",
+              description: "Vigorous climbing plant with masses of pink or white flowers.",
+              growthDetails: {
+                height: "8-12m",
+                spread: "3-4m",
+                growthRate: "Fast",
+              },
+              care: {
+                sunlight: "Full sun to partial shade",
+                watering: "Medium",
+                soil: "Well-drained",
+                maintenance: "Low",
+              }
+            }
+          ],
+          bulbs: [
+            {
+              name: "Dutch Iris",
+              scientificName: "Iris × hollandica",
+              category: "bulbs",
+              description: "Spring flowering bulb with elegant blue, yellow or white flowers.",
+              growthDetails: {
+                height: "50-60cm",
+                spread: "10-15cm",
+                growthRate: "Medium",
+              },
+              care: {
+                sunlight: "Full sun",
+                watering: "Medium",
+                soil: "Well-drained",
+                maintenance: "Low",
+              }
+            }
+          ]
         },
-        {
-          id: "japanese-maple",
-          name: "Japanese Maple",
-          scientificName: "Acer palmatum",
-          category: "trees",
-          subCategory: "deciduous",
-          description: "Elegant ornamental tree known for its delicate foliage and stunning autumn colors.",
-          growthDetails: {
-            height: "4-6m",
-            spread: "3-5m",
-            growthRate: "Slow",
-            ultimateHeight: "6 meters",
-            timeToUltimateHeight: "20-50 years"
-          },
-          careInstructions: {
-            sunlight: "Partial shade to dappled sunlight",
-            watering: "Regular watering, keep soil moist",
-            soil: "Rich, well-draining acidic soil",
-            pruning: "Light pruning in late winter",
-            fertilizer: "Spring and early summer feeding"
-          },
-          properties: {
-            hardinessZone: "USDA 5-8",
-            soilType: ["Loam", "Sandy"],
-            moisture: "Moist but well-drained",
-            ph: "Acidic to neutral",
-            droughtTolerant: false,
-            frostTolerant: true
-          },
-          seasonalInterest: {
-            spring: "Fresh lime-green leaves",
-            summer: "Deep purple-red foliage",
-            autumn: "Brilliant red and orange colors",
-            winter: "Attractive bark structure"
-          },
-          imageUrl: "https://images.unsplash.com/photo-1615672968435-75cd1c6a36e5",
-          mainCategory: "outdoor"
+        seasonalPlants: {
+          newPlants: [
+            {
+              name: "Japanese Forest Grass",
+              scientificName: "Hakonechloa macra",
+              category: "grasses",
+              description: "Elegant ornamental grass with arching foliage.",
+              isNew: true,
+              growthDetails: {
+                height: "30-45cm",
+                spread: "45-60cm",
+                growthRate: "Slow",
+              },
+              care: {
+                sunlight: "Partial shade",
+                watering: "Medium",
+                soil: "Rich, moist",
+                maintenance: "Low",
+              }
+            }
+          ],
+          hellebores: [
+            {
+              name: "Christmas Rose",
+              scientificName: "Helleborus niger",
+              category: "perennials",
+              description: "Winter-flowering perennial with white flowers.",
+              seasonal: "winter",
+              growthDetails: {
+                height: "30cm",
+                spread: "30cm",
+                growthRate: "Slow",
+              },
+              care: {
+                sunlight: "Partial shade",
+                watering: "Medium",
+                soil: "Rich, well-drained",
+                maintenance: "Low",
+              }
+            }
+          ],
+          roses: [
+            {
+              name: "David Austin Rose 'Graham Thomas'",
+              scientificName: "Rosa 'Graham Thomas'",
+              category: "roses",
+              description: "Rich yellow English rose with strong fragrance.",
+              seasonal: "summer",
+              growthDetails: {
+                height: "1.2m",
+                spread: "1m",
+                growthRate: "Medium",
+              },
+              care: {
+                sunlight: "Full sun",
+                watering: "Medium",
+                soil: "Rich, well-drained",
+                maintenance: "Medium",
+              }
+            }
+          ]
         },
-        // Outdoor Plants - Perennials
-        {
-          id: "lavender-hidcote",
-          name: "Lavender 'Hidcote'",
-          scientificName: "Lavandula angustifolia 'Hidcote'",
-          category: "perennials",
-          subCategory: "herbs",
-          description: "Compact English lavender variety with deep purple flowers and intense fragrance. Perfect for borders and containers.",
-          growthDetails: {
-            height: "40-60cm",
-            spread: "40-60cm",
-            growthRate: "Medium",
-            ultimateHeight: "60cm",
-            timeToUltimateHeight: "2-5 years"
-          },
-          careInstructions: {
-            sunlight: "Full sun",
-            watering: "Low water needs once established",
-            soil: "Well-drained, poor to moderately fertile soil",
-            pruning: "Cut back after first flush of flowers to encourage second bloom",
-            fertilizer: "Light feeding in spring"
-          },
-          properties: {
-            hardinessZone: "USDA 5-9",
-            soilType: ["Chalk", "Loam", "Sand"],
-            moisture: "Well-drained",
-            ph: "Neutral, Alkaline",
-            droughtTolerant: true,
-            frostTolerant: true
-          },
-          seasonalInterest: {
-            spring: "Silver-grey foliage",
-            summer: "Deep purple flowers",
-            autumn: "Extended flowering",
-            winter: "Evergreen structure"
-          },
-          imageUrl: "https://images.unsplash.com/photo-1468327768560-75b778cbb551",
-          mainCategory: "outdoor"
-        },
-        {
-          id: "purple-coneflower",
-          name: "Purple Coneflower",
-          scientificName: "Echinacea purpurea",
-          category: "perennials",
-          subCategory: "flowering",
-          description: "Stunning native perennial with large daisy-like flowers that attract butterflies and bees.",
-          growthDetails: {
-            height: "60-90cm",
-            spread: "45-60cm",
-            growthRate: "Fast",
-            ultimateHeight: "90cm",
-            timeToUltimateHeight: "2-3 years"
-          },
-          careInstructions: {
-            sunlight: "Full sun",
-            watering: "Moderate, drought tolerant once established",
-            soil: "Well-drained, rich soil",
-            pruning: "Deadhead spent flowers",
-            fertilizer: "Light feeding in spring"
-          },
-          properties: {
-            hardinessZone: "USDA 3-9",
-            soilType: ["Clay", "Loam", "Sand"],
-            moisture: "Medium",
-            ph: "Neutral",
-            droughtTolerant: true,
-            frostTolerant: true
-          },
-          seasonalInterest: {
-            spring: "Fresh green growth",
-            summer: "Purple-pink flowers",
-            autumn: "Extended blooming",
-            winter: "Seedheads for birds"
-          },
-          imageUrl: "https://images.unsplash.com/photo-1597892657493-6847b6770acd",
-          mainCategory: "outdoor"
-        },
-        // Indoor Plants
-        {
-          id: "peace-lily",
-          name: "Peace Lily",
-          scientificName: "Spathiphyllum wallisii",
-          category: "indoor",
-          subCategory: "foliage plants",
-          description: "Popular indoor plant with elegant white flowers and glossy dark green leaves. Excellent air-purifying qualities.",
-          growthDetails: {
-            height: "45-65cm",
-            spread: "45-65cm",
-            growthRate: "Medium",
-            ultimateHeight: "65cm",
-            timeToUltimateHeight: "3-5 years"
-          },
-          careInstructions: {
-            sunlight: "Indirect light to partial shade",
-            watering: "Keep soil consistently moist",
-            soil: "Rich, well-draining potting mix",
-            pruning: "Remove spent flowers and yellowed leaves",
-            fertilizer: "Monthly feeding during growing season"
-          },
-          properties: {
-            hardinessZone: "USDA 11-12",
-            soilType: ["Potting mix"],
-            moisture: "Moist but well-drained",
-            ph: "Acid, Neutral",
-            droughtTolerant: false,
-            frostTolerant: false
-          },
-          seasonalInterest: {
-            spring: "Active growth period",
-            summer: "White flowers",
-            autumn: "Continued growth",
-            winter: "Possible flowering"
-          },
-          imageUrl: "https://images.unsplash.com/photo-1593691509543-c55fb32e7355",
-          mainCategory: "indoor"
-        },
-        {
-          id: "monstera",
-          name: "Swiss Cheese Plant",
-          scientificName: "Monstera deliciosa",
-          category: "indoor",
-          subCategory: "foliage plants",
-          description: "Trendy tropical plant with distinctive split leaves, perfect for creating a jungle atmosphere indoors.",
-          growthDetails: {
-            height: "2-3m",
-            spread: "1-2m",
-            growthRate: "Fast",
-            ultimateHeight: "3m indoors",
-            timeToUltimateHeight: "5-10 years"
-          },
-          careInstructions: {
-            sunlight: "Bright indirect light",
-            watering: "Allow top soil to dry between waterings",
-            soil: "Well-draining, rich potting mix",
-            pruning: "Remove yellow leaves, control size",
-            fertilizer: "Monthly during growing season"
-          },
-          properties: {
-            hardinessZone: "USDA 10-12",
-            soilType: ["Potting mix"],
-            moisture: "Medium",
-            ph: "Slightly acidic to neutral",
-            droughtTolerant: false,
-            frostTolerant: false
-          },
-          seasonalInterest: {
-            spring: "New leaf growth",
-            summer: "Rapid growth",
-            autumn: "Continued growth",
-            winter: "Slower growth"
-          },
-          imageUrl: "https://images.unsplash.com/photo-1614594975525-e45190c55d0b",
-          mainCategory: "indoor"
-        },
-        {
-          id: "orchid",
-          name: "Phalaenopsis Orchid",
-          scientificName: "Phalaenopsis hybrid",
-          category: "indoor",
-          subCategory: "flowering plants",
-          description: "Elegant moth orchid with long-lasting blooms, perfect for brightening indoor spaces.",
-          growthDetails: {
-            height: "45-60cm",
-            spread: "30-45cm",
-            growthRate: "Slow",
-            ultimateHeight: "60cm",
-            timeToUltimateHeight: "2-3 years"
-          },
-          careInstructions: {
-            sunlight: "Bright indirect light",
-            watering: "Weekly, allow to dry slightly",
-            soil: "Specialized orchid mix",
-            pruning: "Cut spent flower stems",
-            fertilizer: "Weak orchid fertilizer bi-weekly"
-          },
-          properties: {
-            hardinessZone: "USDA 10-12",
-            soilType: ["Orchid mix"],
-            moisture: "Medium",
-            ph: "Slightly acidic",
-            droughtTolerant: false,
-            frostTolerant: false
-          },
-          seasonalInterest: {
-            spring: "Potential blooming",
-            summer: "Active growth",
-            autumn: "Potential blooming",
-            winter: "Rest period"
-          },
-          imageUrl: "https://images.unsplash.com/photo-1624809781812-9129d89c6764",
-          mainCategory: "indoor"
+        winterSale: {
+          shrubs: [
+            {
+              name: "Winter Beauty Honeysuckle",
+              scientificName: "Lonicera × purpusii 'Winter Beauty'",
+              category: "shrubs",
+              description: "Winter-flowering shrub with fragrant cream flowers.",
+              discount: 50,
+              growthDetails: {
+                height: "2m",
+                spread: "2.5m",
+                growthRate: "Medium",
+              },
+              care: {
+                sunlight: "Full sun to partial shade",
+                watering: "Medium",
+                soil: "Well-drained",
+                maintenance: "Low",
+              }
+            }
+          ],
+          perennials: [
+            {
+              name: "Hardy Geranium",
+              scientificName: "Geranium 'Rozanne'",
+              category: "perennials",
+              description: "Long-flowering perennial with violet-blue flowers.",
+              discount: 50,
+              growthDetails: {
+                height: "60cm",
+                spread: "80cm",
+                growthRate: "Fast",
+              },
+              care: {
+                sunlight: "Full sun to partial shade",
+                watering: "Medium",
+                soil: "Well-drained",
+                maintenance: "Low",
+              }
+            }
+          ]
         }
-      ];
+      };
 
-      // Group templates by main category
-      const groupedTemplates = templates.reduce((acc, template) => {
-        if (!acc[template.mainCategory]) {
-          acc[template.mainCategory] = [];
-        }
-        acc[template.mainCategory].push(template);
-        return acc;
-      }, {} as Record<string, any[]>);
-
-      return res.json(groupedTemplates);
+      return res.json(templates);
     } catch (error) {
       console.error('Error fetching plant templates:', error);
       return res.status(500).json({ message: "Failed to fetch plant templates" });
+    }
+  });
+
+  // CSV upload endpoint for bulk plant import
+  app.post("/api/plants/upload", upload.single('file'), async (req, res) => {
+    if (!req.isAuthenticated() || req.user.role !== "nursery") {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+
+    try {
+      const records: any[] = [];
+      const parser = parse({
+        columns: true,
+        skip_empty_lines: true
+      });
+
+      parser.on('readable', () => {
+        let record;
+        while ((record = parser.read())) {
+          records.push({
+            name: record.name,
+            scientificName: record.scientificName || null,
+            category: record.category,
+            description: record.description || "",
+            price: parseFloat(record.price),
+            quantity: parseInt(record.quantity),
+            imageUrl: record.imageUrl || "",
+            nurseryId: req.user.id,
+            sunExposure: record.sunExposure || null,
+            wateringNeeds: record.wateringNeeds || null,
+            soilType: record.soilType || null,
+            hardinessZone: record.hardinessZone || null,
+            matureSize: record.matureSize || null,
+            growthRate: record.growthRate || null,
+            maintainanceLevel: record.maintainanceLevel || null,
+          });
+        }
+      });
+
+      parser.on('end', async () => {
+        try {
+          await db.insert(plants).values(records);
+          res.json({ message: `Successfully imported ${records.length} plants` });
+        } catch (error) {
+          console.error('Error inserting plants:', error);
+          res.status(500).json({ message: "Failed to import plants" });
+        }
+      });
+
+      parser.write(req.file.buffer.toString());
+      parser.end();
+    } catch (error) {
+      console.error('Error processing CSV:', error);
+      return res.status(500).json({ message: "Failed to process CSV file" });
     }
   });
 

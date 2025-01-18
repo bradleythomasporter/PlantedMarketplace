@@ -10,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   Accordion,
@@ -30,9 +31,10 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/hooks/use-user";
-import { Loader2, PenSquare, Trash2, Package, Sun, Droplets } from "lucide-react";
+import { Loader2, PenSquare, Trash2, Package, Sun, Droplets, Upload } from "lucide-react";
 import { useLocation } from "wouter";
 import type { Plant, Order } from "@db/schema";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface PlantTemplate {
   id: string;
@@ -349,7 +351,6 @@ export default function NurseryDashboard() {
     );
   };
 
-
   return (
     <div className="min-h-screen bg-background">
       <header className="bg-primary/10 p-4 md:p-6">
@@ -397,73 +398,130 @@ export default function NurseryDashboard() {
             <section>
               <h2 className="text-2xl font-semibold mb-6">Manage Plants</h2>
 
-              <Dialog open={isAddingPlant} onOpenChange={setIsAddingPlant}>
-                <DialogTrigger asChild>
-                  <Button className="mb-6">Add New Plant</Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle>Add New Plant</DialogTitle>
-                  </DialogHeader>
-                  <form onSubmit={handleAddPlant} className="space-y-6">
-                    <div className="space-y-4">
-                      {renderTemplateSelection()}
+              <div className="flex gap-4 mb-6">
+                <Dialog open={isAddingPlant} onOpenChange={setIsAddingPlant}>
+                  <DialogTrigger asChild>
+                    <Button>Add New Plant</Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>Add New Plant</DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handleAddPlant} className="space-y-6">
+                      <div className="space-y-4">
+                        {renderTemplateSelection()}
 
-                      <div className="pt-4 border-t space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="name">Plant Name *</Label>
-                            <Input id="name" name="name" required />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="scientificName">Scientific Name</Label>
-                            <Input id="scientificName" name="scientificName" />
-                          </div>
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="category">Category *</Label>
-                          <select
-                            id="category"
-                            name="category"
-                            className="w-full rounded-md border border-input bg-background px-3 py-2"
-                            required
-                          >
-                            <option value="">Select Category</option>
-                            <option value="indoor">Indoor Plants</option>
-                            <option value="outdoor">Outdoor Plants</option>
-                            <option value="flowers">Flowers</option>
-                            <option value="trees">Trees</option>
-                            <option value="shrubs">Shrubs</option>
-                          </select>
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="description">Description</Label>
-                          <Textarea id="description" name="description" />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label>Care Requirements</Label>
-                          <div className="grid grid-cols-3 gap-4">
-                            <div>
-                              <Label htmlFor="sunExposure">Sunlight</Label>
-                              <select
-                                id="sunExposure"
-                                name="sunExposure"
-                                className="w-full rounded-md border border-input bg-background px-3 py-2"
-                              >
-                                <option value="full_sun">Full Sun</option>
-                                <option value="partial_sun">Partial Sun</option>
-                                <option value="partial_shade">Partial Shade</option>
-                                <option value="full_shade">Full Shade</option>
-                              </select>
+                        <div className="pt-4 border-t space-y-4">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="name">Plant Name *</Label>
+                              <Input id="name" name="name" required />
                             </div>
-                            <div>
-                              <Label htmlFor="wateringNeeds">Watering</Label>
+                            <div className="space-y-2">
+                              <Label htmlFor="scientificName">Scientific Name</Label>
+                              <Input id="scientificName" name="scientificName" />
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="category">Category *</Label>
+                            <select
+                              id="category"
+                              name="category"
+                              className="w-full rounded-md border border-input bg-background px-3 py-2"
+                              required
+                            >
+                              <option value="">Select Category</option>
+                              <option value="indoor">Indoor Plants</option>
+                              <option value="outdoor">Outdoor Plants</option>
+                              <option value="flowers">Flowers</option>
+                              <option value="trees">Trees</option>
+                              <option value="shrubs">Shrubs</option>
+                            </select>
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="description">Description</Label>
+                            <Textarea id="description" name="description" />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label>Care Requirements</Label>
+                            <div className="grid grid-cols-3 gap-4">
+                              <div>
+                                <Label htmlFor="sunExposure">Sunlight</Label>
+                                <select
+                                  id="sunExposure"
+                                  name="sunExposure"
+                                  className="w-full rounded-md border border-input bg-background px-3 py-2"
+                                >
+                                  <option value="full_sun">Full Sun</option>
+                                  <option value="partial_sun">Partial Sun</option>
+                                  <option value="partial_shade">Partial Shade</option>
+                                  <option value="full_shade">Full Shade</option>
+                                </select>
+                              </div>
+                              <div>
+                                <Label htmlFor="wateringNeeds">Watering</Label>
+                                <select
+                                  id="wateringNeeds"
+                                  name="wateringNeeds"
+                                  className="w-full rounded-md border border-input bg-background px-3 py-2"
+                                >
+                                  <option value="high">High</option>
+                                  <option value="moderate">Moderate</option>
+                                  <option value="low">Low</option>
+                                </select>
+                              </div>
+                              <div>
+                                <Label htmlFor="soilType">Soil Type</Label>
+                                <select
+                                  id="soilType"
+                                  name="soilType"
+                                  className="w-full rounded-md border border-input bg-background px-3 py-2"
+                                >
+                                  <option value="well_draining">Well-draining</option>
+                                  <option value="clay">Clay</option>
+                                  <option value="sandy">Sandy</option>
+                                  <option value="loamy">Loamy</option>
+                                </select>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="hardinessZone">Hardiness Zone</Label>
+                              <Input
+                                id="hardinessZone"
+                                name="hardinessZone"
+                                placeholder="e.g., USDA 6-9"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="matureSize">Mature Size</Label>
+                              <Input
+                                id="matureSize"
+                                name="matureSize"
+                                placeholder="e.g., 3-4 ft tall"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="growthRate">Growth Rate</Label>
+                              <Input
+                                id="growthRate"
+                                name="growthRate"
+                                placeholder="e.g., Fast, Moderate, Slow"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="maintainanceLevel">Maintenance Level</Label>
                               <select
-                                id="wateringNeeds"
-                                name="wateringNeeds"
+                                id="maintainanceLevel"
+                                name="maintainanceLevel"
                                 className="w-full rounded-md border border-input bg-background px-3 py-2"
                               >
                                 <option value="high">High</option>
@@ -471,108 +529,153 @@ export default function NurseryDashboard() {
                                 <option value="low">Low</option>
                               </select>
                             </div>
-                            <div>
-                              <Label htmlFor="soilType">Soil Type</Label>
-                              <select
-                                id="soilType"
-                                name="soilType"
-                                className="w-full rounded-md border border-input bg-background px-3 py-2"
-                              >
-                                <option value="well_draining">Well-draining</option>
-                                <option value="clay">Clay</option>
-                                <option value="sandy">Sandy</option>
-                                <option value="loamy">Loamy</option>
-                              </select>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="price">Price ($) *</Label>
+                              <Input
+                                id="price"
+                                name="price"
+                                type="number"
+                                step="0.01"
+                                min="0.01"
+                                required
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label htmlFor="quantity">Quantity *</Label>
+                              <Input
+                                id="quantity"
+                                name="quantity"
+                                type="number"
+                                min="1"
+                                required
+                              />
                             </div>
                           </div>
-                        </div>
 
-                        <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-2">
-                            <Label htmlFor="hardinessZone">Hardiness Zone</Label>
-                            <Input
-                              id="hardinessZone"
-                              name="hardinessZone"
-                              placeholder="e.g., USDA 6-9"
-                            />
+                            <Label htmlFor="imageUrl">Image URL</Label>
+                            <Input id="imageUrl" name="imageUrl" />
                           </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="matureSize">Mature Size</Label>
-                            <Input
-                              id="matureSize"
-                              name="matureSize"
-                              placeholder="e.g., 3-4 ft tall"
-                            />
-                          </div>
-                        </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="growthRate">Growth Rate</Label>
-                            <Input
-                              id="growthRate"
-                              name="growthRate"
-                              placeholder="e.g., Fast, Moderate, Slow"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="maintainanceLevel">Maintenance Level</Label>
-                            <select
-                              id="maintainanceLevel"
-                              name="maintainanceLevel"
-                              className="w-full rounded-md border border-input bg-background px-3 py-2"
-                            >
-                              <option value="high">High</option>
-                              <option value="moderate">Moderate</option>
-                              <option value="low">Low</option>
-                            </select>
-                          </div>
+                          <Button
+                            type="submit"
+                            className="w-full"
+                            disabled={addPlantMutation.isPending}
+                          >
+                            {addPlantMutation.isPending ? (
+                              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                            ) : null}
+                            Add Plant
+                          </Button>
                         </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="price">Price ($) *</Label>
-                            <Input
-                              id="price"
-                              name="price"
-                              type="number"
-                              step="0.01"
-                              min="0.01"
-                              required
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="quantity">Quantity *</Label>
-                            <Input
-                              id="quantity"
-                              name="quantity"
-                              type="number"
-                              min="1"
-                              required
-                            />
-                          </div>
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="imageUrl">Image URL</Label>
-                          <Input id="imageUrl" name="imageUrl" />
-                        </div>
-
-                        <Button
-                          type="submit"
-                          className="w-full"
-                          disabled={addPlantMutation.isPending}
-                        >
-                          {addPlantMutation.isPending ? (
-                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                          ) : null}
-                          Add Plant
-                        </Button>
                       </div>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="outline">
+                      <Upload className="h-4 w-4 mr-2" />
+                      Import CSV
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Import Plants from CSV</DialogTitle>
+                      <DialogDescription>
+                        Upload a CSV file to bulk import your plant inventory.
+                      </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-6">
+                      <Card>
+                        <CardContent className="pt-6">
+                          <h3 className="font-medium mb-2">CSV Format</h3>
+                          <p className="text-sm text-muted-foreground mb-4">
+                            Your CSV file should include the following columns:
+                          </p>
+                          <pre className="bg-muted p-4 rounded-md text-xs whitespace-pre-wrap">
+                            name,scientificName,category,description,price,quantity,imageUrl,sunExposure,wateringNeeds,soilType,hardinessZone,matureSize,growthRate,maintainanceLevel
+                          </pre>
+                          <Button
+                            variant="link"
+                            className="px-0 text-xs"
+                            onClick={() => {
+                              const csvContent = `name,scientificName,category,description,price,quantity,imageUrl,sunExposure,wateringNeeds,soilType,hardinessZone,matureSize,growthRate,maintainanceLevel
+Lavender 'Hidcote',Lavandula angustifolia 'Hidcote',perennials,"Compact English lavender variety",29.99,10,,full_sun,low,well_draining,USDA 5-9,40-60cm,medium,low
+Japanese Maple,Acer palmatum,trees,"Elegant ornamental tree",89.99,5,,partial_shade,moderate,well_draining,USDA 5-8,4-6m,slow,medium`;
+
+                              const blob = new Blob([csvContent], { type: 'text/csv' });
+                              const url = window.URL.createObjectURL(blob);
+                              const a = document.createElement('a');
+                              a.href = url;
+                              a.download = 'plant_template.csv';
+                              a.click();
+                              window.URL.revokeObjectURL(url);
+                            }}
+                          >
+                            Download template CSV
+                          </Button>
+                        </CardContent>
+                      </Card>
+
+                      <form
+                        onSubmit={async (e) => {
+                          e.preventDefault();
+                          const formData = new FormData(e.currentTarget);
+
+                          try {
+                            const response = await fetch('/api/plants/upload', {
+                              method: 'POST',
+                              credentials: 'include',
+                              body: formData,
+                            });
+
+                            if (!response.ok) {
+                              throw new Error(await response.text());
+                            }
+
+                            const result = await response.json();
+                            toast({
+                              title: "Upload successful",
+                              description: result.message,
+                            });
+
+                            // Refresh the plants list
+                            queryClient.invalidateQueries({ queryKey: [`/api/plants?nurseryId=${user?.id}`] });
+
+                            // Reset the form
+                            e.currentTarget.reset();
+                          } catch (error: any) {
+                            toast({
+                              title: "Upload failed",
+                              description: error.message,
+                              variant: "destructive",
+                            });
+                          }
+                        }}
+                        className="space-y-4"
+                      >
+                        <div className="space-y-2">
+                          <Label htmlFor="csvFile">Choose CSV File</Label>
+                          <Input
+                            id="csvFile"
+                            name="file"
+                            type="file"
+                            accept=".csv"
+                            required
+                          />
+                        </div>
+                        <Button type="submit">Upload</Button>
+                      </form>
                     </div>
-                  </form>
-                </DialogContent>
-              </Dialog>
+                  </DialogContent>
+                </Dialog>
+              </div>
 
               <Dialog open={!!selectedPlant} onOpenChange={(open) => !open && setSelectedPlant(null)}>
                 <DialogContent>
