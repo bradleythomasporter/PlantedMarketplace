@@ -640,7 +640,7 @@ export default function NurseryDashboard() {
                         </DialogDescription>
                       </DialogHeader>
 
-                      <div className="space-y-6">
+                      <div className="space-y-6 px-1">
                         <Card>
                           <CardContent className="pt-6">
                             <h3 className="font-medium mb-2">CSV Format</h3>
