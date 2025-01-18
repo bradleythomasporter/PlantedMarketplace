@@ -38,10 +38,8 @@ export function Header() {
   return (
     <header 
       className={cn(
-        "fixed top-0 left-0 right-0 z-50 transition-all duration-200",
-        scrolled 
-          ? "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/40"
-          : "bg-gradient-to-b from-emerald-50/90 to-background/0 dark:from-emerald-950/90"
+        "fixed top-0 left-0 right-0 z-50 bg-emerald-600",
+        scrolled && "shadow-md"
       )}
     >
       <div className="max-w-7xl mx-auto">
@@ -51,8 +49,8 @@ export function Header() {
             className="flex items-center gap-2 cursor-pointer mr-8" 
             onClick={() => setLocation("/")}
           >
-            <Leaf className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
-            <h1 className="text-2xl font-bold text-emerald-700 dark:text-emerald-300 tracking-tight">
+            <Leaf className="h-6 w-6 text-white" />
+            <h1 className="text-2xl font-bold text-white tracking-tight">
               Planted
             </h1>
           </div>
@@ -63,7 +61,7 @@ export function Header() {
               <DropdownMenuTrigger asChild>
                 <Button 
                   variant="ghost" 
-                  className="flex items-center gap-1 font-medium hover:bg-emerald-50 dark:hover:bg-emerald-950/50"
+                  className="flex items-center gap-1 font-medium text-white hover:bg-emerald-500"
                 >
                   Shop <ChevronDown className="h-4 w-4" />
                 </Button>
@@ -83,7 +81,7 @@ export function Header() {
 
             <Button 
               variant="ghost" 
-              className="font-medium hover:bg-emerald-50 dark:hover:bg-emerald-950/50"
+              className="font-medium text-white hover:bg-emerald-500"
               onClick={() => setLocation("/about")}
             >
               About
@@ -91,7 +89,7 @@ export function Header() {
 
             <Button 
               variant="ghost" 
-              className="font-medium hover:bg-emerald-50 dark:hover:bg-emerald-950/50"
+              className="font-medium text-white hover:bg-emerald-500"
               onClick={() => setLocation("/contact")}
             >
               Contact
@@ -106,19 +104,19 @@ export function Header() {
                   <Button 
                     variant="ghost" 
                     onClick={() => setLocation("/dashboard")}
-                    className="font-medium hover:bg-emerald-50 dark:hover:bg-emerald-950/50"
+                    className="font-medium text-white hover:bg-emerald-500"
                   >
                     Dashboard
                   </Button>
                 )}
-                <span className="text-sm hidden md:inline font-medium">
+                <span className="text-sm hidden md:inline font-medium text-white">
                   Welcome, {user.name}
                 </span>
                 <CartDrawer />
                 <Button 
                   variant="outline" 
                   onClick={() => logout()}
-                  className="shadow-sm hover:bg-emerald-50 dark:hover:bg-emerald-950/50"
+                  className="text-white border-white hover:bg-emerald-500"
                 >
                   Logout
                 </Button>
@@ -129,7 +127,7 @@ export function Header() {
                 <Button 
                   variant="outline" 
                   onClick={() => setLocation("/auth")}
-                  className="shadow-sm hover:bg-emerald-50 dark:hover:bg-emerald-950/50"
+                  className="text-white border-white hover:bg-emerald-500"
                 >
                   Login
                 </Button>
