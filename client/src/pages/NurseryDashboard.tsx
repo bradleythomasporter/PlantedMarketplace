@@ -632,7 +632,7 @@ export default function NurseryDashboard() {
                         Import CSV
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-2xl">
+                    <DialogContent className="sm:max-w-[625px]">
                       <DialogHeader>
                         <DialogTitle>Import Plants from CSV</DialogTitle>
                         <DialogDescription>
@@ -647,17 +647,17 @@ export default function NurseryDashboard() {
                             <p className="text-sm text-muted-foreground mb-4">
                               Your CSV file should include the following columns:
                             </p>
-                            <div className="bg-muted/50 p-4 rounded-md overflow-x-auto">
-                              <code className="text-xs whitespace-pre-wrap text-muted-foreground">
+                            <div className="relative">
+                              <pre className="max-h-[200px] overflow-auto rounded-lg border bg-muted px-4 py-3 font-mono text-xs">
                                 name,scientificName,category,description,price,quantity,imageUrl,sunExposure,wateringNeeds,soilType,hardinessZone,matureSize,growthRate,maintainanceLevel
-                              </code>
+                              </pre>
                             </div>
                             <Button
                               variant="link"
-                              className="px-0 mt-2 text-xs"
+                              className="h-auto p-0 text-xs mt-2"
                               onClick={() => {
                                 const csvContent = `name,scientificName,category,description,price,quantity,imageUrl,sunExposure,wateringNeeds,soilType,hardinessZone,matureSize,growthRate,maintainanceLevel
-Lavender 'Hidcote',Lavandula angustifolia 'Hidcote',perennials,"Compact English lavender variety",29.99,10,,full_sun,low,well-draining,USDA 5-9,40-60cm,medium,low
+Lavender 'Hidcote',Lavandula angustifolia 'Hidcote',flowers,"Compact English lavender variety",29.99,10,,full_sun,low,well-draining,USDA 5-9,40-60cm,medium,low
 Japanese Maple,Acer palmatum,trees,"Elegant ornamental tree",89.99,5,,partial_shade,moderate,well-draining,USDA 5-8,4-6m,slow,medium`;
 
                                 const blob = new Blob([csvContent], { type: 'text/csv' });
