@@ -1,10 +1,7 @@
 import { defineConfig } from "drizzle-kit";
-import * as dotenv from "dotenv";
 
-dotenv.config();
-
-if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL environment variable must be set");
+if (!process.env.PGDATABASE || !process.env.PGHOST) {
+  throw new Error("Database configuration environment variables must be set");
 }
 
 export default defineConfig({
@@ -12,9 +9,10 @@ export default defineConfig({
   out: "./migrations",
   dialect: "postgresql",
   dbCredentials: {
-    connectionString: process.env.DATABASE_URL,
-    ssl: {
-      rejectUnauthorized: false
-    }
-  }
+    host: process.env.PGHOST,
+    user: process.env.PGUSER,
+    password: process.env.PGPASSWORD,
+    database: process.env.PGDATABASE,
+    port: Number(process.env.PGPORT),
+  },
 });
