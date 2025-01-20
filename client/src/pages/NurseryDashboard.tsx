@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, QueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -68,6 +68,7 @@ export default function NurseryDashboard() {
   const [isAddingPlant, setIsAddingPlant] = useState(false);
   const [selectedPlant, setSelectedPlant] = useState<Plant | null>(null);
   const [activeTab, setActiveTab] = useState("inventory");
+  const queryClient = new QueryClient(); //Added this line
 
   // Fetch inventory
   const { data: plants = [], isLoading: isLoadingPlants } = useQuery<Plant[]>({
@@ -123,14 +124,21 @@ export default function NurseryDashboard() {
       const formData = new FormData();
       formData.append('file', file);
 
-      fetch("/api/plants/upload", {
+      fetch("/api/plants/upload-csv", {
         method: "POST",
         credentials: "include",
         body: formData,
       })
         .then(response => {
           if (!response.ok) throw new Error(response.statusText);
-          toast({ title: "Plants imported successfully" });
+          return response.json();
+        })
+        .then(data => {
+          toast({
+            title: "Plants imported successfully",
+            description: `${data.count} plants were imported`,
+          });
+          queryClient.invalidateQueries({ queryKey: ['/api/inventory'] });
         })
         .catch(error => {
           toast({

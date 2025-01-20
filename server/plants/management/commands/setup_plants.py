@@ -19,7 +19,7 @@ class Command(BaseCommand):
             user.save()
             self.stdout.write(self.style.SUCCESS('Created demo user'))
 
-        # Sample plants data
+        # Sample plants data that matches the CSV format
         plants_data = [
             {
                 'common_name': 'Peace Lily',
@@ -70,6 +70,7 @@ class Command(BaseCommand):
             }
         ]
 
+        # Create the sample plants
         for plant_data in plants_data:
             plant, created = Plant.objects.get_or_create(
                 common_name=plant_data['common_name'],
@@ -78,4 +79,16 @@ class Command(BaseCommand):
             status = 'Created' if created else 'Already exists'
             self.stdout.write(self.style.SUCCESS(f'{status}: {plant.common_name}'))
 
+        # Generate CSV file with sample data
+        import csv
+        import os
+
+        csv_path = os.path.join(os.path.dirname(__file__), 'sample_plants.csv')
+        with open(csv_path, 'w', newline='') as file:
+            writer = csv.DictWriter(file, fieldnames=list(plants_data[0].keys()))
+            writer.writeheader()
+            for plant in plants_data:
+                writer.writerow(plant)
+
+        self.stdout.write(self.style.SUCCESS(f'Created sample CSV file at {csv_path}'))
         self.stdout.write(self.style.SUCCESS('Successfully initialized plants database'))

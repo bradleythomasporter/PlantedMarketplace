@@ -7,6 +7,7 @@ from server.plants import views
 
 router = routers.DefaultRouter()
 router.register(r'plants', views.PlantViewSet)
+router.register(r'inventory', views.PlantInventoryViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
