@@ -1,5 +1,5 @@
-import { neon } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-http';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { Pool } from 'pg';
 import * as schema from "@db/schema";
 
 if (!process.env.DATABASE_URL) {
@@ -8,14 +8,18 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-const sql = neon(process.env.DATABASE_URL);
-export const db = drizzle(sql, { schema });
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  max: 10
+});
+
+export const db = drizzle(pool, { schema });
 
 // Initialize database connection
 async function initDb() {
   try {
-    const result = await sql`SELECT NOW()`;
-    console.log('Database initialized successfully:', result[0].now);
+    const result = await pool.query('SELECT NOW()');
+    console.log('Database initialized successfully:', result.rows[0].now);
   } catch (error) {
     console.error('Error initializing database:', error);
     throw error;
@@ -24,7 +28,8 @@ async function initDb() {
 
 initDb().catch(console.error);
 
-// Handle process termination.
-process.on('exit', () => {
+// Handle process termination
+process.on('exit', async () => {
   console.log('Database connection closing...');
+  await pool.end();
 });
