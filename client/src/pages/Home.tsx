@@ -5,9 +5,9 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import {
-  Tree,
+  TreeDeciduous,
   Flower2,
-  Home,
+  HomeIcon,
   Sprout,
   Apple,
   Leaf,
@@ -18,9 +18,9 @@ import {
 } from "lucide-react";
 
 const categories = [
-  { id: "indoor", label: "Indoor", icon: Home },
+  { id: "indoor", label: "Indoor", icon: HomeIcon },
   { id: "outdoor", label: "Outdoor", icon: Umbrella },
-  { id: "trees", label: "Trees", icon: Tree },
+  { id: "trees", label: "Trees", icon: TreeDeciduous },
   { id: "shrubs", label: "Shrubs", icon: Shrub },
   { id: "flowers", label: "Flowers", icon: Flower2 },
   { id: "perennials", label: "Perennials", icon: FlowerIcon },

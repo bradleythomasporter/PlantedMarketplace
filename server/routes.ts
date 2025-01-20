@@ -11,6 +11,14 @@ import stripe from "stripe";
 import { point } from "@turf/helpers";
 import turfDistance from "@turf/distance";
 
+// Add file upload middleware
+const upload = multer({ storage: multer.memoryStorage() });
+
+// Add geocoding service
+const geocoder = NodeGeocoder({
+  provider: 'openstreetmap'
+});
+
 if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error("STRIPE_SECRET_KEY is required");
 }
@@ -18,49 +26,8 @@ if (!process.env.STRIPE_SECRET_KEY) {
 const stripeClient = new stripe(process.env.STRIPE_SECRET_KEY);
 const MAX_STRIPE_URL_LENGTH = 500;
 
-const geocoder = NodeGeocoder({
-  provider: 'openstreetmap'
-});
-
-const upload = multer({ storage: multer.memoryStorage() });
-
 export function registerRoutes(app: Express): Server {
   setupAuth(app);
-
-  // Add inventory endpoint
-  app.get("/api/inventory", async (req, res) => {
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-
-    try {
-      const inventory = await db
-        .select({
-          id: plantInventory.id,
-          plantId: plantInventory.plantId,
-          quantity: plantInventory.quantity,
-          price: plantInventory.price,
-          size: plantInventory.size,
-          notes: plantInventory.notes,
-          name: plants.name,
-          scientificName: plants.scientificName,
-          description: plants.description,
-          imageUrl: plants.imageUrl,
-          category: plants.category,
-          sunExposure: plants.sunExposure,
-          wateringNeeds: plants.wateringNeeds,
-          hardinessZone: plants.hardinessZone
-        })
-        .from(plantInventory)
-        .innerJoin(plants, eq(plantInventory.plantId, plants.id))
-        .where(eq(plantInventory.nurseryId, req.user.id));
-
-      return res.json(inventory);
-    } catch (error) {
-      console.error('Error fetching inventory:', error);
-      return res.status(500).json({ message: "Failed to fetch inventory" });
-    }
-  });
 
   // Plants listing and search with geospatial filtering
   app.get("/api/plants", async (req, res) => {
@@ -68,9 +35,8 @@ export function registerRoutes(app: Express): Server {
       const {
         search,
         category,
-        latitude,
-        longitude,
-        radius = "10", // Default radius in kilometers
+        zipCode,
+        radius = "20", // Default radius in kilometers
         minPrice,
         maxPrice,
         sortBy
@@ -89,52 +55,68 @@ export function registerRoutes(app: Express): Server {
           and(
             eq(users.role, "nursery"),
             sql`${users.latitude} IS NOT NULL`,
-            sql`${users.longitude} IS NOT NULL`,
-            sql`${users.serviceRadius} IS NOT NULL`
+            sql`${users.longitude} IS NOT NULL`
           )
         );
 
-      let nurseryIds: number[] = [];
+      let nurseryIds = availableNurseries.map(nursery => nursery.id);
 
       // If location is provided, filter nurseries by distance
-      if (typeof latitude === 'string' && typeof longitude === 'string') {
-        const userLocation = point([parseFloat(longitude), parseFloat(latitude)]);
-
-        // Filter nurseries within service radius
-        nurseryIds = availableNurseries
-          .filter(nursery => {
-            const nurseryLocation = point([nursery.longitude!, nursery.latitude!]);
-            const distanceInKm = turfDistance(userLocation, nurseryLocation);
-            return distanceInKm <= (nursery.serviceRadius || parseFloat(radius));
-          })
-          .map(nursery => nursery.id);
-      } else {
-        // If no location provided, include all nurseries
-        nurseryIds = availableNurseries.map(nursery => nursery.id);
+      if (zipCode) {
+        try {
+          const [location] = await geocoder.geocode(zipCode as string);
+          if (location) {
+            const userLocation = point([location.longitude!, location.latitude!]);
+            nurseryIds = availableNurseries
+              .filter(nursery => {
+                if (!nursery.latitude || !nursery.longitude) return false;
+                const nurseryLocation = point([nursery.longitude, nursery.latitude]);
+                const distanceInKm = turfDistance(userLocation, nurseryLocation);
+                return distanceInKm <= (nursery.serviceRadius || parseFloat(radius as string));
+              })
+              .map(nursery => nursery.id);
+          }
+        } catch (error) {
+          console.error('Geocoding error:', error);
+        }
       }
 
-      // Build the query with the filtered nurseries
+      // Base query for plants
       let query = db
-        .select()
+        .select({
+          id: plants.id,
+          name: plants.name,
+          description: plants.description,
+          price: plants.price,
+          category: plants.category,
+          imageUrl: plants.imageUrl,
+          nurseryId: plants.nurseryId,
+          sunExposure: plants.sunExposure,
+          wateringNeeds: plants.wateringNeeds,
+          quantity: plants.quantity,
+          createdAt: plants.createdAt
+        })
         .from(plants)
         .where(inArray(plants.nurseryId, nurseryIds));
 
       const conditions = [];
 
-      // Search by name or description (case-insensitive)
-      if (typeof search === 'string' && search) {
-        conditions.push(sql`(
-          LOWER(${plants.name}) LIKE ${`%${search.toLowerCase()}%`} OR
-          LOWER(${plants.description}) LIKE ${`%${search.toLowerCase()}%`}
-        )`);
+      // Add search condition
+      if (typeof search === 'string' && search.trim()) {
+        conditions.push(
+          or(
+            like(sql`LOWER(${plants.name})`, `%${search.toLowerCase()}%`),
+            like(sql`LOWER(${plants.description})`, `%${search.toLowerCase()}%`)
+          )
+        );
       }
 
-      // Filter by category
+      // Add category filter
       if (typeof category === 'string' && category && category !== 'all') {
-        conditions.push(sql`${plants.category} = ${category}`);
+        conditions.push(eq(plants.category, category));
       }
 
-      // Price range filter
+      // Add price range filter
       if (typeof minPrice === 'string' && typeof maxPrice === 'string') {
         const min = parseFloat(minPrice);
         const max = parseFloat(maxPrice);
@@ -165,33 +147,81 @@ export function registerRoutes(app: Express): Server {
       }
 
       const results = await query;
-
-      // Add distance information if location is provided
-      let resultsWithDistance = results;
-      if (typeof latitude === 'string' && typeof longitude === 'string') {
-        const userLocation = point([parseFloat(longitude), parseFloat(latitude)]);
-        resultsWithDistance = results.map(plant => {
-          if (plant.latitude && plant.longitude) {
-            const plantLocation = point([plant.longitude, plant.latitude]);
-            const distanceInKm = turfDistance(userLocation, plantLocation);
-            return { ...plant, distance: Math.round(distanceInKm * 100) / 100 };
-          }
-          return plant;
-        });
-
-        // Sort by distance if no other sorting is specified
-        if (!sortBy) {
-          resultsWithDistance.sort((a, b) => (a.distance || 0) - (b.distance || 0));
-        }
-      }
-
-      return res.json(resultsWithDistance);
+      return res.json(results);
     } catch (error) {
       console.error('Error fetching plants:', error);
       return res.status(500).json({ message: "Failed to fetch plants" });
     }
   });
 
+  // Get nursery inventory
+  app.get("/api/inventory", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    try {
+      const inventory = await db
+        .select()
+        .from(plants)
+        .where(eq(plants.nurseryId, req.user.id));
+
+      return res.json(inventory);
+    } catch (error) {
+      console.error('Error fetching inventory:', error);
+      return res.status(500).json({ message: "Failed to fetch inventory" });
+    }
+  });
+
+  // Get orders for a nursery
+  app.get("/api/orders", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    try {
+      const nurseryOrders = await db
+        .select()
+        .from(orders)
+        .where(eq(orders.nurseryId, req.user.id))
+        .orderBy(orders.createdAt);
+
+      return res.json(nurseryOrders);
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+      return res.status(500).json({ message: "Failed to fetch orders" });
+    }
+  });
+
+  // Update order status
+  app.patch("/api/orders/:id/status", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    try {
+      const orderId = parseInt(req.params.id);
+      const { status } = req.body;
+
+      if (!status || !["pending", "confirmed", "processing", "shipped", "delivered", "cancelled"].includes(status)) {
+        return res.status(400).json({ message: "Invalid status" });
+      }
+
+      const [updatedOrder] = await db
+        .update(orders)
+        .set({
+          status,
+          updatedAt: new Date()
+        })
+        .where(eq(orders.id, orderId))
+        .returning();
+
+      return res.json(updatedOrder);
+    } catch (error) {
+      console.error('Error updating order:', error);
+      return res.status(500).json({ message: "Failed to update order" });
+    }
+  });
   // Plant templates endpoint with organized categories
   app.get("/api/plants/templates", async (_req, res) => {
     try {
@@ -799,164 +829,6 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       console.error('Error fetching plant:', error);
       return res.status(500).json({ message: "Failed to fetch plant" });
-    }
-  });
-
-  // Get orders for a nursery
-  app.get("/api/orders", async (req, res) => {
-    if (!req.isAuthenticated() || req.user.role !== "nursery") {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-
-    try {
-      const nurseryOrders = await db
-        .select()
-        .from(orders)
-        .where(eq(orders.nurseryId, req.user.id))
-        .orderBy(orders.createdAt);
-
-      return res.json(nurseryOrders);
-    } catch (error) {
-      console.error('Error fetching orders:', error);
-      return res.status(500).json({ message: "Failed to fetch orders" });
-    }
-  });
-
-  // Update order status
-  app.patch("/api/orders/:id/status", async (req, res) => {
-    if (!req.isAuthenticated() || req.user.role !== "nursery") {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-
-    try {
-      const orderId = parseInt(req.params.id);
-      const { status } = req.body;
-
-      if (!status || !["pending", "confirmed", "processing", "shipped", "delivered", "cancelled"].includes(status)) {
-        return res.status(400).json({ message: "Invalid status" });
-      }
-
-      // Verify the order belongs to this nursery
-      const [existingOrder] = await db
-        .select()
-        .from(orders)
-        .where(and(
-          eq(orders.id, orderId),
-          eq(orders.nurseryId, req.user.id)
-        ))
-        .limit(1);
-
-      if (!existingOrder) {
-        return res.status(404).json({ message: "Order not found" });
-      }
-
-      const [updatedOrder] = await db
-        .update(orders)
-        .set({
-          status,
-          updatedAt: new Date()
-        })
-        .where(eq(orders.id, orderId))
-        .returning();
-
-      return res.json(updatedOrder);
-    } catch (error) {
-      console.error('Error updating order:', error);
-      return res.status(500).json({ message: "Failed to update order" });
-    }
-  });
-
-  // Update plant
-  app.patch("/api/plants/:id", async (req, res) => {
-    if (!req.isAuthenticated() || req.user.role !== "nursery") {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-
-    try {
-      const plantId = parseInt(req.params.id);
-
-      // Verify the plant belongs to this nursery
-      const [existingPlant] = await db
-        .select()
-        .from(plants)
-        .where(and(
-          eq(plants.id, plantId),
-          eq(plants.nurseryId, req.user.id)
-        ))
-        .limit(1);
-
-      if (!existingPlant) {
-        return res.status(404).json({ message: "Plant not found" });
-      }
-
-      const [updatedPlant] = await db
-        .update(plants)
-        .set(req.body)
-        .where(eq(plants.id, plantId))
-        .returning();
-
-      return res.json(updatedPlant);
-    } catch (error) {
-      console.error('Error updating plant:', error);
-      return res.status(500).json({ message: "Failed to update plant" });
-    }
-  });
-
-  // Delete plant
-  app.delete("/api/plants/:id", async (req, res) => {
-    if (!req.isAuthenticated() || req.user.role !== "nursery") {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-
-    try {
-      const plantId = parseInt(req.params.id);
-
-      // Verify the plant belongs to this nursery
-      const [existingPlant] = await db
-        .select()
-        .from(plants)
-        .where(and(
-          eq(plants.id, plantId),
-          eq(plants.nurseryId, req.user.id)
-        ))
-        .limit(1);
-
-      if (!existingPlant) {
-        return res.status(404).json({ message: "Plant not found" });
-      }
-
-      await db
-        .delete(plants)
-        .where(eq(plants.id, plantId));
-
-      return res.json({ message: "Plant deleted successfully" });
-    } catch (error) {
-      console.error('Error deleting plant:', error);
-      return res.status(500).json({ message: "Failed to delete plant" });
-    }
-  });
-
-  // Geocoding endpoint
-  app.get("/api/geocode", async (req, res) => {
-    try {
-      const { address } = req.query;
-      if (!address || typeof address !== 'string') {
-        return res.status(400).json({ message: "Address is required" });
-      }
-
-      const [location] = await geocoder.geocode(address);
-      if (!location) {
-        return res.status(404).json({ message: "Location not found" });
-      }
-
-      return res.json({
-        latitude: location.latitude,
-        longitude: location.longitude,
-        zipCode: location.zipcode || "00000" // Fallback ZIP code
-      });
-    } catch (error) {
-      console.error('Geocoding error:', error);
-      return res.status(500).json({ message: "Failed to geocode address" });
     }
   });
 

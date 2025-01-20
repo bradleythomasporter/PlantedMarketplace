@@ -5,11 +5,38 @@ import { PlantCard } from "@/components/PlantCard";
 import { SearchFilters } from "@/components/SearchFilters";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { Loader2 } from "lucide-react";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { 
+  Loader2, 
+  TreeDeciduous, 
+  Flower2, 
+  Home as HomeIcon, 
+  Sprout, 
+  Apple, 
+  Leaf, 
+  FlowerIcon, 
+  Umbrella, 
+  TreePine, 
+  Shrub 
+} from "lucide-react";
 import type { Plant } from "@db/schema";
 import { useUser } from "@/hooks/use-user";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
+
+const categories = [
+  { id: "indoor", label: "Indoor", icon: HomeIcon },
+  { id: "outdoor", label: "Outdoor", icon: Umbrella },
+  { id: "trees", label: "Trees", icon: TreeDeciduous },
+  { id: "shrubs", label: "Shrubs", icon: Shrub },
+  { id: "flowers", label: "Flowers", icon: Flower2 },
+  { id: "perennials", label: "Perennials", icon: FlowerIcon },
+  { id: "climbers", label: "Climbers", icon: Sprout },
+  { id: "fruit", label: "Fruit Trees", icon: Apple },
+  { id: "herbs", label: "Herbs", icon: Leaf },
+  { id: "conifers", label: "Conifers", icon: TreePine },
+];
 
 const defaultFilters = {
   search: "",
@@ -25,12 +52,14 @@ export default function HomePage() {
   const { user } = useUser();
   const [location] = useLocation();
   const { toast } = useToast();
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   // Parse URL parameters
   useEffect(() => {
     const params = new URLSearchParams(location.split('?')[1]);
     const category = params.get('category');
     if (category) {
+      setSelectedCategory(category);
       setFilters(prev => ({ ...prev, category }));
     }
   }, [location]);
@@ -38,7 +67,7 @@ export default function HomePage() {
   // Build query string for API
   const queryString = new URLSearchParams({
     search: filters.search,
-    category: filters.category,
+    category: selectedCategory || filters.category,
     zipCode: filters.zipCode,
     radius: filters.radius,
     minPrice: filters.priceRange[0].toString(),
@@ -65,6 +94,7 @@ export default function HomePage() {
 
   const handleClearFilters = () => {
     setFilters(defaultFilters);
+    setSelectedCategory(null);
   };
 
   return (
@@ -96,6 +126,34 @@ export default function HomePage() {
             </div>
           </div>
         </section>
+
+        {/* Categories Scroll */}
+        <ScrollArea className="w-full border-b bg-background sticky top-[72px] md:top-[88px] z-10">
+          <div className="flex p-4">
+            {categories.map((category) => {
+              const Icon = category.icon;
+              return (
+                <Button
+                  key={category.id}
+                  variant={selectedCategory === category.id ? "default" : "ghost"}
+                  className={cn(
+                    "flex-col h-auto px-4 py-2 mr-2 min-w-[80px]",
+                    selectedCategory === category.id
+                      ? "bg-primary text-primary-foreground"
+                      : "hover:bg-muted"
+                  )}
+                  onClick={() => setSelectedCategory(
+                    selectedCategory === category.id ? null : category.id
+                  )}
+                >
+                  <Icon className="mb-1 h-5 w-5" />
+                  <span className="text-xs">{category.label}</span>
+                </Button>
+              );
+            })}
+          </div>
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
 
         {/* Main Content */}
         <main className="max-w-7xl mx-auto px-4 md:px-6 py-8 flex-1">

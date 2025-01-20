@@ -25,9 +25,7 @@ function App() {
         <Route path="/dashboard" component={NurseryDashboard} />
       )}
       <Route>
-        <div className="flex items-center justify-center min-h-screen">
-          <h1 className="text-2xl font-bold">404 - Page Not Found</h1>
-        </div>
+        <HomePage />
       </Route>
     </Switch>
   );
