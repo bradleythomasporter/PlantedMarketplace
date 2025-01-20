@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
-from server.plants.models import Plant, PlantImage
+from plants.models import Plant, PlantImage
 
 class Command(BaseCommand):
     help = 'Initialize plants database with sample data'
@@ -19,7 +19,7 @@ class Command(BaseCommand):
             user.save()
             self.stdout.write(self.style.SUCCESS('Created demo user'))
 
-        # Sample plants data that matches the CSV format
+        # Sample plants data
         plants_data = [
             {
                 'common_name': 'Peace Lily',
@@ -42,7 +42,12 @@ class Command(BaseCommand):
                 'native_region': 'Tropical Americas',
                 'price': 29.99,
                 'quantity': 10,
+                'drought_tolerant': False,
+                'deer_resistant': False,
+                'pest_resistant': False,
+                'edible': False,
                 'indoor_suitable': True,
+                'featured': True
             },
             {
                 'common_name': 'Snake Plant',
@@ -65,8 +70,12 @@ class Command(BaseCommand):
                 'native_region': 'West Africa',
                 'price': 24.99,
                 'quantity': 15,
-                'indoor_suitable': True,
                 'drought_tolerant': True,
+                'deer_resistant': False,
+                'pest_resistant': True,
+                'edible': False,
+                'indoor_suitable': True,
+                'featured': False
             },
             {
                 'common_name': 'Boston Fern',
@@ -89,7 +98,12 @@ class Command(BaseCommand):
                 'native_region': 'Florida and tropical regions',
                 'price': 19.99,
                 'quantity': 20,
+                'drought_tolerant': False,
+                'deer_resistant': False,
+                'pest_resistant': False,
+                'edible': False,
                 'indoor_suitable': True,
+                'featured': True
             }
         ]
 
@@ -102,13 +116,17 @@ class Command(BaseCommand):
             status = 'Created' if created else 'Already exists'
             self.stdout.write(self.style.SUCCESS(f'{status}: {plant.common_name}'))
 
-        # Generate CSV file with sample data and instructions
+        # Generate CSV file with sample data
         import csv
         import os
 
         csv_path = os.path.join(os.path.dirname(__file__), 'sample_plants.csv')
+
+        # Ensure all fields are included in the fieldnames
+        fieldnames = list(plants_data[0].keys())
+
         with open(csv_path, 'w', newline='') as file:
-            writer = csv.DictWriter(file, fieldnames=list(plants_data[0].keys()))
+            writer = csv.DictWriter(file, fieldnames=fieldnames)
             writer.writeheader()
             for plant in plants_data:
                 writer.writerow(plant)
