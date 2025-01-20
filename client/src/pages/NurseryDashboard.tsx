@@ -243,7 +243,16 @@ export default function NurseryDashboard() {
   };
 
   const { data: plants = [], isLoading: isLoadingPlants } = useQuery<Plant[]>({
-    queryKey: [`/api/plants?nurseryId=${user?.id}`],
+    queryKey: [`/api/inventory?nurseryId=${user?.id}`],
+    queryFn: async ({ queryKey }) => {
+      const response = await fetch(queryKey[0] as string, {
+        credentials: "include",
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch inventory');
+      }
+      return response.json();
+    },
   });
 
   const { data: orders = [], isLoading: isLoadingOrders } = useQuery<Order[]>({
