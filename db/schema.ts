@@ -32,7 +32,7 @@ export const plants = sqliteTable('plants', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   name: text('name').notNull(),
   scientificName: text('scientific_name'),
-  category: text('category').notNull(),
+  category: text('category', { enum: ['perennials', 'shrubs', 'climbers', 'bulbs', 'bedding', 'grasses', 'roses', 'ferns', 'fruit', 'herbs', 'vegetables', 'hedging', 'trees'] }).notNull(),
   description: text('description'),
   price: real('price').notNull(),
   imageUrl: text('image_url'),
@@ -54,7 +54,7 @@ export const orders = sqliteTable('orders', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   customerId: integer('customer_id').notNull().references(() => users.id),
   nurseryId: integer('nursery_id').notNull().references(() => users.id),
-  status: text('status').notNull().default('pending'),
+  status: text('status', { enum: ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'] }).notNull().default('pending'),
   totalAmount: real('total_amount').notNull(),
   shippingAddress: text('shipping_address').notNull(),
   createdAt: integer('created_at', { mode: 'timestamp' })
@@ -71,7 +71,7 @@ export const orderItems = sqliteTable('order_items', {
   plantId: integer('plant_id').notNull().references(() => plants.id),
   quantity: integer('quantity').notNull(),
   priceAtTime: real('price_at_time').notNull(),
-  requiresPlanting: integer('requires_planting', { mode: 'boolean' }).notNull().default(0)
+  requiresPlanting: integer('requires_planting').notNull().default(0)
 });
 
 // Relations configuration
