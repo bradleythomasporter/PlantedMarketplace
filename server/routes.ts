@@ -7,6 +7,14 @@ import NodeGeocoder from "node-geocoder";
 import { setupAuth } from "./auth";
 import multer from "multer";
 import { parse } from "csv-parse";
+import stripe from "stripe";
+
+if (!process.env.STRIPE_SECRET_KEY) {
+  throw new Error("STRIPE_SECRET_KEY is required");
+}
+
+const stripeClient = new stripe(process.env.STRIPE_SECRET_KEY);
+const MAX_STRIPE_URL_LENGTH = 500;
 
 const geocoder = NodeGeocoder({
   provider: 'openstreetmap'
@@ -22,332 +30,262 @@ export function registerRoutes(app: Express): Server {
     try {
       const templates = {
         plantsByType: {
-          perennials: [
+          houseplants: [
             {
-              name: "Lavender 'Hidcote'",
-              scientificName: "Lavandula angustifolia 'Hidcote'",
-              category: "perennials",
-              description: "Compact English lavender variety with deep purple flowers and intense fragrance.",
+              name: "Chinese Evergreen",
+              scientificName: "Aglaonema commutatum",
+              category: "houseplants",
+              description: "Popular low-maintenance houseplant known for its decorative leaves and air-purifying qualities.",
               growthDetails: {
-                height: "40-60cm",
-                spread: "40-60cm",
-                growthRate: "Medium",
+                height: "60-90cm",
+                spread: "30-60cm",
+                growthRate: "Slow to Moderate",
               },
               care: {
-                sunlight: "Full sun",
-                watering: "Low",
-                soil: "Well-drained",
+                sunlight: "Low to Medium",
+                watering: "Moderate",
+                soil: "Well-draining potting mix",
                 maintenance: "Low",
-              }
+                temperatureRange: "16-27°C",
+              },
+              price: 24.99,
+              stockDefault: 15
             },
             {
-              name: "Echinacea 'Magnus'",
-              scientificName: "Echinacea purpurea 'Magnus'",
-              category: "perennials",
-              description: "Bold purple coneflower, excellent for attracting butterflies.",
+              name: "Snake Plant",
+              scientificName: "Sansevieria trifasciata",
+              category: "houseplants",
+              description: "Architectural plant with striking upright leaves, excellent air purifier.",
               growthDetails: {
-                height: "70-90cm",
-                spread: "45-60cm",
-                growthRate: "Fast",
-              },
-              care: {
-                sunlight: "Full sun",
-                watering: "Medium",
-                soil: "Well-drained",
-                maintenance: "Low",
-              }
-            },
-            {
-              name: "Salvia 'May Night'",
-              scientificName: "Salvia x sylvestris 'May Night'",
-              category: "perennials",
-              description: "Deep purple-blue spikes, long blooming period.",
-              growthDetails: {
-                height: "45-60cm",
-                spread: "45-60cm",
-                growthRate: "Medium",
-              },
-              care: {
-                sunlight: "Full sun",
-                watering: "Medium",
-                soil: "Well-drained",
-                maintenance: "Low",
-              }
-            }
-          ],
-          shrubs: [
-            {
-              name: "Red Robin",
-              scientificName: "Photinia x fraseri 'Red Robin'",
-              category: "shrubs",
-              description: "Evergreen shrub with bright red young leaves.",
-              growthDetails: {
-                height: "2.5-4m",
-                spread: "2.5-4m",
-                growthRate: "Medium",
-              },
-              care: {
-                sunlight: "Full sun to partial shade",
-                watering: "Medium",
-                soil: "Well-drained",
-                maintenance: "Low",
-              }
-            },
-            {
-              name: "Hydrangea 'Annabelle'",
-              scientificName: "Hydrangea arborescens 'Annabelle'",
-              category: "shrubs",
-              description: "Stunning white snowball blooms, reliable performer.",
-              growthDetails: {
-                height: "1-1.5m",
-                spread: "1-1.5m",
-                growthRate: "Fast",
-              },
-              care: {
-                sunlight: "Partial shade",
-                watering: "High",
-                soil: "Rich, moist",
-                maintenance: "Medium",
-              }
-            },
-            {
-              name: "Japanese Holly",
-              scientificName: "Ilex crenata",
-              category: "shrubs",
-              description: "Compact evergreen shrub, perfect for hedging.",
-              growthDetails: {
-                height: "1-2m",
-                spread: "1-1.5m",
+                height: "70-120cm",
+                spread: "30-60cm",
                 growthRate: "Slow",
               },
               care: {
-                sunlight: "Full sun to partial shade",
-                watering: "Medium",
-                soil: "Well-drained",
-                maintenance: "Low",
-              }
-            }
-          ],
-          climbers: [
-            {
-              name: "Clematis Montana",
-              scientificName: "Clematis montana",
-              category: "climbers",
-              description: "Vigorous climbing plant with masses of pink or white flowers.",
-              growthDetails: {
-                height: "8-12m",
-                spread: "3-4m",
-                growthRate: "Fast",
-              },
-              care: {
-                sunlight: "Full sun to partial shade",
-                watering: "Medium",
-                soil: "Well-drained",
-                maintenance: "Low",
-              }
-            },
-            {
-              name: "Star Jasmine",
-              scientificName: "Trachelospermum jasminoides",
-              category: "climbers",
-              description: "Evergreen climber with fragrant white flowers.",
-              growthDetails: {
-                height: "3-6m",
-                spread: "2-3m",
-                growthRate: "Medium",
-              },
-              care: {
-                sunlight: "Full sun to partial shade",
-                watering: "Medium",
-                soil: "Well-drained",
-                maintenance: "Medium",
-              }
-            },
-            {
-              name: "Boston Ivy",
-              scientificName: "Parthenocissus tricuspidata",
-              category: "climbers",
-              description: "Self-clinging climber with stunning autumn color.",
-              growthDetails: {
-                height: "15-25m",
-                spread: "5-8m",
-                growthRate: "Fast",
-              },
-              care: {
-                sunlight: "Any aspect",
-                watering: "Medium",
-                soil: "Any well-drained",
-                maintenance: "Low",
-              }
-            }
-          ],
-          bulbs: [
-            {
-              name: "Dutch Iris",
-              scientificName: "Iris × hollandica",
-              category: "bulbs",
-              description: "Spring flowering bulb with elegant blue, yellow or white flowers.",
-              growthDetails: {
-                height: "50-60cm",
-                spread: "10-15cm",
-                growthRate: "Medium",
-              },
-              care: {
-                sunlight: "Full sun",
-                watering: "Medium",
-                soil: "Well-drained",
-                maintenance: "Low",
-              }
-            },
-            {
-              name: "Allium 'Purple Sensation'",
-              scientificName: "Allium hollandicum",
-              category: "bulbs",
-              description: "Large purple spherical flowers on tall stems.",
-              growthDetails: {
-                height: "80-100cm",
-                spread: "15-20cm",
-                growthRate: "Fast",
-              },
-              care: {
-                sunlight: "Full sun",
+                sunlight: "Low to Bright",
                 watering: "Low",
-                soil: "Well-drained",
-                maintenance: "Low",
-              }
+                soil: "Well-draining cactus mix",
+                maintenance: "Very Low",
+                temperatureRange: "15-30°C",
+              },
+              price: 29.99,
+              stockDefault: 20
+            }
+          ],
+          tropicals: [
+            {
+              name: "Bird of Paradise",
+              scientificName: "Strelitzia reginae",
+              category: "tropicals",
+              description: "Dramatic tropical plant with distinctive paddle-shaped leaves and exotic flowers.",
+              growthDetails: {
+                height: "150-200cm",
+                spread: "120-180cm",
+                growthRate: "Moderate",
+              },
+              care: {
+                sunlight: "Bright",
+                watering: "Moderate to High",
+                soil: "Rich, well-draining mix",
+                maintenance: "Medium",
+                temperatureRange: "18-30°C",
+              },
+              price: 89.99,
+              stockDefault: 8
             },
             {
-              name: "Tulip 'Queen of Night'",
-              scientificName: "Tulipa 'Queen of Night'",
-              category: "bulbs",
-              description: "Deep purple-black tulip, stunning in groups.",
+              name: "Monstera Deliciosa",
+              scientificName: "Monstera deliciosa",
+              category: "tropicals",
+              description: "Popular tropical plant with distinctive split leaves, also known as Swiss Cheese Plant.",
+              growthDetails: {
+                height: "200-300cm",
+                spread: "120-150cm",
+                growthRate: "Fast",
+              },
+              care: {
+                sunlight: "Bright Indirect",
+                watering: "Moderate",
+                soil: "Rich, well-draining mix",
+                maintenance: "Medium",
+                temperatureRange: "20-30°C",
+              },
+              price: 49.99,
+              stockDefault: 12
+            }
+          ],
+          succulents: [
+            {
+              name: "Zebra Haworthia",
+              scientificName: "Haworthia fasciata",
+              category: "succulents",
+              description: "Small succulent with distinctive white stripes, perfect for desks and windowsills.",
+              growthDetails: {
+                height: "10-15cm",
+                spread: "10-15cm",
+                growthRate: "Slow",
+              },
+              care: {
+                sunlight: "Bright Indirect",
+                watering: "Low",
+                soil: "Cactus mix",
+                maintenance: "Very Low",
+                temperatureRange: "18-32°C",
+              },
+              price: 14.99,
+              stockDefault: 25
+            },
+            {
+              name: "String of Pearls",
+              scientificName: "Senecio rowleyanus",
+              category: "succulents",
+              description: "Trailing succulent with small, round leaves resembling a string of beads.",
+              growthDetails: {
+                height: "5-10cm",
+                spread: "90-120cm",
+                growthRate: "Moderate",
+              },
+              care: {
+                sunlight: "Bright Indirect",
+                watering: "Low",
+                soil: "Well-draining cactus mix",
+                maintenance: "Low",
+                temperatureRange: "18-24°C",
+              },
+              price: 19.99,
+              stockDefault: 15
+            }
+          ],
+          herbs: [
+            {
+              name: "English Lavender",
+              scientificName: "Lavandula angustifolia",
+              category: "herbs",
+              description: "Fragrant herb with purple flowers, excellent for gardens and containers.",
               growthDetails: {
                 height: "45-60cm",
-                spread: "10-15cm",
+                spread: "45-60cm",
+                growthRate: "Moderate",
+              },
+              care: {
+                sunlight: "Full Sun",
+                watering: "Low",
+                soil: "Well-draining, alkaline",
+                maintenance: "Low",
+                temperatureRange: "15-30°C",
+              },
+              price: 12.99,
+              stockDefault: 30
+            },
+            {
+              name: "Sweet Basil",
+              scientificName: "Ocimum basilicum",
+              category: "herbs",
+              description: "Popular culinary herb with aromatic leaves, essential for Mediterranean cooking.",
+              growthDetails: {
+                height: "30-60cm",
+                spread: "30-45cm",
                 growthRate: "Fast",
               },
               care: {
-                sunlight: "Full sun",
-                watering: "Medium",
-                soil: "Well-drained",
-                maintenance: "Low",
-              }
+                sunlight: "Full Sun",
+                watering: "Moderate",
+                soil: "Rich, well-draining",
+                maintenance: "Medium",
+                temperatureRange: "18-30°C",
+              },
+              price: 8.99,
+              stockDefault: 40
             }
           ]
         },
         seasonalPlants: {
-          newPlants: [
+          spring: [
             {
-              name: "Japanese Forest Grass",
-              scientificName: "Hakonechloa macra",
-              category: "grasses",
-              description: "Elegant ornamental grass with arching foliage.",
-              isNew: true,
+              name: "Cherry Blossom",
+              scientificName: "Prunus serrulata",
+              category: "trees",
+              description: "Ornamental cherry tree with stunning spring blossoms.",
               growthDetails: {
-                height: "30-45cm",
-                spread: "45-60cm",
+                height: "400-800cm",
+                spread: "400-800cm",
+                growthRate: "Moderate",
+              },
+              care: {
+                sunlight: "Full Sun",
+                watering: "Moderate",
+                soil: "Well-draining, slightly acidic",
+                maintenance: "Medium",
+                temperatureRange: "15-25°C",
+              },
+              price: 149.99,
+              stockDefault: 5
+            }
+          ],
+          summer: [
+            {
+              name: "Dahlia 'Café au Lait'",
+              scientificName: "Dahlia 'Café au Lait'",
+              category: "flowers",
+              description: "Large, dinner-plate sized blooms in creamy pink tones.",
+              growthDetails: {
+                height: "90-120cm",
+                spread: "60-90cm",
+                growthRate: "Fast",
+              },
+              care: {
+                sunlight: "Full Sun",
+                watering: "Moderate to High",
+                soil: "Rich, well-draining",
+                maintenance: "High",
+                temperatureRange: "18-28°C",
+              },
+              price: 16.99,
+              stockDefault: 20
+            }
+          ],
+          autumn: [
+            {
+              name: "Japanese Maple",
+              scientificName: "Acer palmatum",
+              category: "trees",
+              description: "Small tree with spectacular autumn foliage.",
+              growthDetails: {
+                height: "300-500cm",
+                spread: "300-500cm",
                 growthRate: "Slow",
               },
               care: {
-                sunlight: "Partial shade",
-                watering: "Medium",
-                soil: "Rich, moist",
-                maintenance: "Low",
-              }
-            },
-            {
-              name: "Coral Bells 'Obsidian'",
-              scientificName: "Heuchera 'Obsidian'",
-              category: "perennials",
-              description: "Dark purple-black foliage plant, perfect for contrast.",
-              isNew: true,
-              growthDetails: {
-                height: "20-30cm",
-                spread: "30-45cm",
-                growthRate: "Medium",
+                sunlight: "Partial Shade",
+                watering: "Moderate",
+                soil: "Well-draining, acidic",
+                maintenance: "Medium",
+                temperatureRange: "15-25°C",
               },
-              care: {
-                sunlight: "Partial shade",
-                watering: "Medium",
-                soil: "Well-drained",
-                maintenance: "Low",
-              }
+              price: 129.99,
+              stockDefault: 8
             }
           ],
-          hellebores: [
+          winter: [
             {
               name: "Christmas Rose",
               scientificName: "Helleborus niger",
-              category: "perennials",
-              description: "Winter-flowering perennial with white flowers.",
-              seasonal: "winter",
+              category: "flowers",
+              description: "Winter-flowering perennial with white blooms.",
               growthDetails: {
-                height: "30cm",
-                spread: "30cm",
+                height: "30-45cm",
+                spread: "30-45cm",
                 growthRate: "Slow",
               },
               care: {
-                sunlight: "Partial shade",
-                watering: "Medium",
-                soil: "Rich, well-drained",
+                sunlight: "Partial Shade",
+                watering: "Moderate",
+                soil: "Rich, well-draining",
                 maintenance: "Low",
-              }
-            },
-            {
-              name: "Lenten Rose",
-              scientificName: "Helleborus orientalis",
-              category: "perennials",
-              description: "Late winter to early spring blooms in various colors.",
-              seasonal: "winter",
-              growthDetails: {
-                height: "45cm",
-                spread: "45cm",
-                growthRate: "Slow",
+                temperatureRange: "5-15°C",
               },
-              care: {
-                sunlight: "Partial shade",
-                watering: "Medium",
-                soil: "Rich, well-drained",
-                maintenance: "Low",
-              }
-            }
-          ],
-          roses: [
-            {
-              name: "David Austin Rose 'Graham Thomas'",
-              scientificName: "Rosa 'Graham Thomas'",
-              category: "roses",
-              description: "Rich yellow English rose with strong fragrance.",
-              seasonal: "summer",
-              growthDetails: {
-                height: "1.2m",
-                spread: "1m",
-                growthRate: "Medium",
-              },
-              care: {
-                sunlight: "Full sun",
-                watering: "Medium",
-                soil: "Rich, well-drained",
-                maintenance: "Medium",
-              }
-            },
-            {
-              name: "David Austin Rose 'Lady Emma Hamilton'",
-              scientificName: "Rosa 'Lady Emma Hamilton'",
-              category: "roses",
-              description: "Tangerine-orange blooms with fruity fragrance.",
-              seasonal: "summer",
-              growthDetails: {
-                height: "1m",
-                spread: "90cm",
-                growthRate: "Medium",
-              },
-              care: {
-                sunlight: "Full sun",
-                watering: "Medium",
-                soil: "Rich, well-drained",
-                maintenance: "Medium",
-              }
+              price: 22.99,
+              stockDefault: 15
             }
           ]
         }
@@ -499,7 +437,7 @@ export function registerRoutes(app: Express): Server {
       const baseUrl = `${req.protocol}://${req.get("host")}`;
 
       // Create Stripe checkout session with proper configuration
-      const session = await stripe.checkout.sessions.create({
+      const session = await stripeClient.checkout.sessions.create({
         payment_method_types: ["card"],
         line_items: lineItems,
         mode: "payment",
@@ -516,7 +454,7 @@ export function registerRoutes(app: Express): Server {
       console.error("Checkout error:", error);
 
       // Handle Stripe-specific errors
-      if (error instanceof Stripe.errors.StripeError) {
+      if (error instanceof stripe.errors.StripeError) {
         return res.status(error.statusCode || 500).json({
           message: error.message,
           type: error.type
