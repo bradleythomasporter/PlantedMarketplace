@@ -77,48 +77,48 @@ export default function NurseryDashboard() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
-      <main className="flex-1 container py-8 px-4 md:px-6">
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList>
-            <TabsTrigger value="inventory">Inventory</TabsTrigger>
-            <TabsTrigger value="orders">Orders</TabsTrigger>
-            <TabsTrigger value="profile">Profile</TabsTrigger>
-          </TabsList>
+      <main className="pt-[72px] md:pt-[88px] flex-1">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-8">
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList>
+              <TabsTrigger value="inventory">Inventory</TabsTrigger>
+              <TabsTrigger value="orders">Orders</TabsTrigger>
+              <TabsTrigger value="profile">Profile</TabsTrigger>
+            </TabsList>
 
-          <TabsContent value="inventory" className="space-y-8">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-semibold">Manage Plants</h2>
-              <div className="flex gap-4">
-                <Button onClick={() => setIsAddingPlant(true)}>
-                  Add New Plant
-                </Button>
-                <div>
-                  <Input
-                    type="file"
-                    accept=".csv"
-                    onChange={handleCsvUpload}
-                    className="hidden"
-                    id="csv-upload"
-                  />
-                  <Button
-                    variant="outline"
-                    onClick={() => document.getElementById('csv-upload')?.click()}
-                  >
-                    <Upload className="h-4 w-4 mr-2" />
-                    Import CSV
+            <TabsContent value="inventory" className="mt-6">
+              <div className="mb-6">
+                <h2 className="text-2xl font-semibold mb-6">Manage Plants</h2>
+                <div className="flex gap-4">
+                  <Button onClick={() => setIsAddingPlant(true)}>
+                    Add New Plant
                   </Button>
+                  <div>
+                    <Input
+                      type="file"
+                      accept=".csv"
+                      onChange={handleCsvUpload}
+                      className="hidden"
+                      id="csv-upload"
+                    />
+                    <Button
+                      variant="outline"
+                      onClick={() => document.getElementById('csv-upload')?.click()}
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      Import CSV
+                    </Button>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="space-y-4">
-              {isLoadingPlants ? (
-                <div className="flex justify-center py-12">
-                  {/* Loader here */}
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {plants.map((plant) => (
+              <div className="space-y-2">
+                {isLoadingPlants ? (
+                  <div className="flex justify-center py-12">
+                    {/* Loader here */}
+                  </div>
+                ) : (
+                  plants.map((plant) => (
                     <PlantCard
                       key={plant.id}
                       plant={plant}
@@ -131,80 +131,80 @@ export default function NurseryDashboard() {
                         });
                       }}
                     />
-                  ))}
+                  ))
+                )}
+
+                {plants.length === 0 && !isLoadingPlants && (
+                  <div className="text-center py-12">
+                    <p className="text-muted-foreground">No plants in inventory</p>
+                    <Button
+                      variant="link"
+                      onClick={() => setIsAddingPlant(true)}
+                      className="mt-2"
+                    >
+                      Add your first plant
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="orders">
+              <div className="py-12 text-center text-muted-foreground">
+                Order management coming soon
+              </div>
+            </TabsContent>
+
+            <TabsContent value="profile">
+              <div className="py-12 text-center text-muted-foreground">
+                Profile settings coming soon
+              </div>
+            </TabsContent>
+          </Tabs>
+
+          <Dialog open={isAddingPlant} onOpenChange={setIsAddingPlant}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add New Plant</DialogTitle>
+              </DialogHeader>
+              <form
+                className="space-y-4"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleAddPlant(new FormData(e.currentTarget));
+                }}
+              >
+                <div>
+                  <Input
+                    name="name"
+                    placeholder="Plant Name"
+                    required
+                  />
                 </div>
-              )}
-            </div>
-
-            {plants.length === 0 && !isLoadingPlants && (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground">No plants in inventory</p>
-                <Button
-                  variant="link"
-                  onClick={() => setIsAddingPlant(true)}
-                  className="mt-2"
-                >
-                  Add your first plant
+                <div>
+                  <Input
+                    name="price"
+                    type="number"
+                    step="0.01"
+                    placeholder="Price"
+                    required
+                  />
+                </div>
+                <div>
+                  <Input
+                    name="quantity"
+                    type="number"
+                    placeholder="Stock Quantity"
+                    required
+                  />
+                </div>
+                <Button type="submit">
+                  Add Plant
                 </Button>
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="orders">
-            <div className="py-12 text-center text-muted-foreground">
-              Order management coming soon
-            </div>
-          </TabsContent>
-
-          <TabsContent value="profile">
-            <div className="py-12 text-center text-muted-foreground">
-              Profile settings coming soon
-            </div>
-          </TabsContent>
-        </Tabs>
-
-        <Dialog open={isAddingPlant} onOpenChange={setIsAddingPlant}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add New Plant</DialogTitle>
-            </DialogHeader>
-            <form
-              className="space-y-4"
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleAddPlant(new FormData(e.currentTarget));
-              }}
-            >
-              <div>
-                <Input
-                  name="name"
-                  placeholder="Plant Name"
-                  required
-                />
-              </div>
-              <div>
-                <Input
-                  name="price"
-                  type="number"
-                  step="0.01"
-                  placeholder="Price"
-                  required
-                />
-              </div>
-              <div>
-                <Input
-                  name="quantity"
-                  type="number"
-                  placeholder="Stock Quantity"
-                  required
-                />
-              </div>
-              <Button type="submit">
-                Add Plant
-              </Button>
-            </form>
-          </DialogContent>
-        </Dialog>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
       </main>
       <Footer />
     </div>

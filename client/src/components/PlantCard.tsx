@@ -1,5 +1,4 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { PenSquare, Trash2 } from "lucide-react";
 import type { Plant } from "@db/schema";
@@ -27,7 +26,10 @@ export function PlantCard({ plant, onEdit, onDelete, variant = 'product' }: Plan
           <div className="flex gap-2">
             {onEdit && (
               <button
-                onClick={onEdit}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit();
+                }}
                 className="p-2 hover:bg-secondary rounded-full"
               >
                 <PenSquare className="h-4 w-4" />
@@ -35,7 +37,10 @@ export function PlantCard({ plant, onEdit, onDelete, variant = 'product' }: Plan
             )}
             {onDelete && (
               <button
-                onClick={onDelete}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete();
+                }}
                 className="p-2 hover:bg-secondary rounded-full text-destructive"
               >
                 <Trash2 className="h-4 w-4" />
@@ -53,17 +58,12 @@ export function PlantCard({ plant, onEdit, onDelete, variant = 'product' }: Plan
       onClick={() => setLocation(`/plants/${plant.id}`)}
     >
       <CardContent className="p-0">
-        <div className="aspect-square relative">
+        <div className="aspect-square relative overflow-hidden">
           <img
             src={plant.imageUrl || '/placeholder-plant.jpg'}
             alt={plant.name}
             className="w-full h-full object-cover transition-transform group-hover:scale-105"
           />
-          {plant.featured && (
-            <div className="absolute top-2 right-2 bg-primary/90 text-primary-foreground px-2 py-1 rounded text-xs">
-              Featured
-            </div>
-          )}
         </div>
         <div className="p-4">
           <div className="flex justify-between items-start mb-2">
@@ -77,9 +77,9 @@ export function PlantCard({ plant, onEdit, onDelete, variant = 'product' }: Plan
             </div>
             <p className="font-semibold">${Number(plant.price).toFixed(2)}</p>
           </div>
-          {plant.quantity <= 0 && (
-            <p className="text-sm text-destructive font-medium">Out of stock</p>
-          )}
+          <p className="text-sm text-muted-foreground line-clamp-2">
+            {plant.description}
+          </p>
         </div>
       </CardContent>
     </Card>
