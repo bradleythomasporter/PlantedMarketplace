@@ -94,40 +94,37 @@ export default function HomePage() {
                 onSortByChange={(sortBy) => setFilters(prev => ({ ...prev, sortBy }))}
                 onClearFilters={handleClearFilters}
               />
-            </div>
-          </div>
-        </div>
 
-        {/* Categories */}
-        <div className="bg-background border-b">
-          <div className="max-w-7xl mx-auto px-4 md:px-6 py-6">
-            <h2 className="text-lg font-semibold mb-4">Browse Categories</h2>
-            <ScrollArea className="w-full">
-              <div className="flex gap-4">
-                {categories.map((category) => {
-                  const Icon = category.icon;
-                  return (
-                    <Button
-                      key={category.id}
-                      variant={selectedCategory === category.id ? "default" : "ghost"}
-                      className={cn(
-                        "flex-col h-auto px-6 py-4 min-w-[100px]",
-                        selectedCategory === category.id
-                          ? "bg-primary text-primary-foreground"
-                          : "hover:bg-muted"
-                      )}
-                      onClick={() => setSelectedCategory(
-                        selectedCategory === category.id ? null : category.id
-                      )}
-                    >
-                      <Icon className="mb-2 h-6 w-6" />
-                      <span className="text-sm font-medium">{category.label}</span>
-                    </Button>
-                  );
-                })}
+              {/* Category Icons - Moved below search */}
+              <div className="mt-6">
+                <ScrollArea className="w-full">
+                  <div className="flex gap-4">
+                    {categories.map((category) => {
+                      const Icon = category.icon;
+                      return (
+                        <Button
+                          key={category.id}
+                          variant={selectedCategory === category.id ? "default" : "ghost"}
+                          className={cn(
+                            "flex-col h-auto px-6 py-4 min-w-[100px]",
+                            selectedCategory === category.id
+                              ? "bg-primary text-primary-foreground"
+                              : "hover:bg-muted"
+                          )}
+                          onClick={() => setSelectedCategory(
+                            selectedCategory === category.id ? null : category.id
+                          )}
+                        >
+                          <Icon className="mb-2 h-6 w-6" />
+                          <span className="text-sm font-medium">{category.label}</span>
+                        </Button>
+                      );
+                    })}
+                  </div>
+                  <ScrollBar orientation="horizontal" />
+                </ScrollArea>
               </div>
-              <ScrollBar orientation="horizontal" />
-            </ScrollArea>
+            </div>
           </div>
         </div>
 
