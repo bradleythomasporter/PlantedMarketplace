@@ -1,17 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Facebook, Instagram, Twitter, Sprout } from "lucide-react";
-import { useLocation } from "wouter";
-import { useUser } from "@/hooks/use-user";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
-  const [, setLocation] = useLocation();
-  const { user } = useUser();
-
-  const handleSellOnPlanted = () => {
-    // If user is not logged in, redirect to auth page with nursery role pre-selected
-    setLocation('/auth?role=nursery');
-  };
 
   return (
     <footer className="bg-primary/5 border-t">
@@ -57,16 +48,14 @@ export function Footer() {
           <div>
             <h4 className="font-semibold mb-4">Grow With Us</h4>
             <div className="space-y-4">
-              {!user?.role === 'nursery' && (
-                <Button 
-                  variant="outline" 
-                  className="w-full flex items-center gap-2"
-                  onClick={handleSellOnPlanted}
-                >
-                  <Sprout className="h-4 w-4" />
-                  Sell on Planted
-                </Button>
-              )}
+              <Button 
+                variant="outline" 
+                className="w-full flex items-center gap-2"
+                disabled
+              >
+                <Sprout className="h-4 w-4" />
+                Coming Soon: Sell on Planted
+              </Button>
               <div className="flex gap-4">
                 <Button variant="ghost" size="icon" className="h-8 w-8">
                   <Facebook className="h-4 w-4" />

@@ -5,8 +5,8 @@ import { PlantCard } from "@/components/PlantCard";
 import { SearchFilters } from "@/components/SearchFilters";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { 
-  Loader2, 
+import {
+  Loader2,
   HomeIcon,
   Umbrella,
   TreeDeciduous,
@@ -16,12 +16,9 @@ import {
   Sprout,
   Apple,
   Leaf,
-  TreePine
+  TreePine,
 } from "lucide-react";
 import type { Plant } from "@db/schema";
-import { useUser } from "@/hooks/use-user";
-import { useLocation } from "wouter";
-import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
 const categories = [
@@ -37,89 +34,58 @@ const categories = [
   { id: "conifers", label: "Conifers", icon: TreePine },
 ];
 
-const defaultFilters = {
-  search: "",
-  zipCode: "",
-  radius: "20",
-  category: "all",
-  priceRange: [0, 1000] as [number, number],
-  sortBy: "relevance",
-};
-
 export default function HomePage() {
-  const [filters, setFilters] = useState(defaultFilters);
-  const { user } = useUser();
-  const [location] = useLocation();
-  const { toast } = useToast();
+  const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   const queryString = new URLSearchParams({
-    search: filters.search,
-    category: selectedCategory || filters.category,
-    zipCode: filters.zipCode,
-    radius: filters.radius,
-    minPrice: filters.priceRange[0].toString(),
-    maxPrice: filters.priceRange[1].toString(),
-    sortBy: filters.sortBy,
+    search: search,
+    category: selectedCategory || "all",
   }).toString();
 
-  const { data: plants = [], isLoading, error } = useQuery<Plant[]>({
+  const { data: plants = [], isLoading } = useQuery<Plant[]>({
     queryKey: [`/api/plants?${queryString}`],
   });
-
-  const handleClearFilters = () => {
-    setFilters(defaultFilters);
-    setSelectedCategory(null);
-  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
 
       <div className="pt-[72px] md:pt-[88px]">
-        {/* Search Filters and Categories */}
+        {/* Search and Categories Section */}
         <div className="bg-primary/5 py-8">
           <div className="max-w-7xl mx-auto px-4 md:px-6">
-            <div className="max-w-2xl mx-auto">
-              <SearchFilters
-                {...filters}
-                onSearchChange={(search) => setFilters(prev => ({ ...prev, search }))}
-                onZipCodeChange={(zipCode) => setFilters(prev => ({ ...prev, zipCode }))}
-                onRadiusChange={(radius) => setFilters(prev => ({ ...prev, radius }))}
-                onCategoryChange={(category) => setFilters(prev => ({ ...prev, category }))}
-                onPriceRangeChange={(priceRange) => setFilters(prev => ({ ...prev, priceRange }))}
-                onSortByChange={(sortBy) => setFilters(prev => ({ ...prev, sortBy }))}
-                onClearFilters={handleClearFilters}
-              />
+            <div className="max-w-2xl mx-auto space-y-6">
+              {/* Main Search */}
+              <SearchFilters search={search} onSearchChange={setSearch} />
 
-              {/* Category Icons - Grid layout with improved styling */}
-              <div className="mt-8">
-                <h2 className="text-lg font-semibold mb-4">Browse Categories</h2>
-                <div className="grid grid-cols-5 gap-4 justify-items-center">
-                  {categories.map((category) => {
-                    const Icon = category.icon;
-                    return (
-                      <button
-                        key={category.id}
-                        onClick={() => setSelectedCategory(
+              {/* Category Icons */}
+              <div className="grid grid-cols-5 gap-4 justify-items-center">
+                {categories.map((category) => {
+                  const Icon = category.icon;
+                  return (
+                    <button
+                      key={category.id}
+                      onClick={() =>
+                        setSelectedCategory(
                           selectedCategory === category.id ? null : category.id
-                        )}
-                        className={cn(
-                          "flex flex-col items-center gap-2 p-3 rounded-xl transition-all",
-                          "hover:bg-primary/10",
-                          selectedCategory === category.id
-                            ? "bg-primary/15 text-primary shadow-sm"
-                            : "text-muted-foreground"
-                        )}
-                      >
-                        <Icon className="h-6 w-6" />
-                        <span className="text-xs font-medium text-center">
-                          {category.label}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
+                        )
+                      }
+                      className={cn(
+                        "flex flex-col items-center gap-2 p-3 rounded-xl transition-all",
+                        "hover:bg-primary/10",
+                        selectedCategory === category.id
+                          ? "bg-primary/15 text-primary shadow-sm"
+                          : "text-muted-foreground"
+                      )}
+                    >
+                      <Icon className="h-6 w-6" />
+                      <span className="text-xs font-medium text-center">
+                        {category.label}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -134,23 +100,15 @@ export default function HomePage() {
           ) : plants.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-lg text-muted-foreground">
-                No plants found. Try adjusting your search or filters.
+                No plants found. Try adjusting your search or category.
               </p>
-              {Object.values(filters).some(v => v !== defaultFilters[v as keyof typeof defaultFilters]) && (
-                <Button 
-                  variant="outline" 
-                  onClick={handleClearFilters}
-                  className="mt-4"
-                >
-                  Clear All Filters
-                </Button>
-              )}
             </div>
           ) : (
             <>
               <div className="flex justify-between items-center mb-6">
                 <p className="text-muted-foreground">
-                  Showing {plants.length} result{plants.length === 1 ? '' : 's'}
+                  Showing {plants.length}{" "}
+                  result{plants.length === 1 ? "" : "s"}
                 </p>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
