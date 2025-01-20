@@ -26,6 +26,10 @@ interface PlantTemplate {
     height: string;
     spread: string;
     growthRate: string;
+    sunlight: string;
+    watering: string;
+    soil: string;
+    otherConditions?: string;
   };
   care: {
     sunlight: string;
@@ -33,6 +37,8 @@ interface PlantTemplate {
     soil: string;
     maintenance: string;
   };
+  price?: number;
+  stockDefault?: number;
 }
 
 interface TemplateResponse {
@@ -267,141 +273,73 @@ export default function NurseryDashboard() {
       );
     }
 
-    const handleTemplateSelect = (template: PlantTemplate, quantity: string) => {
+    const handleTemplateSelect = (template: PlantTemplate) => {
       const form = document.querySelector('form') as HTMLFormElement;
       if (!form) return;
 
       form.name.value = template.name;
       form.scientificName.value = template.scientificName;
       form.category.value = template.category;
-      form.description.value = template.description;
-      form.sunExposure.value = template.care.sunlight;
-      form.wateringNeeds.value = template.care.watering;
-      form.soilType.value = template.care.soil;
-      form.growthRate.value = template.growthDetails.growthRate;
-      form.maintainanceLevel.value = template.care.maintenance;
-      form.price.value = "29.99";
-      form.quantity.value = quantity;
+      form.description.value = template.description || '';
+      form.sunExposure.value = template.growthDetails.sunlight;
+      form.wateringNeeds.value = template.growthDetails.watering;
+      form.soilType.value = template.growthDetails.soil;
+      form.price.value = template.price?.toString() || "29.99";
+      form.quantity.value = template.stockDefault?.toString() || "10";
+      form.maintainanceLevel.value = "low";
     };
 
     return (
-      <div className="space-y-6">
-        <div>
-          <Label>Plant Type</Label>
-          <Button
-            variant="outline"
-            className="mt-2 w-full"
-            onClick={() => {
-              const form = document.querySelector('form') as HTMLFormElement;
-              if (form) form.reset();
-            }}
-          >
-            Custom Plant
-          </Button>
-        </div>
-
-        <Accordion type="single" collapsible className="w-full">
-          {Object.entries(templates.plantsByType).map(([category, plantList]) => (
-            <AccordionItem key={category} value={category}>
-              <AccordionTrigger className="text-lg font-semibold capitalize">
-                {category.replace(/_/g, ' ')}
-              </AccordionTrigger>
-              <AccordionContent>
-                <div className="grid grid-cols-1 gap-2 p-2">
-                  {plantList.map((template) => (
-                    <div key={template.name} className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        className="flex-1 justify-start h-auto py-4 px-4"
-                        onClick={() => handleTemplateSelect(template, "10")}
-                      >
-                        <div className="text-left">
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 gap-4">
+          {Object.entries(templates.plantsByType).map(([category, plants]) => (
+            <div key={category} className="space-y-2">
+              <h3 className="text-lg font-semibold capitalize">{category.replace(/_/g, ' ')}</h3>
+              <div className="grid grid-cols-1 gap-2">
+                {plants.map((template) => (
+                  <Button
+                    key={template.name}
+                    variant="outline"
+                    className="w-full text-left h-auto p-4"
+                    onClick={() => handleTemplateSelect(template)}
+                  >
+                    <div className="flex flex-col space-y-2">
+                      <div className="flex justify-between items-start">
+                        <div>
                           <div className="font-medium">{template.name}</div>
-                          <div className="text-sm text-muted-foreground mt-1">
+                          <div className="text-sm text-muted-foreground italic">
                             {template.scientificName}
                           </div>
-                          <div className="flex gap-2 mt-2">
-                            <CareRequirementIcon type="sunlight" level={template.care.sunlight} />
-                            <CareRequirementIcon type="water" level={template.care.watering} />
-                            <CareRequirementIcon type="maintenance" level={template.care.maintenance} />
+                        </div>
+                        <div className="text-sm font-medium">
+                          ${template.price?.toFixed(2)}
+                        </div>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {template.description}
+                      </p>
+                      <div className="flex flex-wrap gap-3 mt-2">
+                        <div className="flex items-center text-sm">
+                          <Sun className="h-4 w-4 mr-1" />
+                          {template.growthDetails.sunlight}
+                        </div>
+                        <div className="flex items-center text-sm">
+                          <Droplets className="h-4 w-4 mr-1" />
+                          {template.growthDetails.watering} water
+                        </div>
+                        {template.growthDetails.otherConditions && (
+                          <div className="text-sm text-muted-foreground">
+                            • {template.growthDetails.otherConditions}
                           </div>
-                        </div>
-                      </Button>
-                      <Select
-                        onValueChange={(value) => handleTemplateSelect(template, value)}
-                        defaultValue="10"
-                      >
-                        <SelectTrigger className="w-24">
-                          <SelectValue placeholder="Qty" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {[5, 10, 25, 50, 100].map((qty) => (
-                            <SelectItem key={qty} value={qty.toString()}>
-                              {qty}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        )}
+                      </div>
                     </div>
-                  ))}
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          ))}
-
-          <AccordionItem value="seasonal">
-            <AccordionTrigger className="text-lg font-semibold">
-              Seasonal Plants
-            </AccordionTrigger>
-            <AccordionContent>
-              <div className="space-y-4">
-                {templates?.seasonalPlants && Object.entries(templates.seasonalPlants).map(([category, plantList]) => (
-                  <div key={category} className="space-y-2">
-                    <h3 className="font-medium capitalize">{category.replace(/_/g, ' ')}</h3>
-                    <div className="grid grid-cols-1 gap-2">
-                      {plantList.map((template) => (
-                        <div key={template.name} className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            className="flex-1 justify-start h-auto py-4 px-4"
-                            onClick={() => handleTemplateSelect(template, "10")}
-                          >
-                            <div className="text-left">
-                              <div className="font-medium">{template.name}</div>
-                              <div className="text-sm text-muted-foreground mt-1">
-                                {template.scientificName}
-                              </div>
-                              <div className="flex gap-2 mt-2">
-                                <CareRequirementIcon type="sunlight" level={template.care.sunlight} />
-                                <CareRequirementIcon type="water" level={template.care.watering} />
-                                <CareRequirementIcon type="maintenance" level={template.care.maintenance} />
-                              </div>
-                            </div>
-                          </Button>
-                          <Select
-                            onValueChange={(value) => handleTemplateSelect(template, value)}
-                            defaultValue="10"
-                          >
-                            <SelectTrigger className="w-24">
-                              <SelectValue placeholder="Qty" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {[5, 10, 25, 50, 100].map((qty) => (
-                                <SelectItem key={qty} value={qty.toString()}>
-                                  {qty}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                  </Button>
                 ))}
               </div>
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
+            </div>
+          ))}
+        </div>
       </div>
     );
   };
@@ -959,8 +897,7 @@ Japanese Maple,Acer palmatum,trees,"Elegant ornamental tree",89.99,5,,partial_sh
                           </select>
                         </div>
                         <div className="flex justify-between items-center text-sm">
-                          <span>Total Amount: ${Number(order.totalAmount).toFixed(2)}</span>
-                          {order.requiresPlanting && (
+                          <span>Total Amount: ${Number(order.totalAmount).toFixed(2)}</span>                          {order.requiresPlanting && (
                             <span className="flex items-center gap-1 text-primary">
                               <Package className="h-4 w-4" />
                               Includes Planting Service

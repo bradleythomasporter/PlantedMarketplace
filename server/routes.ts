@@ -32,286 +32,406 @@ export function registerRoutes(app: Express): Server {
         plantsByType: {
           perennials: [
             {
-              name: "Delphinium 'Black Knight'",
-              scientificName: "Delphinium 'Black Knight'",
-              category: "perennials",
-              description: "Tall spikes of deep purple-blue flowers, perfect for cottage gardens.",
+              name: "Lavender",
+              scientificName: "Lavandula angustifolia",
+              category: "Perennials",
+              description: "Fragrant perennial herb with purple flowers",
               growthDetails: {
-                height: "150-180cm",
-                spread: "60-75cm",
-                growthRate: "Fast",
-              },
-              care: {
-                sunlight: "Full Sun",
-                watering: "Moderate",
-                soil: "Rich, well-draining",
-                maintenance: "High",
-                temperatureRange: "15-25°C",
+                sunlight: "Full sun",
+                watering: "Low",
+                soil: "Well-drained, sandy soil",
+                otherConditions: "Drought-tolerant"
               },
               price: 12.99,
               stockDefault: 20
             },
             {
-              name: "Peony 'Sarah Bernhardt'",
-              scientificName: "Paeonia lactiflora 'Sarah Bernhardt'",
-              category: "perennials",
-              description: "Large, fragrant pink double flowers, long-lived garden classic.",
+              name: "Echinacea",
+              scientificName: "Echinacea purpurea",
+              category: "Perennials",
+              description: "Popular flowering plant that attracts pollinators",
               growthDetails: {
-                height: "90-100cm",
-                spread: "90-100cm",
-                growthRate: "Slow",
+                sunlight: "Full sun",
+                watering: "Medium",
+                soil: "Well-drained, loamy soil",
+                otherConditions: "Attracts pollinators"
               },
-              care: {
-                sunlight: "Full Sun to Partial Shade",
-                watering: "Moderate",
-                soil: "Rich, well-draining",
-                maintenance: "Low",
-                temperatureRange: "10-25°C",
-              },
-              price: 24.99,
+              price: 14.99,
               stockDefault: 15
+            },
+            {
+              name: "Hosta",
+              scientificName: "Hosta spp.",
+              category: "Perennials",
+              description: "Shade-loving perennial with attractive foliage",
+              growthDetails: {
+                sunlight: "Partial to full shade",
+                watering: "Medium",
+                soil: "Moist, well-drained soil",
+                otherConditions: "Great for shade gardens"
+              },
+              price: 16.99,
+              stockDefault: 18
             }
           ],
           shrubs: [
             {
-              name: "Viburnum tinus",
-              scientificName: "Viburnum tinus",
-              category: "shrubs",
-              description: "Evergreen shrub with white flowers in winter and blue-black berries.",
+              name: "Hydrangea",
+              scientificName: "Hydrangea macrophylla",
+              category: "Shrubs",
+              description: "Popular flowering shrub with large blooms",
               growthDetails: {
-                height: "200-300cm",
-                spread: "200-300cm",
-                growthRate: "Moderate",
-              },
-              care: {
-                sunlight: "Full Sun to Partial Shade",
-                watering: "Moderate",
-                soil: "Well-draining",
-                maintenance: "Low",
-                temperatureRange: "5-30°C",
+                sunlight: "Partial sun",
+                watering: "Medium",
+                soil: "Moist, rich soil",
+                otherConditions: "Needs pruning after flowering"
               },
               price: 29.99,
               stockDefault: 10
+            },
+            {
+              name: "Lilac",
+              scientificName: "Syringa vulgaris",
+              category: "Shrubs",
+              description: "Fragrant flowering shrub",
+              growthDetails: {
+                sunlight: "Full sun",
+                watering: "Medium",
+                soil: "Well-drained, alkaline soil",
+                otherConditions: "Fragrant flowers"
+              },
+              price: 34.99,
+              stockDefault: 8
             }
           ],
           climbers: [
             {
-              name: "Wisteria 'Blue Moon'",
-              scientificName: "Wisteria macrostachya 'Blue Moon'",
-              category: "climbers",
-              description: "Hardy climbing vine with cascading blue flower clusters.",
+              name: "Clematis",
+              scientificName: "Clematis spp.",
+              category: "Climbers",
+              description: "Versatile climbing plant with showy flowers",
               growthDetails: {
-                height: "600-800cm",
-                spread: "300-400cm",
-                growthRate: "Fast",
+                sunlight: "Full sun to partial shade",
+                watering: "Medium",
+                soil: "Well-drained soil",
+                otherConditions: "Requires trellis support"
               },
-              care: {
-                sunlight: "Full Sun",
-                watering: "Moderate",
-                soil: "Rich, well-draining",
-                maintenance: "Medium",
-                temperatureRange: "10-30°C",
+              price: 24.99,
+              stockDefault: 12
+            },
+            {
+              name: "Wisteria",
+              scientificName: "Wisteria sinensis",
+              category: "Climbers",
+              description: "Dramatic climbing vine with hanging flowers",
+              growthDetails: {
+                sunlight: "Full sun",
+                watering: "Medium",
+                soil: "Well-drained, fertile soil",
+                otherConditions: "Needs strong support structure"
               },
               price: 39.99,
-              stockDefault: 8
+              stockDefault: 6
             }
           ],
           bulbs: [
             {
-              name: "Dutch Iris Mix",
-              scientificName: "Iris × hollandica",
-              category: "bulbs",
-              description: "Mixed colors of elegant iris flowers, perfect for cutting.",
+              name: "Tulip",
+              scientificName: "Tulipa spp.",
+              category: "Bulbs",
+              description: "Spring-flowering bulb with colorful blooms",
               growthDetails: {
-                height: "50-60cm",
-                spread: "10-15cm",
-                growthRate: "Fast",
-              },
-              care: {
-                sunlight: "Full Sun",
+                sunlight: "Full sun",
                 watering: "Moderate",
-                soil: "Well-draining",
-                maintenance: "Low",
-                temperatureRange: "5-25°C",
+                soil: "Well-drained, sandy soil",
+                otherConditions: "Plant in fall for spring blooms"
               },
               price: 8.99,
+              stockDefault: 50
+            },
+            {
+              name: "Daffodil",
+              scientificName: "Narcissus spp.",
+              category: "Bulbs",
+              description: "Classic spring bulb with cheerful flowers",
+              growthDetails: {
+                sunlight: "Full sun to partial shade",
+                watering: "Low",
+                soil: "Well-drained soil",
+                otherConditions: "Deer-resistant"
+              },
+              price: 7.99,
               stockDefault: 50
             }
           ],
           bedding: [
             {
-              name: "Petunia 'Wave Mix'",
-              scientificName: "Petunia × hybrida",
-              category: "bedding",
-              description: "Trailing petunias in mixed colors, perfect for hanging baskets.",
+              name: "Petunia",
+              scientificName: "Petunia spp.",
+              category: "Bedding",
+              description: "Popular bedding plant with trumpet-shaped flowers",
               growthDetails: {
-                height: "15-20cm",
-                spread: "60-90cm",
-                growthRate: "Fast",
-              },
-              care: {
-                sunlight: "Full Sun",
-                watering: "Moderate to High",
-                soil: "Rich, well-draining",
-                maintenance: "Medium",
-                temperatureRange: "15-25°C",
+                sunlight: "Full sun",
+                watering: "High",
+                soil: "Fertile, well-drained soil",
+                otherConditions: "Deadhead for continuous blooms"
               },
               price: 4.99,
+              stockDefault: 100
+            },
+            {
+              name: "Marigold",
+              scientificName: "Tagetes spp.",
+              category: "Bedding",
+              description: "Easy-to-grow annual with bright flowers",
+              growthDetails: {
+                sunlight: "Full sun",
+                watering: "Medium",
+                soil: "Well-drained soil",
+                otherConditions: "Repels pests in vegetable gardens"
+              },
+              price: 3.99,
               stockDefault: 100
             }
           ],
           grasses: [
             {
-              name: "Pennisetum 'Hameln'",
-              scientificName: "Pennisetum alopecuroides 'Hameln'",
-              category: "grasses",
-              description: "Dwarf fountain grass with fluffy cream flower spikes.",
+              name: "Fountain Grass",
+              scientificName: "Pennisetum alopecuroides",
+              category: "Grasses",
+              description: "Ornamental grass with feathery plumes",
               growthDetails: {
-                height: "60-75cm",
-                spread: "60-75cm",
-                growthRate: "Moderate",
+                sunlight: "Full sun",
+                watering: "Low to medium",
+                soil: "Well-drained soil",
+                otherConditions: "Tolerates drought"
               },
-              care: {
-                sunlight: "Full Sun",
-                watering: "Low to Moderate",
-                soil: "Well-draining",
-                maintenance: "Low",
-                temperatureRange: "10-30°C",
+              price: 15.99,
+              stockDefault: 20
+            },
+            {
+              name: "Blue Fescue",
+              scientificName: "Festuca glauca",
+              category: "Grasses",
+              description: "Compact ornamental grass with blue-gray foliage",
+              growthDetails: {
+                sunlight: "Full sun",
+                watering: "Low",
+                soil: "Well-drained soil",
+                otherConditions: "Drought-resistant"
               },
-              price: 11.99,
+              price: 12.99,
               stockDefault: 25
             }
           ],
           roses: [
             {
-              name: "Rosa 'Peace'",
-              scientificName: "Rosa 'Peace'",
-              category: "roses",
-              description: "Classic hybrid tea rose with yellow and pink blooms.",
+              name: "Knock Out Rose",
+              scientificName: "Rosa 'Knock Out'",
+              category: "Roses",
+              description: "Low-maintenance landscape rose",
               growthDetails: {
-                height: "120-150cm",
-                spread: "90-120cm",
-                growthRate: "Moderate",
+                sunlight: "Full sun",
+                watering: "Medium",
+                soil: "Well-drained soil",
+                otherConditions: "Disease-resistant variety"
               },
-              care: {
-                sunlight: "Full Sun",
-                watering: "Moderate",
-                soil: "Rich, well-draining",
-                maintenance: "High",
-                temperatureRange: "10-30°C",
-              },
-              price: 19.99,
+              price: 29.99,
               stockDefault: 15
+            },
+            {
+              name: "Hybrid Tea Rose",
+              scientificName: "Rosa spp.",
+              category: "Roses",
+              description: "Classic rose variety with elegant blooms",
+              growthDetails: {
+                sunlight: "Full sun",
+                watering: "Medium",
+                soil: "Well-drained soil",
+                otherConditions: "Large, fragrant blooms"
+              },
+              price: 34.99,
+              stockDefault: 12
             }
           ],
           ferns: [
             {
-              name: "Japanese Painted Fern",
-              scientificName: "Athyrium niponicum 'Pictum'",
-              category: "ferns",
-              description: "Silvery-grey fronds with burgundy highlights.",
+              name: "Boston Fern",
+              scientificName: "Nephrolepis exaltata",
+              category: "Ferns",
+              description: "Popular indoor fern with arching fronds",
               growthDetails: {
-                height: "30-45cm",
-                spread: "45-60cm",
-                growthRate: "Moderate",
+                sunlight: "Indirect light",
+                watering: "High",
+                soil: "Rich, moist soil",
+                otherConditions: "Loves humidity"
               },
-              care: {
-                sunlight: "Partial to Full Shade",
-                watering: "Moderate to High",
-                soil: "Rich, well-draining",
-                maintenance: "Low",
-                temperatureRange: "10-25°C",
-              },
-              price: 14.99,
+              price: 19.99,
               stockDefault: 20
+            },
+            {
+              name: "Japanese Painted Fern",
+              scientificName: "Athyrium niponicum",
+              category: "Ferns",
+              description: "Decorative fern with silvery fronds",
+              growthDetails: {
+                sunlight: "Partial shade",
+                watering: "Medium",
+                soil: "Rich, moist soil",
+                otherConditions: "Silver-gray foliage"
+              },
+              price: 24.99,
+              stockDefault: 15
             }
           ],
           fruit: [
             {
-              name: "Apple 'Gala'",
-              scientificName: "Malus domestica 'Gala'",
-              category: "fruit",
-              description: "Popular dessert apple with sweet, crisp flesh.",
+              name: "Apple Tree",
+              scientificName: "Malus domestica",
+              category: "Fruit",
+              description: "Popular fruit tree for home orchards",
               growthDetails: {
-                height: "250-350cm",
-                spread: "250-350cm",
-                growthRate: "Moderate",
+                sunlight: "Full sun",
+                watering: "Medium",
+                soil: "Well-drained, loamy soil",
+                otherConditions: "Requires cross-pollination"
               },
-              care: {
-                sunlight: "Full Sun",
-                watering: "Moderate",
-                soil: "Well-draining, fertile",
-                maintenance: "Medium",
-                temperatureRange: "5-30°C",
-              },
-              price: 34.99,
+              price: 49.99,
               stockDefault: 10
+            },
+            {
+              name: "Blueberry",
+              scientificName: "Vaccinium spp.",
+              category: "Fruit",
+              description: "Productive fruit bush with ornamental value",
+              growthDetails: {
+                sunlight: "Full sun",
+                watering: "Medium",
+                soil: "Acidic, well-drained soil",
+                otherConditions: "Produces edible berries"
+              },
+              price: 29.99,
+              stockDefault: 15
+            }
+          ],
+          herbs: [
+            {
+              name: "Rosemary",
+              scientificName: "Rosmarinus officinalis",
+              category: "Herbs",
+              description: "Aromatic herb with culinary uses",
+              growthDetails: {
+                sunlight: "Full sun",
+                watering: "Low",
+                soil: "Well-drained, sandy soil",
+                otherConditions: "Drought-tolerant"
+              },
+              price: 9.99,
+              stockDefault: 30
+            },
+            {
+              name: "Thyme",
+              scientificName: "Thymus vulgaris",
+              category: "Herbs",
+              description: "Low-growing herb with culinary value",
+              growthDetails: {
+                sunlight: "Full sun",
+                watering: "Low",
+                soil: "Well-drained soil",
+                otherConditions: "Used in cooking, attracts pollinators"
+              },
+              price: 8.99,
+              stockDefault: 30
             }
           ],
           vegetables: [
             {
-              name: "Heritage Tomato Collection",
+              name: "Tomato",
               scientificName: "Solanum lycopersicum",
-              category: "vegetables",
-              description: "Mix of colorful heritage tomato varieties.",
+              category: "Vegetables",
+              description: "Popular vegetable garden plant",
               growthDetails: {
-                height: "150-200cm",
-                spread: "60-90cm",
-                growthRate: "Fast",
-              },
-              care: {
-                sunlight: "Full Sun",
-                watering: "High",
-                soil: "Rich, well-draining",
-                maintenance: "High",
-                temperatureRange: "15-30°C",
+                sunlight: "Full sun",
+                watering: "Medium to high",
+                soil: "Rich, well-drained soil",
+                otherConditions: "Support with stakes or cages"
               },
               price: 6.99,
-              stockDefault: 30
+              stockDefault: 40
+            },
+            {
+              name: "Lettuce",
+              scientificName: "Lactuca sativa",
+              category: "Vegetables",
+              description: "Easy-to-grow leafy vegetable",
+              growthDetails: {
+                sunlight: "Partial sun",
+                watering: "High",
+                soil: "Moist, well-drained soil",
+                otherConditions: "Cool-season crop"
+              },
+              price: 4.99,
+              stockDefault: 50
             }
           ],
           hedging: [
             {
-              name: "Green Beech",
-              scientificName: "Fagus sylvatica",
-              category: "hedging",
-              description: "Deciduous hedge with copper autumn colors.",
+              name: "Boxwood",
+              scientificName: "Buxus sempervirens",
+              category: "Hedging",
+              description: "Classic formal hedge plant",
               growthDetails: {
-                height: "300-500cm",
-                spread: "150-250cm",
-                growthRate: "Moderate",
+                sunlight: "Full sun to partial shade",
+                watering: "Low to medium",
+                soil: "Well-drained soil",
+                otherConditions: "Prune for shape"
               },
-              care: {
-                sunlight: "Full Sun to Partial Shade",
-                watering: "Moderate",
-                soil: "Well-draining",
-                maintenance: "Medium",
-                temperatureRange: "5-25°C",
+              price: 24.99,
+              stockDefault: 30
+            },
+            {
+              name: "Yew",
+              scientificName: "Taxus baccata",
+              category: "Hedging",
+              description: "Traditional evergreen hedging plant",
+              growthDetails: {
+                sunlight: "Partial shade",
+                watering: "Low to medium",
+                soil: "Well-drained soil",
+                otherConditions: "Tolerates heavy pruning"
               },
-              price: 9.99,
-              stockDefault: 50
+              price: 29.99,
+              stockDefault: 25
             }
           ],
           trees: [
             {
-              name: "Silver Birch",
-              scientificName: "Betula pendula",
-              category: "trees",
-              description: "Elegant tree with white bark and delicate foliage.",
+              name: "Oak",
+              scientificName: "Quercus spp.",
+              category: "Trees",
+              description: "Majestic shade tree with long lifespan",
               growthDetails: {
-                height: "1500-2000cm",
-                spread: "800-1200cm",
-                growthRate: "Fast",
+                sunlight: "Full sun",
+                watering: "Low to medium",
+                soil: "Well-drained, deep soil",
+                otherConditions: "Long-lived and strong wood"
               },
-              care: {
-                sunlight: "Full Sun",
-                watering: "Moderate",
-                soil: "Well-draining",
-                maintenance: "Low",
-                temperatureRange: "0-30°C",
-              },
-              price: 49.99,
+              price: 89.99,
               stockDefault: 5
+            },
+            {
+              name: "Maple",
+              scientificName: "Acer spp.",
+              category: "Trees",
+              description: "Deciduous tree with colorful fall foliage",
+              growthDetails: {
+                sunlight: "Full sun to partial shade",
+                watering: "Medium",
+                soil: "Well-drained soil",
+                otherConditions: "Beautiful fall foliage"
+              },
+              price: 79.99,
+              stockDefault: 8
             }
           ]
         }
