@@ -162,18 +162,6 @@ export function Header() {
                 <CartDrawer />
                 <Button 
                   variant={scrolled ? "outline" : "secondary"}
-                  onClick={() => setLocation("/auth?role=nursery")}
-                  className={cn(
-                    "transition-colors duration-200 hidden md:flex",
-                    scrolled 
-                      ? "border-emerald-600 text-emerald-600 hover:bg-emerald-50" 
-                      : "bg-white text-emerald-600 hover:bg-white/90"
-                  )}
-                >
-                  Sell on Planted
-                </Button>
-                <Button 
-                  variant={scrolled ? "outline" : "secondary"}
                   onClick={() => setLocation("/auth")}
                   className={cn(
                     "transition-colors duration-200",

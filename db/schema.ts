@@ -16,6 +16,7 @@ export const users = pgTable("users", {
   website: text("website"),
   latitude: real("latitude"),
   longitude: real("longitude"),
+  serviceRadius: real("service_radius"), // Added: Distance in kilometers that the nursery serves
   businessLicense: text("business_license"),
   rating: real("rating"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -52,7 +53,8 @@ export const plants = pgTable("plants", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
   featured: boolean("featured").default(false),
-  inStock: boolean("in_stock").notNull().default(true)
+  inStock: boolean("in_stock").notNull().default(true),
+  isAvailableForDelivery: boolean("is_available_for_delivery").default(true),
 });
 
 export const orders = pgTable("orders", {
@@ -64,6 +66,8 @@ export const orders = pgTable("orders", {
   }).notNull().default("pending"),
   totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
   shippingAddress: text("shipping_address").notNull(),
+  deliveryLatitude: real("delivery_latitude"),
+  deliveryLongitude: real("delivery_longitude"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
   requiresPlanting: boolean("requires_planting").notNull().default(false),
@@ -79,6 +83,7 @@ export const orderItems = pgTable("order_items", {
   priceAtTime: decimal("price_at_time", { precision: 10, scale: 2 }).notNull(),
 });
 
+// Type definitions
 export type User = typeof users.$inferSelect;
 export type Plant = typeof plants.$inferSelect;
 export type Order = typeof orders.$inferSelect;
@@ -87,6 +92,7 @@ export type NewPlant = typeof plants.$inferInsert;
 export type NewOrder = typeof orders.$inferInsert;
 export type NewOrderItem = typeof orderItems.$inferInsert;
 
+// Schemas
 export const insertUserSchema = createInsertSchema(users);
 export const selectUserSchema = createSelectSchema(users);
 export const insertPlantSchema = createInsertSchema(plants);
