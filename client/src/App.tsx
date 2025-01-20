@@ -14,20 +14,22 @@ function App() {
   const { user } = useUser();
 
   return (
-    <Switch>
-      <Route path="/" component={HomePage} />
-      <Route path="/auth" component={AuthPage} />
-      <Route path="/plants/:id" component={ProductPage} />
-      <Route path="/nurseries/:id" component={NurseryProfile} />
-      <Route path="/checkout/success" component={CheckoutSuccessPage} />
-      <Route path="/checkout/cancel" component={CheckoutCancelPage} />
-      {user?.role === "nursery" && (
-        <Route path="/dashboard" component={NurseryDashboard} />
-      )}
-      <Route>
-        <HomePage />
-      </Route>
-    </Switch>
+    <div className="min-h-screen bg-background">
+      <Switch>
+        <Route path="/" component={HomePage} />
+        <Route path="/auth" component={AuthPage} />
+        <Route path="/plants/:id" component={ProductPage} />
+        <Route path="/nurseries/:id" component={NurseryProfile} />
+        <Route path="/checkout/success" component={CheckoutSuccessPage} />
+        <Route path="/checkout/cancel" component={CheckoutCancelPage} />
+        {user?.role === "nursery" && (
+          <Route path="/dashboard" component={NurseryDashboard} />
+        )}
+        <Route>
+          <HomePage />
+        </Route>
+      </Switch>
+    </div>
   );
 }
 
