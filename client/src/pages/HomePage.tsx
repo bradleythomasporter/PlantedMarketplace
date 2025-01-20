@@ -54,16 +54,6 @@ export default function HomePage() {
   const { toast } = useToast();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  // Parse URL parameters
-  useEffect(() => {
-    const params = new URLSearchParams(location.split('?')[1]);
-    const category = params.get('category');
-    if (category) {
-      setSelectedCategory(category);
-      setFilters(prev => ({ ...prev, category }));
-    }
-  }, [location]);
-
   // Build query string for API
   const queryString = new URLSearchParams({
     search: filters.search,
@@ -78,19 +68,7 @@ export default function HomePage() {
   // Fetch plants with filters
   const { data: plants = [], isLoading, error } = useQuery<Plant[]>({
     queryKey: [`/api/plants?${queryString}`],
-    enabled: !filters.zipCode || filters.zipCode.length === 5,
   });
-
-  // Show error toast if the search fails
-  useEffect(() => {
-    if (error) {
-      toast({
-        title: "Search Error",
-        description: "Failed to load plants. Please try again.",
-        variant: "destructive",
-      });
-    }
-  }, [error, toast]);
 
   const handleClearFilters = () => {
     setFilters(defaultFilters);
@@ -101,17 +79,10 @@ export default function HomePage() {
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
 
-      {/* Add top padding to account for fixed header */}
       <div className="pt-[72px] md:pt-[88px]">
-        {/* Hero Section */}
-        <section className="bg-primary/10 py-12 md:py-24">
-          <div className="max-w-7xl mx-auto px-4 md:px-6 text-center">
-            <h2 className="text-4xl md:text-6xl font-bold mb-4 text-display">
-              Discover Local Plants
-            </h2>
-            <p className="text-lg md:text-xl text-muted-foreground mb-8">
-              Buy local plants from local growers!
-            </p>
+        {/* Search Filters */}
+        <div className="bg-primary/5 py-8">
+          <div className="max-w-7xl mx-auto px-4 md:px-6">
             <div className="max-w-2xl mx-auto">
               <SearchFilters
                 {...filters}
@@ -125,35 +96,40 @@ export default function HomePage() {
               />
             </div>
           </div>
-        </section>
+        </div>
 
-        {/* Categories Scroll */}
-        <ScrollArea className="w-full border-b bg-background sticky top-[72px] md:top-[88px] z-10">
-          <div className="flex p-4">
-            {categories.map((category) => {
-              const Icon = category.icon;
-              return (
-                <Button
-                  key={category.id}
-                  variant={selectedCategory === category.id ? "default" : "ghost"}
-                  className={cn(
-                    "flex-col h-auto px-4 py-2 mr-2 min-w-[80px]",
-                    selectedCategory === category.id
-                      ? "bg-primary text-primary-foreground"
-                      : "hover:bg-muted"
-                  )}
-                  onClick={() => setSelectedCategory(
-                    selectedCategory === category.id ? null : category.id
-                  )}
-                >
-                  <Icon className="mb-1 h-5 w-5" />
-                  <span className="text-xs">{category.label}</span>
-                </Button>
-              );
-            })}
+        {/* Categories */}
+        <div className="bg-background border-b">
+          <div className="max-w-7xl mx-auto px-4 md:px-6 py-6">
+            <h2 className="text-lg font-semibold mb-4">Browse Categories</h2>
+            <ScrollArea className="w-full">
+              <div className="flex gap-4">
+                {categories.map((category) => {
+                  const Icon = category.icon;
+                  return (
+                    <Button
+                      key={category.id}
+                      variant={selectedCategory === category.id ? "default" : "ghost"}
+                      className={cn(
+                        "flex-col h-auto px-6 py-4 min-w-[100px]",
+                        selectedCategory === category.id
+                          ? "bg-primary text-primary-foreground"
+                          : "hover:bg-muted"
+                      )}
+                      onClick={() => setSelectedCategory(
+                        selectedCategory === category.id ? null : category.id
+                      )}
+                    >
+                      <Icon className="mb-2 h-6 w-6" />
+                      <span className="text-sm font-medium">{category.label}</span>
+                    </Button>
+                  );
+                })}
+              </div>
+              <ScrollBar orientation="horizontal" />
+            </ScrollArea>
           </div>
-          <ScrollBar orientation="horizontal" />
-        </ScrollArea>
+        </div>
 
         {/* Main Content */}
         <main className="max-w-7xl mx-auto px-4 md:px-6 py-8 flex-1">
@@ -164,9 +140,7 @@ export default function HomePage() {
           ) : plants.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-lg text-muted-foreground">
-                {filters.zipCode && filters.zipCode.length !== 5 
-                  ? "Please enter a valid 5-digit ZIP code"
-                  : "No plants found. Try adjusting your search or location."}
+                No plants found. Try adjusting your search or filters.
               </p>
               {Object.values(filters).some(v => v !== defaultFilters[v as keyof typeof defaultFilters]) && (
                 <Button 
