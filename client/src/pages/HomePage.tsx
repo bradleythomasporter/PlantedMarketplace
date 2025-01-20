@@ -5,19 +5,18 @@ import { PlantCard } from "@/components/PlantCard";
 import { SearchFilters } from "@/components/SearchFilters";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { 
   Loader2, 
-  TreeDeciduous, 
-  Flower2, 
-  Home as HomeIcon, 
-  Sprout, 
-  Apple, 
-  Leaf, 
-  FlowerIcon, 
-  Umbrella, 
-  TreePine, 
-  Shrub 
+  HomeIcon,
+  Umbrella,
+  TreeDeciduous,
+  Shrub,
+  Flower2,
+  FlowerIcon,
+  Sprout,
+  Apple,
+  Leaf,
+  TreePine
 } from "lucide-react";
 import type { Plant } from "@db/schema";
 import { useUser } from "@/hooks/use-user";
@@ -54,7 +53,6 @@ export default function HomePage() {
   const { toast } = useToast();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  // Build query string for API
   const queryString = new URLSearchParams({
     search: filters.search,
     category: selectedCategory || filters.category,
@@ -65,7 +63,6 @@ export default function HomePage() {
     sortBy: filters.sortBy,
   }).toString();
 
-  // Fetch plants with filters
   const { data: plants = [], isLoading, error } = useQuery<Plant[]>({
     queryKey: [`/api/plants?${queryString}`],
   });
@@ -80,7 +77,7 @@ export default function HomePage() {
       <Header />
 
       <div className="pt-[72px] md:pt-[88px]">
-        {/* Search Filters */}
+        {/* Search Filters and Categories */}
         <div className="bg-primary/5 py-8">
           <div className="max-w-7xl mx-auto px-4 md:px-6">
             <div className="max-w-2xl mx-auto">
@@ -95,34 +92,30 @@ export default function HomePage() {
                 onClearFilters={handleClearFilters}
               />
 
-              {/* Category Icons - Moved below search */}
+              {/* Category Icons - Simple grid layout */}
               <div className="mt-6">
-                <ScrollArea className="w-full">
-                  <div className="flex gap-4">
-                    {categories.map((category) => {
-                      const Icon = category.icon;
-                      return (
-                        <Button
-                          key={category.id}
-                          variant={selectedCategory === category.id ? "default" : "ghost"}
-                          className={cn(
-                            "flex-col h-auto px-6 py-4 min-w-[100px]",
-                            selectedCategory === category.id
-                              ? "bg-primary text-primary-foreground"
-                              : "hover:bg-muted"
-                          )}
-                          onClick={() => setSelectedCategory(
-                            selectedCategory === category.id ? null : category.id
-                          )}
-                        >
-                          <Icon className="mb-2 h-6 w-6" />
-                          <span className="text-sm font-medium">{category.label}</span>
-                        </Button>
-                      );
-                    })}
-                  </div>
-                  <ScrollBar orientation="horizontal" />
-                </ScrollArea>
+                <div className="grid grid-cols-5 gap-4 justify-items-center">
+                  {categories.map((category) => {
+                    const Icon = category.icon;
+                    return (
+                      <button
+                        key={category.id}
+                        onClick={() => setSelectedCategory(
+                          selectedCategory === category.id ? null : category.id
+                        )}
+                        className={cn(
+                          "flex flex-col items-center gap-1 p-2 rounded-lg transition-colors",
+                          selectedCategory === category.id
+                            ? "text-primary"
+                            : "text-gray-600 hover:text-primary"
+                        )}
+                      >
+                        <Icon className="h-6 w-6" />
+                        <span className="text-xs font-medium">{category.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </div>
