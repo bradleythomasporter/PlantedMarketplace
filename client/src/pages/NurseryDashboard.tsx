@@ -207,20 +207,26 @@ export default function NurseryDashboard() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [showCsvInstructions, setShowCsvInstructions] = useState(false);
   const queryClient = new QueryClient();
-  const [selectedTemplate, setSelectedTemplate] = useState<string>("");
+  const [selectedTemplate, setSelectedTemplate] = useState<string>("custom");
 
-  const { data: plants = [], isLoading: isLoadingPlants } = useQuery<Plant[]>({
+  const {
+    data: plants = [],
+    isLoading: isLoadingPlants
+  } = useQuery<Plant[]>({
     queryKey: [`/api/inventory?nurseryId=${user?.id}`],
     enabled: !!user?.id,
   });
 
-  const { data: orderStats = {
-    totalOrders: 0,
-    pendingOrders: 0,
-    revenue: 0,
-    averageOrderValue: 0,
-    recentOrders: []
-  }, isLoading: isLoadingStats } = useQuery({
+  const {
+    data: orderStats = {
+      totalOrders: 0,
+      pendingOrders: 0,
+      revenue: 0,
+      averageOrderValue: 0,
+      recentOrders: []
+    },
+    isLoading: isLoadingStats
+  } = useQuery({
     queryKey: ['/api/orders/stats'],
     enabled: !!user?.id,
   });
@@ -238,11 +244,20 @@ export default function NurseryDashboard() {
   });
 
   useEffect(() => {
-    if (selectedTemplate) {
+    if (selectedTemplate && selectedTemplate !== "custom") {
       const template = plantTemplates.find(t => t.value === selectedTemplate);
       if (template) {
         form.reset(template.data);
       }
+    } else {
+      form.reset({
+        category: 'perennials',
+        drought_tolerant: false,
+        deer_resistant: false,
+        pest_resistant: false,
+        edible: false,
+        indoor_suitable: false,
+      });
     }
   }, [selectedTemplate, form]);
 
@@ -498,7 +513,7 @@ export default function NurseryDashboard() {
                           <SelectValue placeholder="Select a template" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">Custom Plant</SelectItem>
+                          <SelectItem value="custom">Custom Plant</SelectItem>
                           {plantTemplates.map(template => (
                             <SelectItem
                               key={template.value}
