@@ -1,14 +1,14 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { db } from "@db";
-import { plants, orders, users } from "@db/schema";
+import { plants, orders, users, plantInventory } from "@db/schema";
 import { like, and, or, eq, inArray, gte, sql } from "drizzle-orm";
 import NodeGeocoder from "node-geocoder";
 import { setupAuth } from "./auth";
 import multer from "multer";
 import { parse } from "csv-parse";
 import stripe from "stripe";
-import { point, distance } from "@turf/helpers";
+import { point } from "@turf/helpers";
 import turfDistance from "@turf/distance";
 
 if (!process.env.STRIPE_SECRET_KEY) {
@@ -26,6 +26,41 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 export function registerRoutes(app: Express): Server {
   setupAuth(app);
+
+  // Add inventory endpoint
+  app.get("/api/inventory", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    try {
+      const inventory = await db
+        .select({
+          id: plantInventory.id,
+          plantId: plantInventory.plantId,
+          quantity: plantInventory.quantity,
+          price: plantInventory.price,
+          size: plantInventory.size,
+          notes: plantInventory.notes,
+          name: plants.name,
+          scientificName: plants.scientificName,
+          description: plants.description,
+          imageUrl: plants.imageUrl,
+          category: plants.category,
+          sunExposure: plants.sunExposure,
+          wateringNeeds: plants.wateringNeeds,
+          hardinessZone: plants.hardinessZone
+        })
+        .from(plantInventory)
+        .innerJoin(plants, eq(plantInventory.plantId, plants.id))
+        .where(eq(plantInventory.nurseryId, req.user.id));
+
+      return res.json(inventory);
+    } catch (error) {
+      console.error('Error fetching inventory:', error);
+      return res.status(500).json({ message: "Failed to fetch inventory" });
+    }
+  });
 
   // Plants listing and search with geospatial filtering
   app.get("/api/plants", async (req, res) => {
@@ -924,7 +959,6 @@ export function registerRoutes(app: Express): Server {
       return res.status(500).json({ message: "Failed to geocode address" });
     }
   });
-
 
 
   // Add plant route (requires authentication)

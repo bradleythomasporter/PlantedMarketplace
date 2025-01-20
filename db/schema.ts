@@ -16,7 +16,7 @@ export const users = pgTable("users", {
   website: text("website"),
   latitude: real("latitude"),
   longitude: real("longitude"),
-  serviceRadius: real("service_radius"), // Added: Distance in kilometers that the nursery serves
+  serviceRadius: real("service_radius"), 
   businessLicense: text("business_license"),
   rating: real("rating"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -29,12 +29,7 @@ export const plants = pgTable("plants", {
   scientificName: text("scientific_name"),
   category: text("category", { enum: ["flowers", "trees", "shrubs", "indoor", "outdoor"] }).notNull(),
   description: text("description"),
-  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
   imageUrl: text("image_url"),
-  quantity: integer("quantity").notNull().default(0),
-  nurseryId: integer("nursery_id").notNull(),
-  latitude: real("latitude"),
-  longitude: real("longitude"),
   zipCode: text("zip_code"),
   matureSize: text("mature_size"),
   maintainanceLevel: text("maintainance_level"),
@@ -55,6 +50,18 @@ export const plants = pgTable("plants", {
   featured: boolean("featured").default(false),
   inStock: boolean("in_stock").notNull().default(true),
   isAvailableForDelivery: boolean("is_available_for_delivery").default(true),
+});
+
+export const plantInventory = pgTable("plant_inventory", {
+  id: serial("id").primaryKey(),
+  plantId: integer("plant_id").notNull(),
+  nurseryId: integer("nursery_id").notNull(),
+  quantity: integer("quantity").notNull().default(0),
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  size: text("size").notNull(), 
+  notes: text("notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
 export const orders = pgTable("orders", {
@@ -88,9 +95,11 @@ export type User = typeof users.$inferSelect;
 export type Plant = typeof plants.$inferSelect;
 export type Order = typeof orders.$inferSelect;
 export type OrderItem = typeof orderItems.$inferSelect;
+export type PlantInventory = typeof plantInventory.$inferSelect;
 export type NewPlant = typeof plants.$inferInsert;
 export type NewOrder = typeof orders.$inferInsert;
 export type NewOrderItem = typeof orderItems.$inferInsert;
+export type NewPlantInventory = typeof plantInventory.$inferInsert;
 
 // Schemas
 export const insertUserSchema = createInsertSchema(users);
@@ -101,3 +110,5 @@ export const insertOrderSchema = createInsertSchema(orders);
 export const selectOrderSchema = createSelectSchema(orders);
 export const insertOrderItemSchema = createInsertSchema(orderItems);
 export const selectOrderItemSchema = createSelectSchema(orderItems);
+export const insertPlantInventorySchema = createInsertSchema(plantInventory);
+export const selectPlantInventorySchema = createSelectSchema(plantInventory);
