@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, QueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -79,6 +79,125 @@ const plantFormSchema = z.object({
   main_image: z.any(),
 });
 
+const plantTemplates = [
+  {
+    label: "Purple Coneflower",
+    value: "purple-coneflower",
+    data: {
+      category: "perennials",
+      common_name: "Purple Coneflower",
+      scientific_name: "Echinacea purpurea",
+      description: "Beautiful purple flowering perennial that attracts butterflies",
+      care_instructions: "Full sun, well-draining soil",
+      light_requirement: "high",
+      water_requirement: "medium",
+      temperature_min: 15,
+      temperature_max: 30,
+      humidity_requirement: 50,
+      soil_type: "Well-draining soil",
+      fertilizer_requirements: "Monthly during growing season",
+      mature_height: 60,
+      mature_spread: 45,
+      growth_rate: "medium",
+      time_to_maturity: "2-3 years",
+      hardiness_zone: "3-9",
+      native_region: "North America",
+      drought_tolerant: true,
+      deer_resistant: true,
+      pest_resistant: true,
+      edible: false,
+      indoor_suitable: false,
+    }
+  },
+  {
+    label: "Peace Lily",
+    value: "peace-lily",
+    data: {
+      category: "indoor",
+      common_name: "Peace Lily",
+      scientific_name: "Spathiphyllum",
+      description: "Beautiful indoor plant known for its air-purifying qualities",
+      care_instructions: "Keep soil moist but not waterlogged. Tolerates low light.",
+      light_requirement: "low",
+      water_requirement: "medium",
+      temperature_min: 18,
+      temperature_max: 30,
+      humidity_requirement: 50,
+      soil_type: "Rich, well-draining potting mix",
+      fertilizer_requirements: "Monthly during growing season",
+      mature_height: 40,
+      mature_spread: 40,
+      growth_rate: "medium",
+      time_to_maturity: "2-3 years",
+      hardiness_zone: "10-12",
+      native_region: "Tropical Americas",
+      drought_tolerant: false,
+      deer_resistant: false,
+      pest_resistant: false,
+      edible: false,
+      indoor_suitable: true,
+    }
+  },
+  {
+    label: "Jade Plant",
+    value: "jade-plant",
+    data: {
+      category: "succulents",
+      common_name: "Jade Plant",
+      scientific_name: "Crassula ovata",
+      description: "Popular succulent known for its thick, woody stems and oval leaves",
+      care_instructions: "Bright indirect light, well-draining soil",
+      light_requirement: "medium",
+      water_requirement: "low",
+      temperature_min: 10,
+      temperature_max: 30,
+      humidity_requirement: 30,
+      soil_type: "Cactus mix",
+      fertilizer_requirements: "Light feeding in growing season",
+      mature_height: 30,
+      mature_spread: 25,
+      growth_rate: "slow",
+      time_to_maturity: "3-5 years",
+      hardiness_zone: "10-11",
+      native_region: "South Africa",
+      drought_tolerant: true,
+      deer_resistant: true,
+      pest_resistant: true,
+      edible: false,
+      indoor_suitable: true,
+    }
+  },
+  {
+    label: "Lavender",
+    value: "lavender",
+    data: {
+      category: "herbs",
+      common_name: "Lavender",
+      scientific_name: "Lavandula angustifolia",
+      description: "Fragrant herb with purple flowers, perfect for gardens and containers",
+      care_instructions: "Full sun, well-draining soil",
+      light_requirement: "high",
+      water_requirement: "low",
+      temperature_min: 5,
+      temperature_max: 35,
+      humidity_requirement: 40,
+      soil_type: "Well-draining, alkaline soil",
+      fertilizer_requirements: "Light feeding in spring",
+      mature_height: 60,
+      mature_spread: 60,
+      growth_rate: "medium",
+      time_to_maturity: "1-2 years",
+      hardiness_zone: "5-9",
+      native_region: "Mediterranean",
+      drought_tolerant: true,
+      deer_resistant: true,
+      pest_resistant: true,
+      edible: true,
+      indoor_suitable: false,
+    }
+  }
+];
+
 export default function NurseryDashboard() {
   const { user } = useUser();
   const { toast } = useToast();
@@ -88,6 +207,7 @@ export default function NurseryDashboard() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [showCsvInstructions, setShowCsvInstructions] = useState(false);
   const queryClient = new QueryClient();
+  const [selectedTemplate, setSelectedTemplate] = useState<string>("");
 
   const { data: plants = [], isLoading: isLoadingPlants } = useQuery<Plant[]>({
     queryKey: [`/api/inventory?nurseryId=${user?.id}`],
@@ -116,6 +236,16 @@ export default function NurseryDashboard() {
       indoor_suitable: false,
     },
   });
+
+  useEffect(() => {
+    if (selectedTemplate) {
+      const template = plantTemplates.find(t => t.value === selectedTemplate);
+      if (template) {
+        form.reset(template.data);
+      }
+    }
+  }, [selectedTemplate, form]);
+
 
   const handleAddPlant = async (data: z.infer<typeof plantFormSchema>) => {
     try {
@@ -357,6 +487,33 @@ export default function NurseryDashboard() {
               </DialogHeader>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(handleAddPlant)} className="space-y-6">
+                  <div className="mb-6">
+                    <FormItem>
+                      <FormLabel>Use Template</FormLabel>
+                      <Select
+                        value={selectedTemplate}
+                        onValueChange={setSelectedTemplate}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a template" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="">Custom Plant</SelectItem>
+                          {plantTemplates.map(template => (
+                            <SelectItem
+                              key={template.value}
+                              value={template.value}
+                            >
+                              {template.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        Select a template to pre-fill the form with common plant details
+                      </FormDescription>
+                    </FormItem>
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <FormField
                       control={form.control}
@@ -374,8 +531,8 @@ export default function NurseryDashboard() {
                               </SelectTrigger>
                               <SelectContent>
                                 {plantCategories.map(category => (
-                                  <SelectItem 
-                                    key={category.value} 
+                                  <SelectItem
+                                    key={category.value}
                                     value={category.value}
                                   >
                                     {category.label}
