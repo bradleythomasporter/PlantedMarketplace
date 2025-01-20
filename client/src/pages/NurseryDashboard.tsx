@@ -35,7 +35,22 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Progress } from "@/components/ui/progress";
 
+const plantCategories = [
+  { value: 'perennials', label: 'Perennials' },
+  { value: 'annuals', label: 'Annuals' },
+  { value: 'shrubs', label: 'Shrubs' },
+  { value: 'trees', label: 'Trees' },
+  { value: 'vines', label: 'Vines' },
+  { value: 'indoor', label: 'Indoor Plants' },
+  { value: 'succulents', label: 'Succulents & Cacti' },
+  { value: 'herbs', label: 'Herbs' },
+  { value: 'vegetables', label: 'Vegetables' },
+  { value: 'fruits', label: 'Fruits' },
+  { value: 'grasses', label: 'Ornamental Grasses' },
+] as const;
+
 const plantFormSchema = z.object({
+  category: z.enum(['perennials', 'annuals', 'shrubs', 'trees', 'vines', 'indoor', 'succulents', 'herbs', 'vegetables', 'fruits', 'grasses']),
   common_name: z.string().min(1, "Plant name is required"),
   scientific_name: z.string().min(1, "Scientific name is required"),
   description: z.string().min(1, "Description is required"),
@@ -93,6 +108,7 @@ export default function NurseryDashboard() {
   const form = useForm<z.infer<typeof plantFormSchema>>({
     resolver: zodResolver(plantFormSchema),
     defaultValues: {
+      category: 'perennials',
       drought_tolerant: false,
       deer_resistant: false,
       pest_resistant: false,
@@ -342,6 +358,36 @@ export default function NurseryDashboard() {
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(handleAddPlant)} className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField
+                      control={form.control}
+                      name="category"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Category</FormLabel>
+                          <FormControl>
+                            <Select
+                              value={field.value}
+                              onValueChange={field.onChange}
+                            >
+                              <SelectTrigger>
+                                <SelectValue defaultValue={field.value} />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {plantCategories.map(category => (
+                                  <SelectItem 
+                                    key={category.value} 
+                                    value={category.value}
+                                  >
+                                    {category.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                     <FormField
                       control={form.control}
                       name="common_name"
@@ -719,6 +765,7 @@ export default function NurseryDashboard() {
                 <div className="space-y-2">
                   <h3 className="font-medium">Required Fields:</h3>
                   <ul className="list-disc pl-6 text-sm space-y-1">
+                    <li>category (one of: perennials, annuals, shrubs, trees, vines, indoor, succulents, herbs, vegetables, fruits, grasses)</li>
                     <li>common_name (text)</li>
                     <li>scientific_name (text)</li>
                     <li>description (text)</li>
@@ -756,11 +803,7 @@ export default function NurseryDashboard() {
                     variant="outline"
                     className="w-full"
                     onClick={() => {
-                      // Here you would add logic to download a sample CSV
-                      toast({
-                        title: "Sample CSV",
-                        description: "Sample CSV download functionality coming soon",
-                      });
+                      window.location.href = '/api/plants/sample-csv';
                     }}
                   >
                     Download Sample CSV

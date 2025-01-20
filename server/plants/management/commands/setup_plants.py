@@ -19,27 +19,35 @@ class Command(BaseCommand):
             user.save()
             self.stdout.write(self.style.SUCCESS('Created demo user'))
 
-        # Sample plants data
+        # Sample plants data with categories
         plants_data = [
+            # Perennials
+            {
+                'common_name': 'Purple Coneflower',
+                'scientific_name': 'Echinacea purpurea',
+                'category': 'perennials',
+                'description': 'Beautiful purple flowering perennial that attracts butterflies',
+                'care_instructions': 'Full sun, well-draining soil',
+                'light_requirement': 'high',
+                'water_requirement': 'medium',
+                'price': 12.99,
+                'quantity': 25,
+                'drought_tolerant': True,
+                'deer_resistant': True,
+                'pest_resistant': True,
+                'edible': False,
+                'indoor_suitable': False,
+                'featured': True
+            },
+            # Indoor Plants
             {
                 'common_name': 'Peace Lily',
                 'scientific_name': 'Spathiphyllum',
+                'category': 'indoor',
                 'description': 'Beautiful indoor plant known for its air-purifying qualities',
                 'care_instructions': 'Keep soil moist but not waterlogged. Tolerates low light.',
-                'planting_instructions': 'Plant in well-draining potting mix.',
                 'light_requirement': 'low',
                 'water_requirement': 'medium',
-                'temperature_min': 18,
-                'temperature_max': 30,
-                'humidity_requirement': 50,
-                'soil_type': 'Rich, well-draining potting mix',
-                'fertilizer_requirements': 'Monthly during growing season',
-                'mature_height': 40,
-                'mature_spread': 40,
-                'growth_rate': 'medium',
-                'time_to_maturity': '2-3 years',
-                'hardiness_zone': '10-12',
-                'native_region': 'Tropical Americas',
                 'price': 29.99,
                 'quantity': 10,
                 'drought_tolerant': False,
@@ -49,60 +57,76 @@ class Command(BaseCommand):
                 'indoor_suitable': True,
                 'featured': True
             },
+            # Succulents
             {
-                'common_name': 'Snake Plant',
-                'scientific_name': 'Sansevieria trifasciata',
-                'description': 'Hardy indoor plant with striking upright leaves',
-                'care_instructions': 'Very low maintenance, allow soil to dry between watering',
-                'planting_instructions': 'Plant in cactus mix or well-draining potting soil',
-                'light_requirement': 'low',
+                'common_name': 'Jade Plant',
+                'scientific_name': 'Crassula ovata',
+                'category': 'succulents',
+                'description': 'Popular succulent known for its thick, woody stems and oval leaves',
+                'care_instructions': 'Bright indirect light, well-draining soil',
+                'light_requirement': 'medium',
                 'water_requirement': 'low',
-                'temperature_min': 15,
-                'temperature_max': 35,
-                'humidity_requirement': 30,
-                'soil_type': 'Well-draining, cactus mix',
-                'fertilizer_requirements': 'Light feeding during growing season',
-                'mature_height': 70,
-                'mature_spread': 30,
-                'growth_rate': 'slow',
-                'time_to_maturity': '3-4 years',
-                'hardiness_zone': '9-11',
-                'native_region': 'West Africa',
-                'price': 24.99,
-                'quantity': 15,
+                'price': 15.99,
+                'quantity': 30,
                 'drought_tolerant': True,
-                'deer_resistant': False,
+                'deer_resistant': True,
                 'pest_resistant': True,
                 'edible': False,
                 'indoor_suitable': True,
                 'featured': False
             },
+            # Herbs
             {
-                'common_name': 'Boston Fern',
-                'scientific_name': 'Nephrolepis exaltata',
-                'description': 'Classic hanging plant with delicate fronds',
-                'care_instructions': 'Keep soil consistently moist and humidity high',
-                'planting_instructions': 'Plant in rich, organic potting mix',
-                'light_requirement': 'medium',
+                'common_name': 'Lavender',
+                'scientific_name': 'Lavandula angustifolia',
+                'category': 'herbs',
+                'description': 'Fragrant herb with purple flowers, perfect for gardens and containers',
+                'care_instructions': 'Full sun, well-draining soil',
+                'light_requirement': 'high',
+                'water_requirement': 'low',
+                'price': 8.99,
+                'quantity': 40,
+                'drought_tolerant': True,
+                'deer_resistant': True,
+                'pest_resistant': True,
+                'edible': True,
+                'indoor_suitable': False,
+                'featured': True
+            },
+            # Vegetables
+            {
+                'common_name': 'Tomato Plant',
+                'scientific_name': 'Solanum lycopersicum',
+                'category': 'vegetables',
+                'description': 'Popular vegetable plant that produces red fruits',
+                'care_instructions': 'Full sun, regular watering',
+                'light_requirement': 'high',
                 'water_requirement': 'high',
-                'temperature_min': 16,
-                'temperature_max': 24,
-                'humidity_requirement': 80,
-                'soil_type': 'Rich, organic potting mix',
-                'fertilizer_requirements': 'Monthly with balanced fertilizer',
-                'mature_height': 35,
-                'mature_spread': 45,
-                'growth_rate': 'medium',
-                'time_to_maturity': '1-2 years',
-                'hardiness_zone': '10-12',
-                'native_region': 'Florida and tropical regions',
-                'price': 19.99,
-                'quantity': 20,
+                'price': 6.99,
+                'quantity': 50,
+                'drought_tolerant': False,
+                'deer_resistant': False,
+                'pest_resistant': False,
+                'edible': True,
+                'indoor_suitable': False,
+                'featured': True
+            },
+            # Trees
+            {
+                'common_name': 'Japanese Maple',
+                'scientific_name': 'Acer palmatum',
+                'category': 'trees',
+                'description': 'Elegant tree known for its beautiful red foliage',
+                'care_instructions': 'Partial shade, well-draining soil',
+                'light_requirement': 'medium',
+                'water_requirement': 'medium',
+                'price': 89.99,
+                'quantity': 5,
                 'drought_tolerant': False,
                 'deer_resistant': False,
                 'pest_resistant': False,
                 'edible': False,
-                'indoor_suitable': True,
+                'indoor_suitable': False,
                 'featured': True
             }
         ]
@@ -121,8 +145,6 @@ class Command(BaseCommand):
         import os
 
         csv_path = os.path.join(os.path.dirname(__file__), 'sample_plants.csv')
-
-        # Ensure all fields are included in the fieldnames
         fieldnames = list(plants_data[0].keys())
 
         with open(csv_path, 'w', newline='') as file:

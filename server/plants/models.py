@@ -29,9 +29,24 @@ class Plant(models.Model):
         ('year_round', 'Year Round'),
     ]
 
+    CATEGORY_CHOICES = [
+        ('perennials', 'Perennials'),
+        ('annuals', 'Annuals'),
+        ('shrubs', 'Shrubs'),
+        ('trees', 'Trees'),
+        ('vines', 'Vines'),
+        ('indoor', 'Indoor Plants'),
+        ('succulents', 'Succulents & Cacti'),
+        ('herbs', 'Herbs'),
+        ('vegetables', 'Vegetables'),
+        ('fruits', 'Fruits'),
+        ('grasses', 'Ornamental Grasses'),
+    ]
+
     # Basic Information
     common_name = models.CharField(max_length=100)
     scientific_name = models.CharField(max_length=100)
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='perennials')
     description = models.TextField()
     care_instructions = models.TextField(default='')
     planting_instructions = models.TextField(default='')
