@@ -34,7 +34,7 @@ class Plant(models.Model):
     scientific_name = models.CharField(max_length=100)
     description = models.TextField()
     care_instructions = models.TextField()
-    planting_instructions = models.TextField(blank=True)
+    planting_instructions = models.TextField()
 
     # Care Requirements
     light_requirement = models.CharField(max_length=10, choices=LIGHT_CHOICES)
@@ -42,14 +42,14 @@ class Plant(models.Model):
     temperature_min = models.IntegerField(validators=[MinValueValidator(-20), MaxValueValidator(50)])
     temperature_max = models.IntegerField(validators=[MinValueValidator(-20), MaxValueValidator(50)])
     humidity_requirement = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(100)])
-    soil_type = models.CharField(max_length=200, blank=True)
-    fertilizer_requirements = models.TextField(blank=True)
+    soil_type = models.CharField(max_length=200)
+    fertilizer_requirements = models.TextField()
 
     # Growth Information
     mature_height = models.DecimalField(max_digits=5, decimal_places=2, help_text="Height in centimeters")
     mature_spread = models.DecimalField(max_digits=5, decimal_places=2, help_text="Spread in centimeters")
     growth_rate = models.CharField(max_length=10, choices=GROWTH_RATE_CHOICES)
-    time_to_maturity = models.CharField(max_length=100, blank=True)
+    time_to_maturity = models.CharField(max_length=100)
 
     # Seasonal Information
     flowering_season = models.CharField(max_length=20, choices=SEASON_CHOICES, blank=True)
@@ -58,8 +58,8 @@ class Plant(models.Model):
     fragrant = models.BooleanField(default=False)
 
     # Additional Characteristics
-    hardiness_zone = models.CharField(max_length=50, blank=True)
-    native_region = models.CharField(max_length=200, blank=True)
+    hardiness_zone = models.CharField(max_length=50)
+    native_region = models.CharField(max_length=200)
     drought_tolerant = models.BooleanField(default=False)
     deer_resistant = models.BooleanField(default=False)
     pest_resistant = models.BooleanField(default=False)
@@ -69,6 +69,11 @@ class Plant(models.Model):
     # Images
     main_image = models.ImageField(upload_to='plants/main/')
     additional_images = models.ManyToManyField('PlantImage', blank=True)
+
+    # Business Information
+    price = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])
+    quantity = models.IntegerField(default=0, validators=[MinValueValidator(0)])
+    featured = models.BooleanField(default=False)
 
     # Metadata
     created_at = models.DateTimeField(auto_now_add=True)
@@ -91,7 +96,7 @@ class PlantImage(models.Model):
 
 class PlantInventory(models.Model):
     plant = models.ForeignKey(Plant, on_delete=models.CASCADE)
-    nursery = models.ForeignKey(User, on_delete=models.CASCADE)  # Assuming nurseries are Users for now
+    nursery = models.ForeignKey(User, on_delete=models.CASCADE)
     quantity = models.IntegerField(validators=[MinValueValidator(0)])
     price = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])
     size = models.CharField(max_length=50)  # e.g., "2 gallon", "4 inch pot"
