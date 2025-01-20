@@ -1,26 +1,37 @@
-import { drizzle } from "drizzle-orm/neon-serverless";
-import ws from "ws";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
 import * as schema from "@db/schema";
 
-if (!process.env.DATABASE_URL) {
-  throw new Error(
-    "DATABASE_URL must be set. Did you forget to provision a database?",
-  );
-}
-
-export const db = drizzle({
-  connection: process.env.DATABASE_URL,
-  schema,
-  ws: ws,
-});
-
-export async function connectDB() {
-  try {
-    // For Neon, the connection is established lazily
-    // Just log that we're ready to connect
-    console.log("Database configuration ready");
-  } catch (error) {
-    console.error("Database configuration failed:", error);
-    throw error;
+// Ensure all required environment variables are present
+const requiredEnvVars = ['PGHOST', 'PGPORT', 'PGUSER', 'PGPASSWORD', 'PGDATABASE'];
+for (const envVar of requiredEnvVars) {
+  if (!process.env[envVar]) {
+    throw new Error(`${envVar} environment variable is required`);
   }
 }
+
+// Create the connection pool
+const pool = new Pool({
+  host: process.env.PGHOST,
+  port: parseInt(process.env.PGPORT || "5432"),
+  user: process.env.PGUSER,
+  password: process.env.PGPASSWORD,
+  database: process.env.PGDATABASE,
+  ssl: {
+    rejectUnauthorized: false
+  }
+});
+
+// Test the connection
+pool.query('SELECT 1', (err) => {
+  if (err) {
+    console.error('Error connecting to the database:', err);
+  } else {
+    console.log('Database connected successfully');
+  }
+});
+
+// Create the Drizzle instance
+export const db = drizzle(pool, { schema });
+
+console.log("Database configuration ready");
