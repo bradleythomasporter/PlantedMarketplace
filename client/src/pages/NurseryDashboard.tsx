@@ -10,7 +10,6 @@ import { Upload, BarChart2, DollarSign, Package2, Loader2 } from "lucide-react";
 import type { Plant } from "@db/schema";
 import { PlantCard } from "@/components/PlantCard";
 import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer"; // This line is added
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useForm } from "react-hook-form";
 import {
@@ -513,7 +512,6 @@ export default function NurseryDashboard() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Plant form fields... */}
                   <FormField
                     control={form.control}
                     name="common_name"
@@ -585,7 +583,6 @@ export default function NurseryDashboard() {
                     )}
                   />
 
-                  {/* Continue with other form fields... */}
                   <FormField
                     control={form.control}
                     name="care_instructions"
@@ -899,7 +896,6 @@ export default function NurseryDashboard() {
                       </FormItem>
                     )}
                   />
-
 
 
                 </div>
