@@ -6,11 +6,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/hooks/use-user";
-import { Upload } from "lucide-react";
+import { Upload, BarChart2, DollarSign, Package2 } from "lucide-react";
 import type { Plant } from "@db/schema";
 import { PlantCard } from "@/components/PlantCard";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useForm } from "react-hook-form";
 import {
   Form,
@@ -32,6 +33,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Progress } from "@/components/ui/progress";
 
 const plantFormSchema = z.object({
   common_name: z.string().min(1, "Plant name is required"),
@@ -59,7 +61,7 @@ const plantFormSchema = z.object({
   pest_resistant: z.boolean(),
   edible: z.boolean(),
   indoor_suitable: z.boolean(),
-  main_image: z.any(), // Will handle file upload separately
+  main_image: z.any(),
 });
 
 export default function NurseryDashboard() {
@@ -68,11 +70,22 @@ export default function NurseryDashboard() {
   const [isAddingPlant, setIsAddingPlant] = useState(false);
   const [selectedPlant, setSelectedPlant] = useState<Plant | null>(null);
   const [activeTab, setActiveTab] = useState("inventory");
-  const queryClient = new QueryClient(); //Added this line
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const queryClient = new QueryClient();
 
-  // Fetch inventory
   const { data: plants = [], isLoading: isLoadingPlants } = useQuery<Plant[]>({
     queryKey: [`/api/inventory?nurseryId=${user?.id}`],
+    enabled: !!user?.id,
+  });
+
+  const { data: orderStats = {
+    totalOrders: 0,
+    pendingOrders: 0,
+    revenue: 0,
+    averageOrderValue: 0,
+    recentOrders: []
+  }, isLoading: isLoadingStats } = useQuery({
+    queryKey: ['/api/orders/stats'],
     enabled: !!user?.id,
   });
 
@@ -107,6 +120,7 @@ export default function NurseryDashboard() {
         throw new Error(await response.text());
       }
 
+      queryClient.invalidateQueries({ queryKey: ['/api/inventory'] });
       toast({ title: "Plant added successfully" });
       setIsAddingPlant(false);
     } catch (error: any) {
@@ -124,6 +138,16 @@ export default function NurseryDashboard() {
       const formData = new FormData();
       formData.append('file', file);
 
+      const interval = setInterval(() => {
+        setUploadProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(interval);
+            return prev;
+          }
+          return prev + 10;
+        });
+      }, 500);
+
       fetch("/api/plants/upload-csv", {
         method: "POST",
         credentials: "include",
@@ -134,6 +158,10 @@ export default function NurseryDashboard() {
           return response.json();
         })
         .then(data => {
+          clearInterval(interval);
+          setUploadProgress(100);
+          setTimeout(() => setUploadProgress(0), 1000);
+
           toast({
             title: "Plants imported successfully",
             description: `${data.count} plants were imported`,
@@ -141,6 +169,8 @@ export default function NurseryDashboard() {
           queryClient.invalidateQueries({ queryKey: ['/api/inventory'] });
         })
         .catch(error => {
+          clearInterval(interval);
+          setUploadProgress(0);
           toast({
             title: "Failed to import plants",
             description: error.message,
@@ -169,7 +199,7 @@ export default function NurseryDashboard() {
                   <Button onClick={() => setIsAddingPlant(true)}>
                     Add New Plant
                   </Button>
-                  <div>
+                  <div className="relative">
                     <Input
                       type="file"
                       accept=".csv"
@@ -184,6 +214,9 @@ export default function NurseryDashboard() {
                       <Upload className="h-4 w-4 mr-2" />
                       Import CSV
                     </Button>
+                    {uploadProgress > 0 && (
+                      <Progress value={uploadProgress} className="w-full mt-2" />
+                    )}
                   </div>
                 </div>
               </div>
@@ -191,7 +224,7 @@ export default function NurseryDashboard() {
               <div className="space-y-2">
                 {isLoadingPlants ? (
                   <div className="flex justify-center py-12">
-                    {/* Loader here */}
+                    {/* Add a loading spinner here */}
                   </div>
                 ) : (
                   plants.map((plant) => (
@@ -225,10 +258,64 @@ export default function NurseryDashboard() {
               </div>
             </TabsContent>
 
-            <TabsContent value="orders">
-              <div className="py-12 text-center text-muted-foreground">
-                Order management coming soon
+            <TabsContent value="orders" className="mt-6">
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">
+                      Total Orders
+                    </CardTitle>
+                    <Package2 className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{orderStats.totalOrders}</div>
+                    <p className="text-xs text-muted-foreground">
+                      {orderStats.pendingOrders} pending
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">
+                      Revenue
+                    </CardTitle>
+                    <DollarSign className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      ${orderStats.revenue?.toFixed(2)}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Avg. ${orderStats.averageOrderValue?.toFixed(2)} per order
+                    </p>
+                  </CardContent>
+                </Card>
               </div>
+
+              <Card className="mt-4">
+                <CardHeader>
+                  <CardTitle>Recent Orders</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-8">
+                    {orderStats.recentOrders?.map((order: any) => (
+                      <div key={order.id} className="flex items-center">
+                        <div className="ml-4 space-y-1">
+                          <p className="text-sm font-medium leading-none">
+                            {order.customerName}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            ${order.total.toFixed(2)} • {order.items} items
+                          </p>
+                        </div>
+                        <div className="ml-auto font-medium">
+                          {order.status}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
             </TabsContent>
 
             <TabsContent value="profile">
@@ -598,7 +685,7 @@ export default function NurseryDashboard() {
                         </FormItem>
                       )}
                     />
-                    {/* Add a file upload field for main_image here if needed */}
+
 
                     <div className="col-span-2">
                       <Button type="submit" className="w-full">
