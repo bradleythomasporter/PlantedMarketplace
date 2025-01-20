@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useUser } from "@/hooks/use-user";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -76,6 +76,20 @@ export default function AuthPage() {
       setIsLoading(false);
     }
   };
+
+  // Switch to registration tab and set role to nursery when directed from Sell on Planted button
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("role") === "nursery") {
+      const tabsList = document.querySelector('[role="tablist"]');
+      if (tabsList) {
+        const registerTab = tabsList.querySelector('[value="register"]');
+        if (registerTab instanceof HTMLElement) {
+          registerTab.click();
+        }
+      }
+    }
+  }, []);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
