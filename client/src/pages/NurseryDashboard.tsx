@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/hooks/use-user";
-import { Loader2, PenSquare, Trash2 } from "lucide-react";
+import { Loader2, PenSquare, Trash2, Upload } from "lucide-react";
 import { useLocation } from "wouter";
 import type { Plant, Order } from "@db/schema";
 import { PlantCard } from "@/components/PlantCard";
@@ -22,13 +22,20 @@ export default function NurseryDashboard() {
   const queryClient = useQueryClient();
   const [selectedPlant, setSelectedPlant] = useState<Plant | null>(null);
   const [isAddingPlant, setIsAddingPlant] = useState(false);
+  const [isUsingTemplate, setIsUsingTemplate] = useState(false);
   const [plantToDelete, setPlantToDelete] = useState<Plant | null>(null);
   const [activeTab, setActiveTab] = useState("inventory");
+  const [csvFile, setCsvFile] = useState<File | null>(null);
 
   // Fetch inventory
   const { data: plants = [], isLoading: isLoadingPlants } = useQuery<Plant[]>({
     queryKey: [`/api/inventory?nurseryId=${user?.id}`],
     enabled: !!user?.id,
+  });
+
+  // Fetch plant templates
+  const { data: templates, isLoading: isLoadingTemplates } = useQuery({
+    queryKey: ['/api/plants/templates'],
   });
 
   // Fetch orders
@@ -61,6 +68,7 @@ export default function NurseryDashboard() {
       queryClient.invalidateQueries({ queryKey: [`/api/inventory?nurseryId=${user?.id}`] });
       toast({ title: "Plant added successfully" });
       setIsAddingPlant(false);
+      setIsUsingTemplate(false);
     },
     onError: (error: Error) => {
       toast({
@@ -71,13 +79,15 @@ export default function NurseryDashboard() {
     },
   });
 
-  const updatePlantMutation = useMutation({
-    mutationFn: async (data: { id: number; updates: Partial<Plant> }) => {
-      const response = await fetch(`/api/plants/${data.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+  const uploadCsvMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch("/api/plants/upload", {
+        method: "POST",
         credentials: "include",
-        body: JSON.stringify(data.updates),
+        body: formData,
       });
 
       if (!response.ok) {
@@ -87,46 +97,29 @@ export default function NurseryDashboard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/inventory?nurseryId=${user?.id}`] });
-      toast({ title: "Plant updated successfully" });
-      setSelectedPlant(null);
+      toast({ title: "Plants imported successfully" });
+      setCsvFile(null);
     },
     onError: (error: Error) => {
       toast({
-        title: "Failed to update plant",
+        title: "Failed to import plants",
         description: error.message,
         variant: "destructive",
       });
     },
   });
 
-  const deletePlantMutation = useMutation({
-    mutationFn: async (id: number) => {
-      const response = await fetch(`/api/plants/${id}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        throw new Error(await response.text());
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/inventory?nurseryId=${user?.id}`] });
-      toast({ title: "Plant deleted successfully" });
-      setPlantToDelete(null);
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Failed to delete plant",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
+  const handleCsvUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setCsvFile(file);
+      uploadCsvMutation.mutate(file);
+    }
+  };
 
   const handleUpdateOrderStatus = async (orderId: number, newStatus: string) => {
     try {
-      const response = await fetch(`/api/orders/${orderId}`, {
+      const response = await fetch(`/api/orders/${orderId}/status`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
@@ -147,6 +140,17 @@ export default function NurseryDashboard() {
     }
   };
 
+  const handleTemplateSelect = (template: any) => {
+    const formData = new FormData();
+    formData.append('name', template.name);
+    formData.append('description', template.description);
+    formData.append('category', template.category);
+    formData.append('price', template.price.toString());
+    formData.append('quantity', template.stockDefault.toString());
+
+    addPlantMutation.mutate(formData);
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
@@ -163,9 +167,30 @@ export default function NurseryDashboard() {
             <section>
               <h2 className="text-2xl font-semibold mb-6">Manage Plants</h2>
 
-              <Button onClick={() => setIsAddingPlant(true)} className="mb-6">
-                Add New Plant
-              </Button>
+              <div className="flex gap-4 mb-6">
+                <Button onClick={() => setIsAddingPlant(true)}>
+                  Add New Plant
+                </Button>
+                <Button onClick={() => setIsUsingTemplate(true)}>
+                  Use Template
+                </Button>
+                <div>
+                  <Input
+                    type="file"
+                    accept=".csv"
+                    onChange={handleCsvUpload}
+                    className="hidden"
+                    id="csv-upload"
+                  />
+                  <Button
+                    variant="outline"
+                    onClick={() => document.getElementById('csv-upload')?.click()}
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Upload CSV
+                  </Button>
+                </div>
+              </div>
 
               {isLoadingPlants ? (
                 <div className="flex justify-center py-12">
@@ -196,6 +221,42 @@ export default function NurseryDashboard() {
                   ))}
                 </div>
               )}
+
+              {/* Template Selection Dialog */}
+              <Dialog open={isUsingTemplate} onOpenChange={setIsUsingTemplate}>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Select a Plant Template</DialogTitle>
+                  </DialogHeader>
+                  <div className="mt-4 space-y-4">
+                    {isLoadingTemplates ? (
+                      <div className="flex justify-center py-12">
+                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                      </div>
+                    ) : (
+                      <div className="grid gap-4">
+                        {templates && Object.entries(templates.plantsByType).map(([category, plants]) => (
+                          <div key={category}>
+                            <h3 className="text-lg font-semibold capitalize mb-2">{category}</h3>
+                            <div className="grid gap-2">
+                              {(plants as any[]).map((template, idx) => (
+                                <Button
+                                  key={idx}
+                                  variant="outline"
+                                  className="justify-start"
+                                  onClick={() => handleTemplateSelect(template)}
+                                >
+                                  {template.name} - ${template.price}
+                                </Button>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </DialogContent>
+              </Dialog>
 
               {plants.length === 0 && !isLoadingPlants && (
                 <div className="text-center py-12">
