@@ -71,6 +71,7 @@ export default function NurseryDashboard() {
   const [selectedPlant, setSelectedPlant] = useState<Plant | null>(null);
   const [activeTab, setActiveTab] = useState("inventory");
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [showCsvInstructions, setShowCsvInstructions] = useState(false);
   const queryClient = new QueryClient();
 
   const { data: plants = [], isLoading: isLoadingPlants } = useQuery<Plant[]>({
@@ -195,7 +196,7 @@ export default function NurseryDashboard() {
             <TabsContent value="inventory" className="mt-6">
               <div className="mb-6">
                 <h2 className="text-2xl font-semibold mb-6">Manage Plants</h2>
-                <div className="flex gap-4">
+                <div className="flex flex-wrap gap-4">
                   <Button onClick={() => setIsAddingPlant(true)}>
                     Add New Plant
                   </Button>
@@ -207,13 +208,21 @@ export default function NurseryDashboard() {
                       className="hidden"
                       id="csv-upload"
                     />
-                    <Button
-                      variant="outline"
-                      onClick={() => document.getElementById('csv-upload')?.click()}
-                    >
-                      <Upload className="h-4 w-4 mr-2" />
-                      Import CSV
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => document.getElementById('csv-upload')?.click()}
+                      >
+                        <Upload className="h-4 w-4 mr-2" />
+                        Import CSV
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        onClick={() => setShowCsvInstructions(true)}
+                      >
+                        CSV Instructions
+                      </Button>
+                    </div>
                     {uploadProgress > 0 && (
                       <Progress value={uploadProgress} className="w-full mt-2" />
                     )}
@@ -695,6 +704,69 @@ export default function NurseryDashboard() {
                   </div>
                 </form>
               </Form>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={showCsvInstructions} onOpenChange={setShowCsvInstructions}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>CSV Import Instructions</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  To import plants using a CSV file, please follow these guidelines:
+                </p>
+                <div className="space-y-2">
+                  <h3 className="font-medium">Required Fields:</h3>
+                  <ul className="list-disc pl-6 text-sm space-y-1">
+                    <li>common_name (text)</li>
+                    <li>scientific_name (text)</li>
+                    <li>description (text)</li>
+                    <li>price (number)</li>
+                    <li>quantity (number)</li>
+                  </ul>
+                </div>
+                <div className="space-y-2">
+                  <h3 className="font-medium">Optional Fields:</h3>
+                  <ul className="list-disc pl-6 text-sm space-y-1">
+                    <li>care_instructions (text)</li>
+                    <li>planting_instructions (text)</li>
+                    <li>light_requirement (low/medium/high)</li>
+                    <li>water_requirement (low/medium/high)</li>
+                    <li>temperature_min (number)</li>
+                    <li>temperature_max (number)</li>
+                    <li>humidity_requirement (number, 0-100)</li>
+                    <li>soil_type (text)</li>
+                    <li>fertilizer_requirements (text)</li>
+                    <li>mature_height (number, cm)</li>
+                    <li>mature_spread (number, cm)</li>
+                    <li>growth_rate (slow/medium/fast)</li>
+                    <li>time_to_maturity (text)</li>
+                    <li>hardiness_zone (text)</li>
+                    <li>native_region (text)</li>
+                    <li>drought_tolerant (true/false)</li>
+                    <li>deer_resistant (true/false)</li>
+                    <li>pest_resistant (true/false)</li>
+                    <li>edible (true/false)</li>
+                    <li>indoor_suitable (true/false)</li>
+                  </ul>
+                </div>
+                <div>
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => {
+                      // Here you would add logic to download a sample CSV
+                      toast({
+                        title: "Sample CSV",
+                        description: "Sample CSV download functionality coming soon",
+                      });
+                    }}
+                  >
+                    Download Sample CSV
+                  </Button>
+                </div>
+              </div>
             </DialogContent>
           </Dialog>
         </div>

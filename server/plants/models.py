@@ -33,47 +33,47 @@ class Plant(models.Model):
     common_name = models.CharField(max_length=100)
     scientific_name = models.CharField(max_length=100)
     description = models.TextField()
-    care_instructions = models.TextField()
-    planting_instructions = models.TextField()
+    care_instructions = models.TextField(default='')
+    planting_instructions = models.TextField(default='')
 
     # Care Requirements
-    light_requirement = models.CharField(max_length=10, choices=LIGHT_CHOICES)
-    water_requirement = models.CharField(max_length=10, choices=WATER_CHOICES)
-    temperature_min = models.IntegerField(validators=[MinValueValidator(-20), MaxValueValidator(50)])
-    temperature_max = models.IntegerField(validators=[MinValueValidator(-20), MaxValueValidator(50)])
-    humidity_requirement = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(100)])
-    soil_type = models.CharField(max_length=200)
-    fertilizer_requirements = models.TextField()
+    light_requirement = models.CharField(max_length=10, choices=LIGHT_CHOICES, default='medium')
+    water_requirement = models.CharField(max_length=10, choices=WATER_CHOICES, default='medium')
+    temperature_min = models.IntegerField(validators=[MinValueValidator(-20), MaxValueValidator(50)], default=15)
+    temperature_max = models.IntegerField(validators=[MinValueValidator(-20), MaxValueValidator(50)], default=30)
+    humidity_requirement = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(100)], default=50)
+    soil_type = models.CharField(max_length=200, default='All purpose potting mix')
+    fertilizer_requirements = models.TextField(default='')
 
     # Growth Information
-    mature_height = models.DecimalField(max_digits=5, decimal_places=2, help_text="Height in centimeters")
-    mature_spread = models.DecimalField(max_digits=5, decimal_places=2, help_text="Spread in centimeters")
-    growth_rate = models.CharField(max_length=10, choices=GROWTH_RATE_CHOICES)
-    time_to_maturity = models.CharField(max_length=100)
+    mature_height = models.DecimalField(max_digits=5, decimal_places=2, help_text="Height in centimeters", default=30.00)
+    mature_spread = models.DecimalField(max_digits=5, decimal_places=2, help_text="Spread in centimeters", default=30.00)
+    growth_rate = models.CharField(max_length=10, choices=GROWTH_RATE_CHOICES, default='medium')
+    time_to_maturity = models.CharField(max_length=100, default='')
 
     # Seasonal Information
-    flowering_season = models.CharField(max_length=20, choices=SEASON_CHOICES, blank=True)
-    flowering_color = models.CharField(max_length=100, blank=True)
-    fruiting_season = models.CharField(max_length=20, choices=SEASON_CHOICES, blank=True)
+    flowering_season = models.CharField(max_length=20, choices=SEASON_CHOICES, blank=True, default='')
+    flowering_color = models.CharField(max_length=100, blank=True, default='')
+    fruiting_season = models.CharField(max_length=20, choices=SEASON_CHOICES, blank=True, default='')
     fragrant = models.BooleanField(default=False)
 
     # Additional Characteristics
-    hardiness_zone = models.CharField(max_length=50)
-    native_region = models.CharField(max_length=200)
+    hardiness_zone = models.CharField(max_length=50, default='')
+    native_region = models.CharField(max_length=200, default='')
     drought_tolerant = models.BooleanField(default=False)
     deer_resistant = models.BooleanField(default=False)
     pest_resistant = models.BooleanField(default=False)
     edible = models.BooleanField(default=False)
     indoor_suitable = models.BooleanField(default=False)
 
-    # Images
-    main_image = models.ImageField(upload_to='plants/main/')
-    additional_images = models.ManyToManyField('PlantImage', blank=True)
-
     # Business Information
-    price = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])
+    price = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)], default=0.00)
     quantity = models.IntegerField(default=0, validators=[MinValueValidator(0)])
     featured = models.BooleanField(default=False)
+
+    # Images
+    main_image = models.ImageField(upload_to='plants/main/', null=True, blank=True)
+    additional_images = models.ManyToManyField('PlantImage', blank=True)
 
     # Metadata
     created_at = models.DateTimeField(auto_now_add=True)

@@ -67,6 +67,29 @@ class Command(BaseCommand):
                 'quantity': 15,
                 'indoor_suitable': True,
                 'drought_tolerant': True,
+            },
+            {
+                'common_name': 'Boston Fern',
+                'scientific_name': 'Nephrolepis exaltata',
+                'description': 'Classic hanging plant with delicate fronds',
+                'care_instructions': 'Keep soil consistently moist and humidity high',
+                'planting_instructions': 'Plant in rich, organic potting mix',
+                'light_requirement': 'medium',
+                'water_requirement': 'high',
+                'temperature_min': 16,
+                'temperature_max': 24,
+                'humidity_requirement': 80,
+                'soil_type': 'Rich, organic potting mix',
+                'fertilizer_requirements': 'Monthly with balanced fertilizer',
+                'mature_height': 35,
+                'mature_spread': 45,
+                'growth_rate': 'medium',
+                'time_to_maturity': '1-2 years',
+                'hardiness_zone': '10-12',
+                'native_region': 'Florida and tropical regions',
+                'price': 19.99,
+                'quantity': 20,
+                'indoor_suitable': True,
             }
         ]
 
@@ -79,7 +102,7 @@ class Command(BaseCommand):
             status = 'Created' if created else 'Already exists'
             self.stdout.write(self.style.SUCCESS(f'{status}: {plant.common_name}'))
 
-        # Generate CSV file with sample data
+        # Generate CSV file with sample data and instructions
         import csv
         import os
 
