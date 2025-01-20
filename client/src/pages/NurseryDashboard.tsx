@@ -898,6 +898,7 @@ export default function NurseryDashboard() {
                   />
 
 
+
                 </div>
 
                 <div className="flex justify-end gap-4 pt-6">
@@ -977,7 +978,6 @@ export default function NurseryDashboard() {
           </DialogContent>
         </Dialog>
       </main>
-      <Footer />
     </div>
   );
 }
