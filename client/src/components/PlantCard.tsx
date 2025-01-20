@@ -1,113 +1,42 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { useLocation } from "wouter";
-import { Sun, Droplets, ThermometerSun, Clock, MapPin } from "lucide-react";
+import { Card } from "@/components/ui/card";
 import type { Plant } from "@db/schema";
+import { PenSquare, Trash2 } from "lucide-react";
 
 type PlantCardProps = {
   plant: Plant;
+  onEdit?: () => void;
+  onDelete?: () => void;
 };
 
-export function PlantCard({ plant }: PlantCardProps) {
-  const [, setLocation] = useLocation();
-
-  const getCareIcon = (type: string, value: string | null) => {
-    if (!value) return null;
-
-    const getColorClass = (level: string) => {
-      switch (level.toLowerCase()) {
-        case 'high':
-          return 'text-red-500';
-        case 'medium':
-          return 'text-yellow-500';
-        case 'low':
-          return 'text-green-500';
-        default:
-          return 'text-gray-500';
-      }
-    };
-
-    const iconClass = `h-4 w-4 ${getColorClass(value)}`;
-
-    switch (type) {
-      case 'sun':
-        return <Sun className={iconClass} />;
-      case 'water':
-        return <Droplets className={iconClass} />;
-      case 'temperature':
-        return <ThermometerSun className={iconClass} />;
-      default:
-        return null;
-    }
-  };
-
+export function PlantCard({ plant, onEdit, onDelete }: PlantCardProps) {
   return (
-    <Card className="group cursor-pointer" onClick={() => setLocation(`/plants/${plant.id}`)}>
-      <div className="relative">
-        <div className="aspect-[4/3] overflow-hidden rounded-t-lg">
-          <img
-            src={plant.imageUrl || '/placeholder-plant.jpg'}
-            alt={plant.name}
-            className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105"
-          />
+    <Card className="p-4">
+      <div className="flex justify-between items-center">
+        <div>
+          <h3 className="font-medium">{plant.name}</h3>
+          <p className="text-sm text-muted-foreground">
+            Stock: {plant.quantity} | ${Number(plant.price).toFixed(2)}
+          </p>
         </div>
-        {plant.featured && (
-          <div className="absolute top-2 right-2 bg-primary text-primary-foreground px-2 py-1 rounded text-xs font-medium">
-            Featured
-          </div>
-        )}
-      </div>
-      <CardContent className="p-3">
-        <div className="flex justify-between items-start mb-2">
-          <div>
-            <h3 className="font-semibold text-base line-clamp-1">{plant.name}</h3>
-            {plant.scientificName && (
-              <p className="text-xs text-muted-foreground italic line-clamp-1">
-                {plant.scientificName}
-              </p>
-            )}
-          </div>
-          <div className="flex items-center gap-1 text-sm font-semibold">
-            ${Number(plant.price).toFixed(2)}
-          </div>
-        </div>
-
-        {/* Care requirements */}
-        <div className="flex items-center gap-3 mb-2">
-          {getCareIcon('sun', plant.sunExposure)}
-          {getCareIcon('water', plant.wateringNeeds)}
-          {plant.hardinessZone && (
-            <div className="text-xs text-muted-foreground">
-              Zone {plant.hardinessZone}
-            </div>
+        <div className="flex gap-2">
+          {onEdit && (
+            <button
+              onClick={onEdit}
+              className="p-2 hover:bg-secondary rounded-full"
+            >
+              <PenSquare className="h-4 w-4" />
+            </button>
+          )}
+          {onDelete && (
+            <button
+              onClick={onDelete}
+              className="p-2 hover:bg-secondary rounded-full text-destructive"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
           )}
         </div>
-
-        {/* Location and delivery info */}
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <div className="flex items-center gap-1">
-            <MapPin className="h-3 w-3" />
-            {plant.distance ? (
-              <span>{plant.distance.toFixed(1)} km away</span>
-            ) : (
-              <span>Distance varies</span>
-            )}
-          </div>
-          <div className="flex items-center gap-1">
-            <Clock className="h-3 w-3" />
-            <span>
-              {plant.isAvailableForDelivery ? "Delivery available" : "Pickup only"}
-            </span>
-          </div>
-        </div>
-
-        {/* Stock status */}
-        {!plant.inStock && (
-          <div className="mt-2 text-xs text-destructive font-medium">
-            Currently unavailable
-          </div>
-        )}
-      </CardContent>
+      </div>
     </Card>
   );
 }
