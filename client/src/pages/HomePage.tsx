@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { PlantCard } from "@/components/PlantCard";
@@ -92,8 +92,9 @@ export default function HomePage() {
                 onClearFilters={handleClearFilters}
               />
 
-              {/* Category Icons - Simple grid layout */}
-              <div className="mt-6">
+              {/* Category Icons - Grid layout with improved styling */}
+              <div className="mt-8">
+                <h2 className="text-lg font-semibold mb-4">Browse Categories</h2>
                 <div className="grid grid-cols-5 gap-4 justify-items-center">
                   {categories.map((category) => {
                     const Icon = category.icon;
@@ -104,14 +105,17 @@ export default function HomePage() {
                           selectedCategory === category.id ? null : category.id
                         )}
                         className={cn(
-                          "flex flex-col items-center gap-1 p-2 rounded-lg transition-colors",
+                          "flex flex-col items-center gap-2 p-3 rounded-xl transition-all",
+                          "hover:bg-primary/10",
                           selectedCategory === category.id
-                            ? "text-primary"
-                            : "text-gray-600 hover:text-primary"
+                            ? "bg-primary/15 text-primary shadow-sm"
+                            : "text-muted-foreground"
                         )}
                       >
                         <Icon className="h-6 w-6" />
-                        <span className="text-xs font-medium">{category.label}</span>
+                        <span className="text-xs font-medium text-center">
+                          {category.label}
+                        </span>
                       </button>
                     );
                   })}
