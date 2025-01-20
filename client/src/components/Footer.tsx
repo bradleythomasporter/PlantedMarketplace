@@ -1,8 +1,14 @@
 import { Button } from "@/components/ui/button";
 import { Facebook, Instagram, Twitter, Sprout } from "lucide-react";
+import { useLocation } from "wouter";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
+  const [, setLocation] = useLocation();
+
+  const handleSellOnPlanted = () => {
+    setLocation('/auth?role=nursery');
+  };
 
   return (
     <footer className="bg-primary/5 border-t">
@@ -51,10 +57,10 @@ export function Footer() {
               <Button 
                 variant="outline" 
                 className="w-full flex items-center gap-2"
-                disabled
+                onClick={handleSellOnPlanted}
               >
                 <Sprout className="h-4 w-4" />
-                Coming Soon: Sell on Planted
+                Sell on Planted
               </Button>
               <div className="flex gap-4">
                 <Button variant="ghost" size="icon" className="h-8 w-8">

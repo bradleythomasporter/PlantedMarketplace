@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { db } from "@db";
-import { plants, users } from "@db/schema";
+import { plants, users, orders } from "@db/schema";
 import { like, and, or, eq, inArray, gte, sql } from "drizzle-orm";
 import NodeGeocoder from "node-geocoder";
 import { setupAuth } from "./auth";
@@ -28,6 +28,55 @@ const MAX_STRIPE_URL_LENGTH = 500;
 
 export function registerRoutes(app: Express): Server {
   setupAuth(app);
+
+  // Orders endpoints
+  app.get("/api/orders", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    try {
+      const nurseryOrders = await db
+        .select()
+        .from(orders)
+        .where(eq(orders.nurseryId, req.user.id))
+        .orderBy(orders.createdAt);
+
+      return res.json(nurseryOrders);
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+      return res.status(500).json({ message: "Failed to fetch orders" });
+    }
+  });
+
+  app.patch("/api/orders/:id/status", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    try {
+      const orderId = parseInt(req.params.id);
+      const { status } = req.body;
+
+      if (!status || !["pending", "confirmed", "processing", "shipped", "delivered", "cancelled"].includes(status)) {
+        return res.status(400).json({ message: "Invalid status" });
+      }
+
+      const [updatedOrder] = await db
+        .update(orders)
+        .set({
+          status,
+          updatedAt: new Date()
+        })
+        .where(eq(orders.id, orderId))
+        .returning();
+
+      return res.json(updatedOrder);
+    } catch (error) {
+      console.error('Error updating order:', error);
+      return res.status(500).json({ message: "Failed to update order" });
+    }
+  });
 
   // Plants listing and search with geospatial filtering
   app.get("/api/plants", async (req, res) => {
@@ -167,55 +216,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Get orders for a nursery  (This endpoint is removed because of the intention)
-  // app.get("/api/orders", async (req, res) => {
-  //   if (!req.isAuthenticated()) {
-  //     return res.status(401).json({ message: "Unauthorized" });
-  //   }
 
-  //   try {
-  //     const nurseryOrders = await db
-  //       .select()
-  //       .from(orders)
-  //       .where(eq(orders.nurseryId, req.user.id))
-  //       .orderBy(orders.createdAt);
-
-  //     return res.json(nurseryOrders);
-  //   } catch (error) {
-  //     console.error('Error fetching orders:', error);
-  //     return res.status(500).json({ message: "Failed to fetch orders" });
-  //   }
-  // });
-
-  // Update order status (This endpoint is removed because of the intention)
-  // app.patch("/api/orders/:id/status", async (req, res) => {
-  //   if (!req.isAuthenticated()) {
-  //     return res.status(401).json({ message: "Unauthorized" });
-  //   }
-
-  //   try {
-  //     const orderId = parseInt(req.params.id);
-  //     const { status } = req.body;
-
-  //     if (!status || !["pending", "confirmed", "processing", "shipped", "delivered", "cancelled"].includes(status)) {
-  //       return res.status(400).json({ message: "Invalid status" });
-  //     }
-
-  //     const [updatedOrder] = await db
-  //       .update(orders)
-  //       .set({
-  //         status,
-  //         updatedAt: new Date()
-  //       })
-  //       .where(eq(orders.id, orderId))
-  //       .returning();
-
-  //     return res.json(updatedOrder);
-  //   } catch (error) {
-  //     console.error('Error updating order:', error);
-  //     return res.status(500).json({ message: "Failed to update order" });
-  //   }
-  // });
   // Plant templates endpoint with organized categories
   app.get("/api/plants/templates", async (_req, res) => {
     try {
