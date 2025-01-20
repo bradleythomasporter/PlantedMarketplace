@@ -1,30 +1,25 @@
-import { drizzle } from 'drizzle-orm/node-postgres';
-import { Pool } from 'pg';
+import { drizzle } from 'drizzle-orm/better-sqlite3';
+import Database from 'better-sqlite3';
 import * as schema from "@db/schema";
+import path from 'path';
 
-// Create a basic connection pool using individual connection parameters
-const pool = new Pool({
-  user: process.env.PGUSER,
-  host: process.env.PGHOST,
-  database: process.env.PGDATABASE,
-  password: process.env.PGPASSWORD,
-  port: parseInt(process.env.PGPORT || '5432'),
-});
+// Create database connection with the correct path
+const dbPath = path.join(process.cwd(), 'sqlite.db');
+const sqlite = new Database(dbPath);
 
-// Test database connection
-pool.connect((err, client, done) => {
-  if (err) {
-    console.error('Error connecting to the database:', err.stack);
-    return;
-  }
-  client.query('SELECT NOW() as now', (err, res) => {
-    done(); // Release the client back to the pool
-    if (err) {
-      console.error('Error executing test query:', err.stack);
-      return;
-    }
-    console.log('Database connected successfully:', res.rows[0].now);
-  });
-});
+// Configure the database
+sqlite.pragma('journal_mode = WAL');
+sqlite.pragma('foreign_keys = ON');
 
-export const db = drizzle(pool, { schema });
+// Create drizzle database instance
+export const db = drizzle(sqlite, { schema });
+
+// Test connection
+try {
+  const result = sqlite.prepare('SELECT 1 + 1 as test').get();
+  console.log('Connected to SQLite database at:', dbPath);
+  console.log('Test query result:', result.test);
+} catch (error) {
+  console.error('Database connection failed:', error);
+  process.exit(1);
+}

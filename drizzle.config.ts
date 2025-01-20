@@ -1,14 +1,12 @@
 import { defineConfig } from "drizzle-kit";
-
-if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL must be set");
-}
+import path from 'path';
 
 export default defineConfig({
-  out: "./migrations",
   schema: "./db/schema.ts",
-  dialect: "postgresql",
+  out: "./migrations",
+  dialect: "sqlite",
+  driver: "turso",
   dbCredentials: {
-    url: process.env.DATABASE_URL,
+    url: path.join(process.cwd(), 'sqlite.db'),
   },
 });
