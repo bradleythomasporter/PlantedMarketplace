@@ -10,6 +10,7 @@ import { Upload, BarChart2, DollarSign, Package2, Loader2 } from "lucide-react";
 import type { Plant } from "@db/schema";
 import { PlantCard } from "@/components/PlantCard";
 import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer"; // This line is added
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useForm } from "react-hook-form";
 import {
@@ -258,7 +259,7 @@ export default function NurseryDashboard() {
         throw new Error(await response.text());
       }
 
-      toast({ 
+      toast({
         title: "Success",
         description: "Plant added successfully"
       });
@@ -900,6 +901,7 @@ export default function NurseryDashboard() {
                   />
 
 
+
                 </div>
 
                 <div className="flex justify-end gap-4 pt-6">
@@ -966,7 +968,7 @@ export default function NurseryDashboard() {
                 </ul>
               </div>
 
-              <Button 
+              <Button
                 variant="outline"
                 className="w-full"
                 onClick={() => {
