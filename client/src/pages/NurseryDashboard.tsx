@@ -355,7 +355,7 @@ export default function NurseryDashboard() {
             </AccordionTrigger>
             <AccordionContent>
               <div className="space-y-4">
-                {Object.entries(templates.seasonalPlants).map(([category, plantList]) => (
+                {templates?.seasonalPlants && Object.entries(templates.seasonalPlants).map(([category, plantList]) => (
                   <div key={category} className="space-y-2">
                     <h3 className="font-medium capitalize">{category.replace(/_/g, ' ')}</h3>
                     <div className="grid grid-cols-1 gap-2">
@@ -906,7 +906,7 @@ Japanese Maple,Acer palmatum,trees,"Elegant ornamental tree",89.99,5,,partial_sh
 
             <TabsContent value="orders" className="space-y-8">
               <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="p-4 border rounded-lg">
+                <div className="p-4 border roundedlg">
                   <h3 className="text-sm font-medium text-muted-foreground">
                     Total Orders
                   </h3>
