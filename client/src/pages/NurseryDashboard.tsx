@@ -596,6 +596,7 @@ export default function NurseryDashboard() {
                       </FormItem>
                     )}
                   />
+
                   <FormField
                     control={form.control}
                     name="planting_instructions"
@@ -609,6 +610,7 @@ export default function NurseryDashboard() {
                       </FormItem>
                     )}
                   />
+
                   <FormField
                     control={form.control}
                     name="light_requirement"
@@ -631,6 +633,7 @@ export default function NurseryDashboard() {
                       </FormItem>
                     )}
                   />
+
                   <FormField
                     control={form.control}
                     name="water_requirement"
@@ -653,6 +656,7 @@ export default function NurseryDashboard() {
                       </FormItem>
                     )}
                   />
+
                   <FormField
                     control={form.control}
                     name="temperature_min"
@@ -666,6 +670,7 @@ export default function NurseryDashboard() {
                       </FormItem>
                     )}
                   />
+
                   <FormField
                     control={form.control}
                     name="temperature_max"
@@ -679,6 +684,7 @@ export default function NurseryDashboard() {
                       </FormItem>
                     )}
                   />
+
                   <FormField
                     control={form.control}
                     name="humidity_requirement"
@@ -692,6 +698,7 @@ export default function NurseryDashboard() {
                       </FormItem>
                     )}
                   />
+
                   <FormField
                     control={form.control}
                     name="soil_type"
@@ -705,6 +712,7 @@ export default function NurseryDashboard() {
                       </FormItem>
                     )}
                   />
+
                   <FormField
                     control={form.control}
                     name="fertilizer_requirements"
@@ -718,6 +726,7 @@ export default function NurseryDashboard() {
                       </FormItem>
                     )}
                   />
+
                   <FormField
                     control={form.control}
                     name="mature_height"
@@ -731,6 +740,7 @@ export default function NurseryDashboard() {
                       </FormItem>
                     )}
                   />
+
                   <FormField
                     control={form.control}
                     name="mature_spread"
@@ -744,6 +754,7 @@ export default function NurseryDashboard() {
                       </FormItem>
                     )}
                   />
+
                   <FormField
                     control={form.control}
                     name="growth_rate"
@@ -766,6 +777,7 @@ export default function NurseryDashboard() {
                       </FormItem>
                     )}
                   />
+
                   <FormField
                     control={form.control}
                     name="time_to_maturity"
@@ -779,6 +791,7 @@ export default function NurseryDashboard() {
                       </FormItem>
                     )}
                   />
+
                   <FormField
                     control={form.control}
                     name="hardiness_zone"
@@ -792,6 +805,7 @@ export default function NurseryDashboard() {
                       </FormItem>
                     )}
                   />
+
                   <FormField
                     control={form.control}
                     name="native_region"
@@ -805,6 +819,7 @@ export default function NurseryDashboard() {
                       </FormItem>
                     )}
                   />
+
                   <FormField
                     control={form.control}
                     name="price"
@@ -818,6 +833,7 @@ export default function NurseryDashboard() {
                       </FormItem>
                     )}
                   />
+
                   <FormField
                     control={form.control}
                     name="quantity"
@@ -831,6 +847,7 @@ export default function NurseryDashboard() {
                       </FormItem>
                     )}
                   />
+
                   <FormField
                     control={form.control}
                     name="drought_tolerant"
@@ -838,12 +855,16 @@ export default function NurseryDashboard() {
                       <FormItem>
                         <FormLabel>Drought Tolerant</FormLabel>
                         <FormControl>
-                          <Switch {...field} />
+                          <Switch 
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+
                   <FormField
                     control={form.control}
                     name="deer_resistant"
@@ -851,12 +872,16 @@ export default function NurseryDashboard() {
                       <FormItem>
                         <FormLabel>Deer Resistant</FormLabel>
                         <FormControl>
-                          <Switch {...field} />
+                          <Switch 
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+
                   <FormField
                     control={form.control}
                     name="pest_resistant"
@@ -864,12 +889,16 @@ export default function NurseryDashboard() {
                       <FormItem>
                         <FormLabel>Pest Resistant</FormLabel>
                         <FormControl>
-                          <Switch {...field} />
+                          <Switch 
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+
                   <FormField
                     control={form.control}
                     name="edible"
@@ -877,12 +906,16 @@ export default function NurseryDashboard() {
                       <FormItem>
                         <FormLabel>Edible</FormLabel>
                         <FormControl>
-                          <Switch {...field} />
+                          <Switch 
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+
                   <FormField
                     control={form.control}
                     name="indoor_suitable"
@@ -890,15 +923,15 @@ export default function NurseryDashboard() {
                       <FormItem>
                         <FormLabel>Indoor Suitable</FormLabel>
                         <FormControl>
-                          <Switch {...field} />
+                          <Switch 
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-
-
-
                 </div>
 
                 <div className="flex justify-end gap-4 pt-6">
@@ -976,8 +1009,7 @@ export default function NurseryDashboard() {
               </Button>
             </div>
           </DialogContent>
-        </Dialog>
-      </main>
+        </Dialog>      </main>
     </div>
   );
 }
