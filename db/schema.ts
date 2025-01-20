@@ -32,7 +32,7 @@ export const plants = sqliteTable('plants', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   name: text('name').notNull(),
   scientificName: text('scientific_name'),
-  category: text('category', { enum: ['perennials', 'shrubs', 'climbers', 'bulbs', 'bedding', 'grasses', 'roses', 'ferns', 'fruit', 'herbs', 'vegetables', 'hedging', 'trees'] }).notNull(),
+  category: text('category', { enum: ['flowers', 'trees', 'shrubs', 'indoor', 'outdoor'] }).notNull(),
   description: text('description'),
   price: real('price').notNull(),
   imageUrl: text('image_url'),
