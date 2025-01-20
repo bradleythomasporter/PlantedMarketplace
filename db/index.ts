@@ -1,5 +1,5 @@
-import { drizzle } from "drizzle-orm/vercel-postgres";
-import { sql } from "@vercel/postgres";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
 import * as schema from "@db/schema";
 
 if (!process.env.DATABASE_URL) {
@@ -8,7 +8,25 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-// Create the Drizzle instance
-export const db = drizzle(sql, { schema });
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false
+  },
+  max: 20,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
+});
 
-console.log("Database configuration ready");
+// Add error handling for the pool
+pool.on('error', (err) => {
+  console.error('Unexpected error on idle client', err);
+  process.exit(-1);
+});
+
+export const db = drizzle(pool, { schema });
+
+// Test the connection
+pool.connect()
+  .then(() => console.log('Database connected successfully'))
+  .catch(err => console.error('Database connection error:', err));

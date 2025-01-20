@@ -1,7 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import { connectDB } from "@db";
+import { db } from "@db";
 
 const app = express();
 
@@ -42,10 +42,6 @@ app.use((req, res, next) => {
 
 (async () => {
   try {
-    // Connect to database first
-    await connectDB();
-    log("Database connection established");
-
     // Register routes
     const server = registerRoutes(app);
 
