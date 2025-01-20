@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Facebook, Instagram, Twitter } from "lucide-react";
+import { Facebook, Instagram, Twitter, Sprout } from "lucide-react";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -14,7 +14,7 @@ export function Footer() {
               Your local plant marketplace connecting gardeners with nurseries.
             </p>
           </div>
-          
+
           <div>
             <h4 className="font-semibold mb-4">Quick Links</h4>
             <ul className="space-y-2 text-sm">
@@ -22,10 +22,10 @@ export function Footer() {
                 <Button variant="link" className="h-auto p-0">About Us</Button>
               </li>
               <li>
-                <Button variant="link" className="h-auto p-0">For Nurseries</Button>
+                <Button variant="link" className="h-auto p-0">Plant Care Guides</Button>
               </li>
               <li>
-                <Button variant="link" className="h-auto p-0">Plant Care Guides</Button>
+                <Button variant="link" className="h-auto p-0">Nursery Locations</Button>
               </li>
             </ul>
           </div>
@@ -46,17 +46,23 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className="font-semibold mb-4">Connect</h4>
-            <div className="flex gap-4">
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <Facebook className="h-4 w-4" />
+            <h4 className="font-semibold mb-4">Grow With Us</h4>
+            <div className="space-y-4">
+              <Button variant="outline" className="w-full flex items-center gap-2">
+                <Sprout className="h-4 w-4" />
+                Sell on Planted
               </Button>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <Instagram className="h-4 w-4" />
-              </Button>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <Twitter className="h-4 w-4" />
-              </Button>
+              <div className="flex gap-4">
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <Facebook className="h-4 w-4" />
+                </Button>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <Instagram className="h-4 w-4" />
+                </Button>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <Twitter className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </div>
         </div>
