@@ -1,9 +1,10 @@
-import { pgTable, text, serial, timestamp, decimal, boolean } from "drizzle-orm/pg-core";
+import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
+import { sql } from "drizzle-orm";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { relations } from "drizzle-orm";
 
-export const users = pgTable('users', {
-  id: serial('id').primaryKey(),
+export const users = sqliteTable('users', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
   username: text('username').notNull().unique(),
   password: text('password').notNull(),
   email: text('email').unique(),
@@ -14,51 +15,63 @@ export const users = pgTable('users', {
   description: text('description'),
   hoursOfOperation: text('hours_of_operation'),
   website: text('website'),
-  latitude: decimal('latitude'),
-  longitude: decimal('longitude'),
-  serviceRadius: decimal('service_radius'),
+  latitude: real('latitude'),
+  longitude: real('longitude'),
+  serviceRadius: real('service_radius'),
   businessLicense: text('business_license'),
-  rating: decimal('rating'),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow()
+  rating: real('rating'),
+  createdAt: integer('created_at', { mode: 'timestamp' })
+    .notNull()
+    .default(sql`(strftime('%s', 'now'))`),
+  updatedAt: integer('updated_at', { mode: 'timestamp' })
+    .notNull()
+    .default(sql`(strftime('%s', 'now'))`)
 });
 
-export const plants = pgTable('plants', {
-  id: serial('id').primaryKey(),
+export const plants = sqliteTable('plants', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
   name: text('name').notNull(),
   scientificName: text('scientific_name'),
-  category: text('category', { enum: ['indoor', 'outdoor', 'trees', 'shrubs', 'flowers'] }).notNull(),
+  category: text('category').notNull(),
   description: text('description'),
-  price: decimal('price').notNull(),
+  price: real('price').notNull(),
   imageUrl: text('image_url'),
-  nurseryId: serial('nursery_id').notNull().references(() => users.id),
-  quantity: serial('quantity').notNull().default(0),
+  nurseryId: integer('nursery_id').notNull().references(() => users.id),
+  quantity: integer('quantity').notNull().default(0),
   sunExposure: text('sun_exposure'),
   wateringNeeds: text('watering_needs'),
   height: text('height'),
   spread: text('spread'),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow()
+  createdAt: integer('created_at', { mode: 'timestamp' })
+    .notNull()
+    .default(sql`(strftime('%s', 'now'))`),
+  updatedAt: integer('updated_at', { mode: 'timestamp' })
+    .notNull()
+    .default(sql`(strftime('%s', 'now'))`)
 });
 
-export const orders = pgTable('orders', {
-  id: serial('id').primaryKey(),
-  customerId: serial('customer_id').notNull().references(() => users.id),
-  nurseryId: serial('nursery_id').notNull().references(() => users.id),
-  status: text('status', { enum: ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'] }).notNull().default('pending'),
-  total: decimal('total').notNull(),
+export const orders = sqliteTable('orders', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  customerId: integer('customer_id').notNull().references(() => users.id),
+  nurseryId: integer('nursery_id').notNull().references(() => users.id),
+  status: text('status').notNull().default('pending'),
+  totalAmount: real('total_amount').notNull(),
   shippingAddress: text('shipping_address').notNull(),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow()
+  createdAt: integer('created_at', { mode: 'timestamp' })
+    .notNull()
+    .default(sql`(strftime('%s', 'now'))`),
+  updatedAt: integer('updated_at', { mode: 'timestamp' })
+    .notNull()
+    .default(sql`(strftime('%s', 'now'))`)
 });
 
-export const orderItems = pgTable('order_items', {
-  id: serial('id').primaryKey(),
-  orderId: serial('order_id').notNull().references(() => orders.id),
-  plantId: serial('plant_id').notNull().references(() => plants.id),
-  quantity: serial('quantity').notNull(),
-  priceAtTime: decimal('price_at_time').notNull(),
-  requiresPlanting: boolean('requires_planting').notNull().default(false)
+export const orderItems = sqliteTable('order_items', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  orderId: integer('order_id').notNull().references(() => orders.id),
+  plantId: integer('plant_id').notNull().references(() => plants.id),
+  quantity: integer('quantity').notNull(),
+  priceAtTime: real('price_at_time').notNull(),
+  requiresPlanting: integer('requires_planting', { mode: 'boolean' }).notNull().default(0)
 });
 
 // Relations configuration
