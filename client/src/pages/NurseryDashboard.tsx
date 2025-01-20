@@ -273,7 +273,7 @@ export default function NurseryDashboard() {
       );
     }
 
-    const handleTemplateSelect = (template: PlantTemplate) => {
+    const handleTemplateSelect = (template: PlantTemplate, quantity: string) => {
       const form = document.querySelector('form') as HTMLFormElement;
       if (!form) return;
 
@@ -285,61 +285,88 @@ export default function NurseryDashboard() {
       form.wateringNeeds.value = template.growthDetails.watering;
       form.soilType.value = template.growthDetails.soil;
       form.price.value = template.price?.toString() || "29.99";
-      form.quantity.value = template.stockDefault?.toString() || "10";
+      form.quantity.value = quantity;
       form.maintainanceLevel.value = "low";
     };
 
     return (
-      <div className="space-y-4">
-        <div className="grid grid-cols-1 gap-4">
-          {Object.entries(templates.plantsByType).map(([category, plants]) => (
-            <div key={category} className="space-y-2">
-              <h3 className="text-lg font-semibold capitalize">{category.replace(/_/g, ' ')}</h3>
-              <div className="grid grid-cols-1 gap-2">
-                {plants.map((template) => (
-                  <Button
-                    key={template.name}
-                    variant="outline"
-                    className="w-full text-left h-auto p-4"
-                    onClick={() => handleTemplateSelect(template)}
-                  >
-                    <div className="flex flex-col space-y-2">
-                      <div className="flex justify-between items-start">
-                        <div>
+      <div className="space-y-6">
+        <div>
+          <Label>Plant Templates</Label>
+          <Button
+            variant="outline"
+            className="mt-2 w-full"
+            onClick={() => {
+              const form = document.querySelector('form') as HTMLFormElement;
+              if (form) form.reset();
+            }}
+          >
+            Custom Plant
+          </Button>
+        </div>
+
+        <Accordion type="single" collapsible className="w-full">
+          {Object.entries(templates.plantsByType).map(([category, plantList]) => (
+            <AccordionItem key={category} value={category}>
+              <AccordionTrigger className="text-lg font-semibold capitalize">
+                {category.replace(/_/g, ' ')}
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="grid grid-cols-1 gap-2 p-2">
+                  {plantList.map((template) => (
+                    <div key={template.name} className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        className="flex-1 justify-start h-auto py-4 px-4"
+                        onClick={() => handleTemplateSelect(template, "10")}
+                      >
+                        <div className="text-left">
                           <div className="font-medium">{template.name}</div>
-                          <div className="text-sm text-muted-foreground italic">
+                          <div className="text-sm text-muted-foreground mt-1">
                             {template.scientificName}
                           </div>
-                        </div>
-                        <div className="text-sm font-medium">
-                          ${template.price?.toFixed(2)}
-                        </div>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        {template.description}
-                      </p>
-                      <div className="flex flex-wrap gap-3 mt-2">
-                        <div className="flex items-center text-sm">
-                          <Sun className="h-4 w-4 mr-1" />
-                          {template.growthDetails.sunlight}
-                        </div>
-                        <div className="flex items-center text-sm">
-                          <Droplets className="h-4 w-4 mr-1" />
-                          {template.growthDetails.watering} water
-                        </div>
-                        {template.growthDetails.otherConditions && (
-                          <div className="text-sm text-muted-foreground">
-                            • {template.growthDetails.otherConditions}
+                          <p className="text-sm text-muted-foreground mt-2">
+                            {template.description}
+                          </p>
+                          <div className="flex flex-wrap gap-3 mt-2">
+                            <div className="flex items-center text-sm">
+                              <Sun className="h-4 w-4 mr-1" />
+                              {template.growthDetails.sunlight}
+                            </div>
+                            <div className="flex items-center text-sm">
+                              <Droplets className="h-4 w-4 mr-1" />
+                              {template.growthDetails.watering} water
+                            </div>
+                            {template.growthDetails.otherConditions && (
+                              <div className="text-sm text-muted-foreground">
+                                • {template.growthDetails.otherConditions}
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
+                        </div>
+                      </Button>
+                      <Select
+                        onValueChange={(value) => handleTemplateSelect(template, value)}
+                        defaultValue="10"
+                      >
+                        <SelectTrigger className="w-24">
+                          <SelectValue placeholder="Qty" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {[5, 10, 25, 50, 100].map((qty) => (
+                            <SelectItem key={qty} value={qty.toString()}>
+                              {qty}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
-                  </Button>
-                ))}
-              </div>
-            </div>
+                  ))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
           ))}
-        </div>
+        </Accordion>
       </div>
     );
   };
@@ -423,22 +450,8 @@ export default function NurseryDashboard() {
                               </div>
                             </div>
 
-                            <div className="space-y-2">
-                              <Label htmlFor="category">Category *</Label>
-                              <select
-                                id="category"
-                                name="category"
-                                className="w-full rounded-md border border-input bg-background px-3 py-2"
-                                required
-                              >
-                                <option value="">Select Category</option>
-                                <option value="indoor">Indoor Plants</option>
-                                <option value="outdoor">Outdoor Plants</option>
-                                <option value="flowers">Flowers</option>
-                                <option value="trees">Trees</option>
-                                <option value="shrubs">Shrubs</option>
-                              </select>
-                            </div>
+                            {/* Remove category dropdown */}
+                            <input type="hidden" name="category" />
 
                             <div className="space-y-2">
                               <Label htmlFor="description">Description</Label>
@@ -884,9 +897,9 @@ Japanese Maple,Acer palmatum,trees,"Elegant ornamental tree",89.99,5,,partial_sh
                             </p>
                           </div>
                           <select
+                            className="w-[180px] rounded-md border border-input bg-background px-3 py-2"
                             value={order.status}
                             onChange={(e) => handleUpdateOrderStatus(order.id, e.target.value)}
-                            className="w-[180px] rounded-md border border-input bg-background px-3 py-2"
                           >
                             <option value="pending">Pending</option>
                             <option value="confirmed">Confirmed</option>
